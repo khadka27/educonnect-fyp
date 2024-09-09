@@ -12,4 +12,4 @@ console.log("Database connected");
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-// const db = prisma; // Remove this line
+ export const db = prisma; 

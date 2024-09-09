@@ -14,19 +14,47 @@ datasource db {
 }
 
 
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// model User {
+//   id        Int      @id @default(autoincrement())
+//   username  String   @unique
+//   email     String   @unique 
+  
+//   password  String
+//   role      Role     @default(USER)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
 
 enum Role {
   USER
   ADMIN
   TEACHER
+}
+
+
+
+model User {
+  id                   Int        @id @default(autoincrement())
+  username              String     @unique
+  email                 String     @unique
+  password              String
+  isVerified            Boolean    @default(false)
+  verifyCode           String
+  verifyCodeExpiry     DateTime
+  role      Role     @default(USER)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  messages       Message[]
+  isAcceptingMessages Boolean @default(true)
+
+
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
 }
 
