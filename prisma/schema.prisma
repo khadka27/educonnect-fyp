@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,48 +7,193 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-// model User {
-//   id        Int      @id @default(autoincrement())
-//   username  String   @unique
-//   email     String   @unique 
-  
-//   password  String
-//   role      Role     @default(USER)
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
 enum Role {
   USER
   ADMIN
   TEACHER
 }
 
-
+// model User {
+//   id            String    @id @default(cuid()) // Consistent String id
+//   name          String?
+//   username      String?   @unique
+//   email         String?   @unique
+//   password      String?
+//   isVerified    Boolean   @default(false)
+//   verifyCode    String
+//   verifyCodeExpiry DateTime
+//   role          Role      @default(USER)
+//   createdAt     DateTime  @default(now())
+//   updatedAt     DateTime  @updatedAt
+//   messages      Message[]
+//   isAcceptingMessages Boolean @default(true)
+//   emailVerified DateTime? @map("email_verified")
+//   image         String?
+//   accounts      Account[]
+//   sessions      Session[]
+//   posts         Post[]    // Relationship to posts
+//   reactions     Reaction[] // Relationship to reactions
+// }
 
 model User {
-  id                   Int        @id @default(autoincrement())
-  username              String     @unique
-  email                 String     @unique
-  password              String
-  isVerified            Boolean    @default(false)
-  verifyCode           String
-  verifyCodeExpiry     DateTime
-  role      Role     @default(USER)
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
-  messages       Message[]
-  isAcceptingMessages Boolean @default(true)
-
-
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  password      String?
+  bio           String?   // New field for user bio
+  address       String?   // New field for user address
+  profileImage  String?   // New field for profile image
+  isVerified    Boolean   @default(false)
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  messages      Message[]
+  posts         Post[]    // Relationship to posts
+  reactions     Reaction[] // Relationship to reactions
 }
 
+
 model Message {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   content   String
   createdAt DateTime @default(now())
-  userId    Int
+  userId    String   // Match the User model's id type
   user      User     @relation(fields: [userId], references: [id])
 }
 
+
+model Post {
+  id        String    @id @default(cuid()) // Changed to String id to match User
+  content   String
+  createdAt DateTime  @default(now())
+  userId    String    // Match the User model's id type
+  user      User      @relation(fields: [userId], references: [id])
+  reactions Reaction[] // Relationship to reactions
+}
+
+model Reaction {
+  id        String    @id @default(cuid()) // Changed to String id
+  type      String    // Like, Dislike, etc.
+  createdAt DateTime  @default(now())
+  postId    String    // Match the Post model's id type
+  post      Post      @relation(fields: [postId], references: [id])
+  userId    String    // Match the User model's id type
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// model Account {
+//   id                 String  @id @default(cuid())
+//   userId             String  @map("user_id")
+//   type               String
+//   provider           String
+//   providerAccountId  String  @map("provider_account_id")
+//   refresh_token      String? @db.Text
+//   access_token       String? @db.Text
+//   expires_at         Int?
+//   token_type         String?
+//   scope              String?
+//   id_token           String? @db.Text
+//   session_state      String?
+//   user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@unique([provider, providerAccountId])
+//   @@map("accounts")
+// }
+
+// model Session {
+//   id           String   @id @default(cuid())
+//   sessionToken String   @unique @map("session_token")
+//   userId       String   @map("user_id")
+//   expires      DateTime
+//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("sessions")
+// }
+
+// model VerificationToken {
+//   identifier String
+//   token      String
+//   expires    DateTime
+
+//   @@unique([identifier, token])
+//   @@map("verificationtokens")
+// }
+
+// model Post {
+//   id        String    @id @default(cuid()) // Changed to String id to match User
+//   content   String
+//   createdAt DateTime  @default(now())
+//   userId    String    // Match the User model's id type
+//   user      User      @relation(fields: [userId], references: [id])
+//   reactions Reaction[] // Relationship to reactions
+// }
+
+// model Reaction {
+//   id        String    @id @default(cuid()) // Changed to String id
+//   type      String    // Like, Dislike, etc.
+//   createdAt DateTime  @default(now())
+//   postId    String    // Match the Post model's id type
+//   post      Post      @relation(fields: [postId], references: [id])
+//   userId    String    // Match the User model's id type
+//   user      User      @relation(fields: [userId], references: [id])
+// }
