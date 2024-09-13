@@ -88,5 +88,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden; /* Prevent horizontal overflow */
   }
 }

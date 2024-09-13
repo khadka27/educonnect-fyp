@@ -5,8 +5,8 @@ import Navbar1 from "@/components/Navbar1";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "True Feedback",
-  description: "Real feedback from real people.",
+  title: "EduConnect",
+  description: "A platform for students and teachers to connect",
 };
 
 interface RootLayoutProps {

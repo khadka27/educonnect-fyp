@@ -13,187 +13,59 @@ enum Role {
   TEACHER
 }
 
-// model User {
-//   id            String    @id @default(cuid()) // Consistent String id
-//   name          String?
-//   username      String?   @unique
-//   email         String?   @unique
-//   password      String?
-//   isVerified    Boolean   @default(false)
-//   verifyCode    String
-//   verifyCodeExpiry DateTime
-//   role          Role      @default(USER)
-//   createdAt     DateTime  @default(now())
-//   updatedAt     DateTime  @updatedAt
-//   messages      Message[]
-//   isAcceptingMessages Boolean @default(true)
-//   emailVerified DateTime? @map("email_verified")
-//   image         String?
-//   accounts      Account[]
-//   sessions      Session[]
-//   posts         Post[]    // Relationship to posts
-//   reactions     Reaction[] // Relationship to reactions
-// }
-
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  username      String?   @unique
-  email         String?   @unique
-  password      String?
-  bio           String?   // New field for user bio
-  address       String?   // New field for user address
-  profileImage  String?   // New field for profile image
-  isVerified    Boolean   @default(false)
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  messages      Message[]
-  posts         Post[]    // Relationship to posts
-  reactions     Reaction[] // Relationship to reactions
+  id               String     @id @default(cuid()) 
+  name             String? // Optional user name, consider validating in the app if you need it to be required later
+  username         String?    @unique // Optional and unique, consider handling null values carefully
+  email            String?    @unique // Optional email, same caution about null values
+  password         String? // You may want to make sure this isn't nullable after user registration
+  bio              String? // Optional bio for users
+  address          String? // Optional address field
+  coverImage       String? // Optional cover image
+  profileImage     String? // Optional profile image
+  verifyCode       String? // Optional verification code for email confirmation
+  verifyCodeExpiry DateTime? // Optional, used for tracking when the code expires
+  isVerified       Boolean    @default(false) // Default to false, changes to true after email verification
+  role             Role       @default(USER) // Default role is USER, but can be changed to ADMIN or TEACHER
+  createdAt        DateTime   @default(now()) // Automatically sets when the user is created
+  updatedAt        DateTime   @updatedAt // Automatically updates when the record changes
+  messages         Message[] // One-to-many relation with messages
+  posts            Post[] // One-to-many relation with posts
+  reactions        Reaction[] // One-to-many relation with reactions
 }
-
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  userId    String   // Match the User model's id type
-  user      User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid()) 
+  content   String // Message content, required
+  createdAt DateTime @default(now()) 
+  userId    String // Foreign key to the user
+  user      User     @relation(fields: [userId], references: [id]) 
 }
 
-
 model Post {
-  id        String    @id @default(cuid()) // Changed to String id to match User
-  content   String
-  createdAt DateTime  @default(now())
-  userId    String    // Match the User model's id type
-  user      User      @relation(fields: [userId], references: [id])
-  reactions Reaction[] // Relationship to reactions
+  id        String     @id @default(cuid())
+  content   String // Required content field for the post
+  imageUrl  String? // Optional image URL for posts with images
+  createdAt DateTime   @default(now()) 
+  userId    String // Foreign key to the user
+  user      User       @relation(fields: [userId], references: [id])
+  reactions Reaction[] // Relation with reactions
 }
 
 model Reaction {
-  id        String    @id @default(cuid()) // Changed to String id
-  type      String    // Like, Dislike, etc.
-  createdAt DateTime  @default(now())
-  postId    String    // Match the Post model's id type
-  post      Post      @relation(fields: [postId], references: [id])
-  userId    String    // Match the User model's id type
-  user      User      @relation(fields: [userId], references: [id])
+  id        String       @id @default(cuid()) 
+  type      ReactionType // Enum, defines the type of reaction (LIKE, DISLIKE, etc.)
+  createdAt DateTime     @default(now())
+  postId    String // Foreign key to the post
+  post      Post         @relation(fields: [postId], references: [id])
+  userId    String // Foreign key to the user
+  user      User         @relation(fields: [userId], references: [id])
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// model Account {
-//   id                 String  @id @default(cuid())
-//   userId             String  @map("user_id")
-//   type               String
-//   provider           String
-//   providerAccountId  String  @map("provider_account_id")
-//   refresh_token      String? @db.Text
-//   access_token       String? @db.Text
-//   expires_at         Int?
-//   token_type         String?
-//   scope              String?
-//   id_token           String? @db.Text
-//   session_state      String?
-//   user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@unique([provider, providerAccountId])
-//   @@map("accounts")
-// }
-
-// model Session {
-//   id           String   @id @default(cuid())
-//   sessionToken String   @unique @map("session_token")
-//   userId       String   @map("user_id")
-//   expires      DateTime
-//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@map("sessions")
-// }
-
-// model VerificationToken {
-//   identifier String
-//   token      String
-//   expires    DateTime
-
-//   @@unique([identifier, token])
-//   @@map("verificationtokens")
-// }
-
-// model Post {
-//   id        String    @id @default(cuid()) // Changed to String id to match User
-//   content   String
-//   createdAt DateTime  @default(now())
-//   userId    String    // Match the User model's id type
-//   user      User      @relation(fields: [userId], references: [id])
-//   reactions Reaction[] // Relationship to reactions
-// }
-
-// model Reaction {
-//   id        String    @id @default(cuid()) // Changed to String id
-//   type      String    // Like, Dislike, etc.
-//   createdAt DateTime  @default(now())
-//   postId    String    // Match the Post model's id type
-//   post      Post      @relation(fields: [postId], references: [id])
-//   userId    String    // Match the User model's id type
-//   user      User      @relation(fields: [userId], references: [id])
-// }
+enum ReactionType {
+  LIKE
+  DISLIKE
+  LOVE
+  LAUGH
+  SAD
+}

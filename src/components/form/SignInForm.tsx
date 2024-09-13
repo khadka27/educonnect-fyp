@@ -33,7 +33,6 @@ export default function SignInForm() {
     defaultValues: {
       email: "",
       password: "",
-      identifire: "",
     },
   });
 
@@ -45,7 +44,6 @@ export default function SignInForm() {
       redirect: false,
       email: data.email,
       password: data.password,
-      identifier: data.identifire,
     });
 
     setLoading(false);
