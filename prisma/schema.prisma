@@ -14,58 +14,87 @@ enum Role {
 }
 
 model User {
-  id               String     @id @default(cuid())
-  name             String? // Optional user name, consider validating in the app if you need it to be required later
-  username         String?    @unique // Optional and unique, consider handling null values carefully
-  email            String?    @unique // Optional email, same caution about null values
-  password         String? // You may want to make sure this isn't nullable after user registration
-  bio              String? // Optional bio for users
-  address          String? // Optional address field
-  coverImage       String? // Optional cover image
-  profileImage     String? // Optional profile image
-  verifyCode       String? // Optional verification code for email confirmation
-  verifyCodeExpiry DateTime? // Optional, used for tracking when the code expires
-  isVerified       Boolean    @default(false) // Default to false, changes to true after email verification
-  role             Role       @default(USER) // Default role is USER, but can be changed to ADMIN or TEACHER
-  createdAt        DateTime   @default(now()) // Automatically sets when the user is created
-  updatedAt        DateTime   @updatedAt // Automatically updates when the record changes
-  messages         Message[] // One-to-many relation with messages
-  posts            Post[] // One-to-many relation with posts
-  reactions        Reaction[] // One-to-many relation with reactions
+  id               String      @id @default(cuid())
+  name             String?
+  username         String?     @unique
+  email            String?     @unique
+  password         String?
+  bio              String?
+  address          String?
+  coverImage       String?
+  profileImage     String?
+  verifyCode       String?
+  verifyCodeExpiry DateTime?
+  isVerified       Boolean     @default(false)
+  role             Role        @default(USER)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  messages         Message[]   @relation
+  posts            Post[] // Removed @relation(onDelete: Cascade)
+  reactions        Reaction[]  @relation
+  shares           Share[]     @relation
+  savedPosts       SavedPost[] @relation
+  comments         Comment[]   @relation
+}
+
+model Post {
+  id        String      @id @default(cuid())
+  content   String
+  postUrl   String?
+  createdAt DateTime    @default(now())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions Reaction[]  @relation
+  shares    Share[]     @relation
+  savedBy   SavedPost[] @relation
+  comments  Comment[]   @relation
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  type      String // Changed to String to handle different reaction types like 'like'
+  createdAt DateTime @default(now())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, type]) // Ensure that a user can only have one reaction per post type
+}
+
+model Share {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model SavedPost {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Message {
   id        String   @id @default(cuid())
-  content   String // Message content, required
+  content   String
   createdAt DateTime @default(now())
-  userId    String // Foreign key to the user
-  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Post {
-  id        String     @id @default(cuid())
-  content   String // Required content field for the post
-  imageUrl  String? // Optional image URL for posts with images
-  createdAt DateTime   @default(now())
-  userId    String // Foreign key to the user
-  user      User       @relation(fields: [userId], references: [id])
-  reactions Reaction[] // Relation with reactions
-}
-
-model Reaction {
-  id        String       @id @default(cuid())
-  type      ReactionType // Enum, defines the type of reaction (LIKE, DISLIKE, etc.)
-  createdAt DateTime     @default(now())
-  postId    String // Foreign key to the post
-  post      Post         @relation(fields: [postId], references: [id])
-  userId    String // Foreign key to the user
-  user      User         @relation(fields: [userId], references: [id])
-}
-
-enum ReactionType {
-  LIKE
-  DISLIKE
-  LOVE
-  LAUGH
-  SAD
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }

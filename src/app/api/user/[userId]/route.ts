@@ -1,12 +1,7 @@
 // src/app/api/users/[userId]/route.ts
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma"; // Ensure the path is correct
-import multer from "multer";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import fs from "fs";
 import { PrismaClient } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
 import { compare } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -64,10 +59,11 @@ export async function GET(
   }
 }
 
-
-
 // Handler for PUT requests to update user data
-export async function PUT(request: Request, { params }: { params: { userId: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { userId: string } }
+) {
   const { userId } = params;
   const { name, bio, address, profileImage, coverImage } = await request.json();
 
@@ -85,15 +81,13 @@ export async function PUT(request: Request, { params }: { params: { userId: stri
 
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error('Error updating user data:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error updating user data:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
-
-
-
-
-
 
 // Handler for POST requests to verify password
 export async function POST(request: Request) {
@@ -112,7 +106,32 @@ export async function POST(request: Request) {
     const passwordMatch = await compare(password, user.password);
     return NextResponse.json({ match: passwordMatch });
   } catch (error) {
-    console.error('Error verifying password:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error verifying password:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Handler for DELETE requests to delete a user
+export async function DELETE(
+  request: Request,
+  { params }: { params: { userId: string } }
+) {
+  const { userId } = params;
+
+  try {
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return NextResponse.json({ message: "User deleted" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

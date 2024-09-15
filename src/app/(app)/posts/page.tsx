@@ -175,10 +175,7 @@ const PostPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 bg-gray-50 dark:bg-gray-900 min-h-screen ">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-8">
-        Posts
-      </h1>
+    <div className="max-w-2xl mx-auto p-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <form
         onSubmit={handlePostSubmit}
         className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4"

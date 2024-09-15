@@ -1,27 +1,22 @@
-// import type { NextApiRequest, NextApiResponse } from 'next';
-// import formidable from 'formidable';
-// import fs from 'fs';
-// import path from 'path';
-// import { v4 as uuidv4 } from 'uuid';
+import { NextResponse } from "next/server";
+import multer from "multer";
+import { promises as fs } from "fs";
+import path from "path";
+import { createReadStream } from "fs";
 
-// export const config = {
-//   api: {
-//     bodyParser: false,
-//   },
-// };
+const upload = multer({ dest: "public/upload/" });
 
-// const uploadDir = path.resolve(process.cwd(), 'public/uploads');
+export async function POST(request: Request) {
+  // Handle file upload
+  const data = await request.formData();
+  const file = data.get("file") as File;
 
-// const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-//   const form = new formidable.IncomingForm();
-//   form.uploadDir = uploadDir;
-//   form.keepExtensions = true;
+  if (file) {
+    const filePath = path.join(process.cwd(), "public/uploads", file.name);
+    const fileStream = await file.text();
+    await fs.writeFile(filePath, fileStream);
+    return NextResponse.json({ filePath });
+  }
 
-//   form.parse(req, (err, fields, files) => {
-//     if (err) {
-//       return res.status(500).json({ error: 'Error parsing the files' });
-//     }
-
-//     const file = files.file[0];
-//     const randomFileName = `${uuidv4()}.${file.originalFilename?.split('.').pop()}`;
-//     const new
+  return NextResponse.error();
+}

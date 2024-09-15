@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     // Define the path to save the image
     const fileName = `${uuidv4()}-${file.name}`;
     const filePath = path.join(process.cwd(), "public", "upload", fileName);
-    const publicUrl = `/uploads/${fileName}`;
+    const publicUrl = `/upload/${fileName}`;
 
     // Save the image to the file system
     const buffer = Buffer.from(await file.arrayBuffer());
