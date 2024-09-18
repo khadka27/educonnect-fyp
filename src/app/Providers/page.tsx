@@ -7,12 +7,14 @@ import { AuthProvider } from "@/app/context/AuthProvider";
 import { ThemeProvider } from "next-themes";
 import queryClient from "@/lib/queryClient";
 import { SessionProvider } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface ProvidersProps {
   children: React.ReactNode;
 }
 
 export default function Providers({ children }: ProvidersProps) {
+  const router = useRouter();
   return (
     <SessionProvider>
       <AuthProvider>

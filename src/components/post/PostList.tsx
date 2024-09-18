@@ -1,45 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import Image from "next/image";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useInView } from "react-intersection-observer";
+import { motion, AnimatePresence } from "framer-motion";
+import PostComponent from "@/components/post/post";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Heart,
-  MessageCircle,
-  Bookmark,
-  MoreHorizontal,
-  Download,
-  Link,
-  Share2,
-} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
-interface Comment {
-  id: string;
-  user: {
-    username: string;
-    profileImage?: string;
-  };
-  content: string;
-  createdAt: Date;
-}
-
-interface PostProps {
+interface Post {
   id: string;
   content: string;
   postUrl?: string;
@@ -50,203 +21,379 @@ interface PostProps {
     username: string;
     profileImage?: string;
   };
-  comments: Comment[];
+  comments: Array<{
+    id: string;
+    user: {
+      username: string;
+      profileImage?: string;
+    };
+    content: string;
+    createdAt: Date;
+  }>;
   isLiked?: boolean;
   isSaved?: boolean;
 }
 
-export default function PostList({ post }: any) {
-  const [posts, setPosts] = useState<PostProps[]>([]);
+interface CommentsState {
+  [postId: string]: {
+    data: Comment[];
+    hasMore: boolean;
+  };
+}
+
+const PostList: React.FC = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const { theme } = useTheme();
+  const { toast } = useToast();
+  const [ref, inView] = useInView({
+    threshold: 0,
+    triggerOnce: false,
+  });
 
-  const fetchPosts = async (pageNumber: number) => {
-    try {
-      const response = await axios.get(`/api/posts?page=${pageNumber}`);
-      const fetchedPosts = response.data;
+  const [comments, setComments] = useState<CommentsState>({});
 
-      if (Array.isArray(fetchedPosts.posts)) {
-        setPosts((prevPosts) => [...prevPosts, ...fetchedPosts.posts]);
-        setHasMore(fetchedPosts.hasMore);
-      } else {
-        console.error("Error: 'posts' is not an array", fetchedPosts);
+  const isLiked = posts.some((post) => post.isLiked);
+  const { data: session } = useSession(); // Retrieves the user session
+  const userId = session?.user?.id;
+
+  // const fetchPosts = useCallback(
+  //   async (pageNumber: number) => {
+  //     try {
+  //       const response = await axios.get(`/api/posts?page=${pageNumber}`);
+  //       const fetchedPosts = response.data;
+
+  //       if (Array.isArray(fetchedPosts.posts)) {
+  //         setPosts((prevPosts) => [...prevPosts, ...fetchedPosts.posts]);
+  //         setHasMore(fetchedPosts.hasMore);
+  //       } else {
+  //         console.error("Error: 'posts' is not an array", fetchedPosts);
+  //         toast({
+  //           title: "Error",
+  //           description:
+  //             "There was an error fetching posts. Please try again later.",
+  //           variant: "destructive",
+  //         });
+  //       }
+
+  //       setIsLoading(false);
+  //     } catch (error) {
+  //       console.error("Error fetching posts:", error);
+  //       setIsLoading(false);
+  //       toast({
+  //         title: "Error",
+  //         description:
+  //           "There was an error fetching posts. Please try again later.",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   },
+  //   [toast]
+  // );
+
+  // useEffect(() => {
+  //   fetchPosts(page);
+  // }, [page, fetchPosts]);
+
+  // useEffect(() => {
+  //   if (inView && hasMore && !isLoading) {
+  //     setPage((prevPage) => prevPage + 1);
+  //   }
+  // }, [inView, hasMore, isLoading]);
+
+  const fetchPosts = useCallback(
+    async (pageNumber: number) => {
+      try {
+        const response = await axios.get(`/api/posts?page=${pageNumber}`);
+        const fetchedPosts = response.data;
+
+        if (Array.isArray(fetchedPosts.posts)) {
+          setPosts((prevPosts) => {
+            // Create a set of existing post IDs
+            const existingPostIds = new Set(prevPosts.map((post) => post.id));
+
+            // Filter out duplicates from the new posts
+            const uniquePosts = fetchedPosts.posts.filter(
+              (post: { id: string }) => !existingPostIds.has(post.id)
+            );
+
+            return [...prevPosts, ...uniquePosts];
+          });
+          setHasMore(fetchedPosts.hasMore);
+        } else {
+          console.error("Error: 'posts' is not an array", fetchedPosts);
+          toast({
+            title: "Error",
+            description:
+              "There was an error fetching posts. Please try again later.",
+            variant: "destructive",
+          });
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description:
+            "There was an error fetching posts. Please try again later.",
+          variant: "destructive",
+        });
       }
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      setIsLoading(false);
-    }
-  };
+    },
+    [toast]
+  );
 
   useEffect(() => {
     fetchPosts(page);
-  }, [page]);
+  }, [page, fetchPosts]);
 
-  const handleScroll = useCallback(() => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop ===
-      document.documentElement.offsetHeight
-    ) {
-      if (hasMore && !isLoading) {
-        setPage((prevPage) => prevPage + 1);
-      }
+  // Handle loading more posts when "Load More" button is clicked
+  const handleLoadMore = () => {
+    if (hasMore && !isLoading) {
+      setPage((prevPage) => prevPage + 1);
     }
-  }, [hasMore, isLoading]);
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
-
-  const formatCreatedAt = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const months = Math.floor(days / 30);
-    const years = Math.floor(months / 12);
-
-    if (minutes < 60) return `${minutes}m`;
-    if (hours < 24) return `${hours}h`;
-    if (days < 30) return `${days}d`;
-    if (months < 12) return `${months}mo`;
-    return `${years}y`;
   };
 
-  const accentColor = theme === "dark" ? "text-green-400" : "text-green-600";
-  const cardBgColor = theme === "dark" ? "bg-gray-600" : "bg-green-300";
-  const cardTextColor = theme === "dark" ? "text-gray-100" : "text-gray-900";
+  const handleLike = useCallback(
+    async (postId: string, userId: string) => {
+      try {
+        const response = await axios.post(`/api/posts/${postId}/like`, {
+          userId,
+          type: "like", // Assuming 'like' is the type you want to set
+        });
 
-  if (isLoading && posts.length === 0) {
-    return (
-      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-[15%] xl:px-[25%] py-8">
-        <Card className={`w-full mb-4 ${cardBgColor}`}>
-          <CardHeader>
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <Skeleton className="h-4 w-[250px]" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full mt-2" />
-            <Skeleton className="h-40 w-full mt-4" />
-          </CardContent>
-          <CardFooter>
-            <Skeleton className="h-10 w-20" />
-            <Skeleton className="h-10 w-20 ml-2" />
-            <Skeleton className="h-10 w-20 ml-2" />
-          </CardFooter>
-        </Card>
+        if (response.status === 200) {
+          // Update posts state based on server response
+          setPosts((prevPosts) =>
+            prevPosts.map((post) =>
+              post.id === postId ? { ...post, isLiked: !post.isLiked } : post
+            )
+          );
+        } else {
+          toast({
+            title: "Error",
+            description:
+              "There was an error liking the post. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error liking the post:", error);
+        toast({
+          title: "Error",
+          description: "There was an error liking the post. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast]
+  );
+
+  const handleSave = useCallback(
+    async (postId: string) => {
+      try {
+        await axios.post(`/api/posts/${postId}/saved-posts`);
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId ? { ...post, isSaved: !post.isSaved } : post
+          )
+        );
+      } catch (error) {
+        console.error("Error saving the post:", error);
+        toast({
+          title: "Error",
+          description: "There was an error saving the post. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast]
+  );
+
+  // const handleComment = useCallback(
+  //   async (postId: string, comment: string) => {
+  //     if (!userId) {
+  //       toast({
+  //         title: "Error",
+  //         description: "You need to be logged in to comment.",
+  //         variant: "destructive",
+  //       });
+  //       return;
+  //     }
+
+  //     try {
+  //       const response = await axios.post(`/api/posts/${postId}/comments`, {
+  //         postId,
+  //         content: comment,
+  //         userId,
+  //       });
+
+  //       const newComment = response.data;
+  //       setPosts((prevPosts) =>
+  //         prevPosts.map((post) =>
+  //           post.id === postId
+  //             ? { ...post, comments: [...post.comments, newComment] }
+  //             : post
+  //         )
+  //       );
+
+  //       toast({
+  //         title: "Comment added",
+  //         description: "Your comment has been added successfully.",
+  //       });
+  //     } catch (error) {
+  //       console.error("Error adding comment:", error);
+  //       toast({
+  //         title: "Error",
+  //         description:
+  //           "There was an error adding your comment. Please try again.",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   },
+  //   [userId, toast]
+  // );
+
+
+  const handleComment = useCallback(async (postId: string, comment: string) => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You need to be logged in to comment.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    try {
+      const response = await axios.post(`/api/posts/${postId}/comments`, {
+        postId,
+        content: comment,
+        userId,
+      });
+  
+      const newComment: Comment = response.data;
+      setComments((prevComments: CommentsState) => ({
+        ...prevComments,
+        [postId]: {
+          data: [...(prevComments[postId]?.data || []), newComment],
+          hasMore: prevComments[postId]?.hasMore || false,
+        },
+      }));
+  
+      toast({
+        title: "Comment added",
+        description: "Your comment has been added successfully.",
+      });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast({
+        title: "Error",
+        description: "There was an error adding your comment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [userId, toast]);
+  
+  const fetchComments = useCallback(
+    async (postId: string, pageNumber: number) => {
+      try {
+        const response = await axios.get(
+          `/api/posts/${postId}/comments?page=${pageNumber}`
+        );
+        const fetchedComments = response.data;
+
+        setComments((prevComments) => ({
+          ...prevComments,
+          [postId]: {
+            ...prevComments[postId],
+            data: [
+              ...(prevComments[postId]?.data || []),
+              ...fetchedComments.comments,
+            ],
+            hasMore: fetchedComments.hasMore,
+          },
+        }));
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      }
+    },
+    []
+  );
+
+  const PostSkeleton = () => (
+    <div className="w-full mb-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 animate-pulse">
+      <div className="flex items-center space-x-4 mb-4">
+        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[200px]" />
+          <Skeleton className="h-4 w-[100px]" />
+        </div>
       </div>
-    );
-  }
-
-  if (posts.length === 0) {
-    return <div>No posts available.</div>;
-  }
-
-  return (
-    <div className="w-full px-4 sm:px-6 md:px-8 lg:px-[15%] xl:px-[25%] py-8 bg-green-100 dark:bg-gray-900 ">
-      {posts.map((post) => (
-        <Card key={post.id} className={`w-full mb-4 ${cardBgColor}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="flex items-center space-x-4">
-              <Avatar>
-                <AvatarImage
-                  src={post.user?.profileImage || "/default-profile.png"}
-                  alt={post.user?.username || "Unknown"}
-                />
-                <AvatarFallback>{post.user?.username[0] || "U"}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className={`font-semibold ${cardTextColor}`}>
-                  {post.user?.username || "Unknown"}
-                </h3>
-                <p className={`text-sm ${cardTextColor}`}>
-                  {formatCreatedAt(new Date(post.createdAt))}
-                </p>
-              </div>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">More options</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Download className="mr-2 h-4 w-4" />
-                  <span>Download image</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link className="mr-2 h-4 w-4" />
-                  <span>Copy post link</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Share2 className="mr-2 h-4 w-4" />
-                  <span>Share</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardHeader>
-          <CardContent>
-            <div className="prose">
-              <p
-                className={`text-lg ${
-                  post.postUrl || post.fileUrl ? "text-sm" : ""
-                } ${cardTextColor}`}
-              >
-                {post.content}
-              </p>
-              {post.postUrl && (
-                <div className="relative w-full h-64">
-                  <Image
-                    src={post.postUrl}
-                    alt="Post Image"
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-lg"
-                  />
-                </div>
-              )}
-              {post.fileUrl && (
-                <div className="relative w-full h-64">
-                  <Image
-                    src={post.fileUrl}
-                    alt="File Attachment"
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-lg"
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={post.isLiked ? accentColor : ""}
-            >
-              <Heart className="h-5 w-5" />
-              <span className="sr-only">Like</span>
-            </Button>
-            <Button variant="ghost" size="icon">
-              <MessageCircle className="h-5 w-5" />
-              <span className="sr-only">Comment</span>
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bookmark className="h-5 w-5" />
-              <span className="sr-only">Save</span>
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
-      {isLoading && <div className="text-center">Loading more posts...</div>}
+      <Skeleton className="h-4 w-full mb-2" />
+      <Skeleton className="h-4 w-full mb-2" />
+      <Skeleton className="h-4 w-2/3 mb-4" />
+      <Skeleton className="h-48 w-full mb-4" />
+      <div className="flex justify-between">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-8 w-20" />
+      </div>
     </div>
   );
-}
+
+  return (
+    <div
+      className={`w-full px-4 sm:px-6 md:px-8 lg:px-[25%] py-8 min-h-screen ${
+        theme === "light"
+          ? "bg-gradient-to-br from-green-50 to-blue-50"
+          : "bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+      }`}
+    >
+      <h1 className="text-3xl font-bold text-center text-green-600 dark:text-green-400 mb-8">
+        Latest Posts
+      </h1>
+      {posts.length === 0 && !isLoading ? (
+        <div className="text-center text-gray-500 dark:text-gray-400 py-3">
+          No posts available. Check back later!
+        </div>
+      ) : (
+        <AnimatePresence>
+          {posts.map((post, index) => (
+            <motion.div
+              key={`${post.id}-${index}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+            >
+              <PostComponent
+                post={post}
+                onLike={() => handleLike(post.id, post.userId)}
+                onSave={() => handleSave(post.id)}
+                onComment={(comment) => handleComment(post.id, comment)}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      )}
+      {isLoading && (
+        <div className="space-y-4">
+          <PostSkeleton />
+          <PostSkeleton />
+        </div>
+      )}
+      {hasMore && (
+        <div ref={ref} className="h-20 flex items-center justify-center">
+          {isLoading && <PostSkeleton />}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PostList;

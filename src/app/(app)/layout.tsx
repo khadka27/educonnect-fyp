@@ -20,7 +20,6 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body className={inter.className}>
         <Navbar />
-
         <Providers>{children}</Providers>
         {/* <RightSidebar /> */}
       </body>

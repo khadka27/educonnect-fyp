@@ -10,44 +10,41 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const url = request.nextUrl;
 
-  // Redirect authenticated users trying to access sign-in or sign-up pages
-  if (
-    token &&
-    (url.pathname.startsWith("/sign-in") ||
-      url.pathname.startsWith("/sign-up") ||
-      url.pathname.startsWith("/verify") ||
-      url.pathname === "/")
-  ) {
-    if (token.role === "admin") {
-      return NextResponse.redirect(new URL("/Dashboard", request.url));
-    } else {
-      return NextResponse.redirect(new URL("/Home", request.url)); // Default user redirection
-    }
-  }
-
-  // Handle unauthenticated access to protected pages
+  // If no token and the user tries to access a protected route, redirect to sign-in page
   if (!token) {
     if (
-      url.pathname.startsWith("/Dashboard") ||
-      url.pathname.startsWith("/Home") ||
-      url.pathname.startsWith("/user-profile") ||
-      url.pathname.startsWith("/event") ||
-      url.pathname.startsWith("/community")
+      adminRoutes.includes(url.pathname) ||
+      userRoutes.includes(url.pathname)
     ) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
+    return NextResponse.next(); // Allow public routes
   }
 
-  // Redirect based on user role when trying to access admin or user-only routes
-  if (token) {
-    if (token.role === "admin" && !adminRoutes.includes(url.pathname)) {
-      return NextResponse.redirect(new URL("/Dashboard", request.url));
-    } else if (token.role === "user" && !userRoutes.includes(url.pathname)) {
+  // If authenticated and trying to access sign-in or sign-up pages, redirect based on role
+  if (
+    url.pathname.startsWith("/sign-in") ||
+    url.pathname.startsWith("/sign-up") ||
+    url.pathname.startsWith("/verify") ||
+    url.pathname === "/"
+  ) {
+    if (token.role === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    } else if (token.role === "user") {
       return NextResponse.redirect(new URL("/Home", request.url));
     }
   }
 
-  // Allow the request to proceed
+  // Redirect users based on their role
+  if (token.role === "ADMIN" && !adminRoutes.includes(url.pathname)) {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  }
+
+  if (token.role === "USER" && !userRoutes.includes(url.pathname)) {
+    return NextResponse.redirect(new URL("/Home", request.url));
+  }
+
+  // If the user is already authenticated and trying to access an appropriate page, allow the request
   return NextResponse.next();
 }
 
@@ -62,6 +59,10 @@ export const config = {
     "/event",
     "/community",
     "/verify",
+    "/admin/dashboard",
+    "/post",
     "/",
+    
+
   ],
 };

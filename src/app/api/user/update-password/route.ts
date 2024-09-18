@@ -19,7 +19,6 @@ export default async function handler(
       where: { id },
     });
 
-    console.log("userrrrrrrrrr", user);
 
     if (!user || !user.password) {
       return res.status(404).json({ message: "User not found" });

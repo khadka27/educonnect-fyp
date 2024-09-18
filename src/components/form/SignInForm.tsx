@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
+
 import {
   Form,
   FormControl,
@@ -9,22 +17,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import Link from "next/link";
-import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
-import { SignInSchema } from "@/Schema/signInSchema";
-import { useRouter } from "next/navigation";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { signIn } from "next-auth/react";
-import Image from "next/image";
+import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
+
+const SignInSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters long" }),
+});
 
 export default function SignInForm() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -38,7 +46,6 @@ export default function SignInForm() {
 
   const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
     setLoading(true);
-    setError(null);
 
     const result = await signIn("credentials", {
       redirect: false,
@@ -49,19 +56,14 @@ export default function SignInForm() {
     setLoading(false);
 
     if (result?.error) {
-      if (result.error === "CredentialsSignin") {
-        toast({
-          title: "Login Failed",
-          description: "Incorrect email or password",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Login Failed",
+        description:
+          result.error === "CredentialsSignin"
+            ? "Incorrect email or password"
+            : result.error,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -70,79 +72,98 @@ export default function SignInForm() {
     }
   };
 
+  const isFormValid = form.formState.isValid;
+
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 flex justify-center items-center">
-      <div className="max-w-screen-xl m-0 sm:m-10 bg-white shadow sm:rounded-lg flex justify-center flex-1">
+    <div className="min-h-screen bg-green-50 text-gray-900 flex justify-center items-center">
+      <div className="max-w-screen-xl m-0 sm:m-10 bg-white shadow-lg sm:rounded-lg flex justify-center flex-1">
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12">
           <div className="flex items-center justify-center mb-6">
             <Image
-              src="/eduConnect.png" // Path relative to the public directory
+              src="/eduConnect.png"
               alt="Logo"
               width={200}
               height={200}
-              className="mr-4" // Margin right to space out the text from the image
+              className="mr-4"
             />
           </div>
           <div className="mt-12 flex flex-col items-center">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="w-full space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="w-full px-4 py-2 rounded-lg font-medium bg-green-50 border border-green-200 placeholder-gray-500 text-sm focus:outline-none focus:border-green-400 focus:bg-white"
+                          placeholder="mail@example.com"
+                          {...field}
+                          required
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
                           <Input
-                            className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                            placeholder="mail@example.com"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                            type="password"
+                            className="w-full px-4 py-2 rounded-lg font-medium bg-green-50 border border-green-200 placeholder-gray-500 text-sm focus:outline-none focus:border-green-400 focus:bg-white"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
                             {...field}
+                            required
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                {error ? <p className="text-red-500 text-sm">{error}</p> : null}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-gray-500" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button
-                  className="w-full mt-6 bg-green-400 text-white py-4 rounded-lg hover:bg-green-700 transition-all duration-300 ease-in-out flex items-center justify-center"
+                  className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all duration-300 ease-in-out flex items-center justify-center"
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !isFormValid}
                 >
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>
               </form>
-              <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">
-                or
-              </div>
-              <GoogleSignInButton>Sign in with Google</GoogleSignInButton>
-              <p className="text-center text-sm text-gray-600 mt-2">
-                If you don&apos;t have an account, please&nbsp;
-                <Link className="text-blue-500 hover:underline" href="/sign-up">
-                  Sign up
-                </Link>
-              </p>
             </Form>
+            <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">
+              or
+            </div>
+            <GoogleSignInButton>Sign in with Google</GoogleSignInButton>
+            <p className="text-center text-sm text-gray-600 mt-4">
+              If you don&apos;t have an account, please&nbsp;
+              <Link className="text-green-500 hover:underline" href="/sign-up">
+                Sign up
+              </Link>
+            </p>
           </div>
         </div>
         <div className="flex-1 bg-green-100 text-center hidden lg:flex">
