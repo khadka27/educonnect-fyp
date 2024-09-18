@@ -31,14 +31,14 @@ export async function POST(req: Request) {
     if (files.length > 0) {
       const file = files[0]; // Assuming only one file for simplicity
       const fileName = `${uuidv4()}-${file.name}`;
-      const filePath = path.join(process.cwd(), "public", "uploads", fileName);
+      const filePath = path.join(process.cwd(), "public", "upload", fileName);
       const buffer = Buffer.from(await file.arrayBuffer());
 
       // Save the file to the uploads directory
       fs.writeFileSync(filePath, buffer);
 
       // Generate a public URL for the uploaded file
-      postUrl = `/uploads/${fileName}`;
+      postUrl = `/upload/${fileName}`;
     }
 
     // Create the post in the database
@@ -81,10 +81,46 @@ export async function POST(req: Request) {
 
 // GET: Fetch posts from the database with pagination
 
+// export async function GET(request: Request) {
+//   const url = new URL(request.url);
+//   const page = parseInt(url.searchParams.get("page") || "1", 10);
+//   const limit = 1000; // Number of posts per page
+
+//   try {
+//     const posts = await prisma.post.findMany({
+//       skip: (page - 1) * limit,
+//       take: limit,
+//       orderBy: { createdAt: "desc" },
+//       include: {
+//         user: {
+//           select: { username: true, profileImage: true },
+//         },
+//         comments: true,
+//       },
+//     });
+
+//     const totalPosts = await prisma.post.count();
+//     const hasMore = page * limit < totalPosts;
+
+//     return NextResponse.json({
+//       posts,
+//       hasMore,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching posts:", error);
+//     return NextResponse.json(
+//       { error: "Failed to fetch posts" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// Adjust this path based on your project structure
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get("page") || "1", 10);
-  const limit = 1000; // Number of posts per page
+  const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
+  const limit = 10; // Reduce the number of posts per page for better performance
 
   try {
     const posts = await prisma.post.findMany({
@@ -95,7 +131,10 @@ export async function GET(request: Request) {
         user: {
           select: { username: true, profileImage: true },
         },
-        comments: true,
+        comments: {
+          select: { content: true, userId: true }, // Limit fields
+          take: 5, // Limit number of comments per post
+        },
       },
     });
 
@@ -107,7 +146,7 @@ export async function GET(request: Request) {
       hasMore,
     });
   } catch (error) {
-    console.error("Error fetching posts:", error);
+    console.error("Error fetching posts:", (error as Error).message); // Log error message
     return NextResponse.json(
       { error: "Failed to fetch posts" },
       { status: 500 }

@@ -1,7 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client"; // Import Prisma Client
+import { PrismaClient } from "@prisma/client";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
@@ -41,11 +41,13 @@ export const authOptions: NextAuthOptions = {
             user.password &&
             (await bcrypt.compare(credentials.password, user.password))
           ) {
+            // Ensure that null values are converted to undefined
             return {
               id: user.id,
               email: user.email,
-              username: user.username ?? undefined,
+              username: user.username ?? undefined, // Convert null to undefined
               isVerified: user.isVerified,
+              role: user.role, // Assuming Role is an enum or correct type
             };
           } else {
             throw new Error("Incorrect password");
@@ -61,6 +63,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.role = user.role;
         token.id = user.id;
         token.isVerified = user.isVerified;
         token.email = user.email;
@@ -69,6 +72,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      session.user.role = token.role;
       session.user.id = token.id as string;
       session.user.isVerified = token.isVerified as boolean;
       session.user.email = token.email as string;
@@ -89,3 +93,4 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET || "",
 };
+

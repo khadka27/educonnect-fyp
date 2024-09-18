@@ -1,26 +1,11 @@
-"use client";
+import React from 'react'
 
-import React, { useState } from "react";
-import EnhancedPostBox from "@/components/post/PostForm";
-import Feeds from "@/components/post/PostList";
-
-const DashboardPage = () => {
-  const [post, setPosts] = useState<any[]>([]); // State to manage posts
-
-  // Function to handle adding a new post
-  const handleAddPost = (newPost: any) => {
-    setPosts([newPost, ...post]); // Add the new post to the top of the list
-  };
-
+function page() {
   return (
     <div>
-      {/* Post Form for creating a new post */}
-      <EnhancedPostBox onAddPost={handleAddPost} />
-
-      {/* Post List to display posts */}
-      <Feeds post={post} />
+        <h1>Dashboard</h1>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardPage;
+export default page

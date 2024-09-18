@@ -17,10 +17,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ApiResponse } from "@/types/apiResponse";
 import Image from "next/image";
+import PasswordStrengthBar from "react-password-strength-bar";
 
 const FormSchema = z
   .object({
@@ -42,6 +43,8 @@ const SignUpForm = () => {
   const [usernameMessage, setUsernameMessage] = useState("");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -60,7 +63,7 @@ const SignUpForm = () => {
     const checkUsernameUnique = async () => {
       if (username) {
         setIsCheckingUsername(true);
-        setUsernameMessage(""); // Reset message
+        setUsernameMessage("");
         try {
           const response = await axios.get(`/api/check-username-unique`, {
             params: { username },
@@ -111,37 +114,48 @@ const SignUpForm = () => {
     }
   };
 
+  const isFormValid =
+    form.formState.isValid &&
+    Object.values(form.getValues()).every((value) => value !== "");
+
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 flex justify-center items-center">
-      <div className="max-w-screen-xl m-0 sm:m-10 bg-white shadow sm:rounded-lg flex justify-center flex-1">
+    <div className="min-h-screen bg-green-50 text-gray-900 flex justify-center items-center">
+      <div className="max-w-screen-xl m-0 sm:m-10 bg-white shadow-lg sm:rounded-lg flex justify-center flex-1">
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12">
-        <div className="flex items-center justify-center mb-6">
-        <Image
-            src="/eduConnect.png" // Path relative to the public directory
-            alt="Logo"
-            width={200}
-            height={200}
-            className="mr-4" // Margin right to space out the text from the image
-          />
-        </div>
+          <div className="flex items-center justify-center mb-6">
+            <Image
+              src="/eduConnect.png"
+              alt="Logo"
+              width={200}
+              height={200}
+              className="mr-4"
+            />
+          </div>
           <div className="mt-12 flex flex-col items-center">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="w-full flex flex-col space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="w-full space-y-6"
+              >
                 <FormField
                   name="username"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Username</FormLabel>
-                      <Input
-                        {...field}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                          field.onChange(e);
-                          setUsername(e.target.value); // Update username state
-                        }}
-                        className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                      />
-                      {isCheckingUsername && <Loader2 className="animate-spin" />}
+                      <FormControl>
+                        <Input
+                          {...field}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                            field.onChange(e);
+                            setUsername(e.target.value);
+                          }}
+                          className="w-full px-4 py-2 rounded-lg font-medium bg-green-50 border border-green-200 placeholder-gray-500 text-sm focus:outline-none focus:border-green-400 focus:bg-white"
+                        />
+                      </FormControl>
+                      {isCheckingUsername && (
+                        <Loader2 className="animate-spin" />
+                      )}
                       {!isCheckingUsername && usernameMessage && (
                         <p
                           className={`text-sm ${
@@ -163,10 +177,12 @@ const SignUpForm = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
-                      <Input
-                        {...field}
-                        className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                      />
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="w-full px-4 py-2 rounded-lg font-medium bg-green-50 border border-green-200 placeholder-gray-500 text-sm focus:outline-none focus:border-green-400 focus:bg-white"
+                        />
+                      </FormControl>
                       <p className="text-muted text-gray-400 text-sm">
                         We will send you a verification code
                       </p>
@@ -180,11 +196,29 @@ const SignUpForm = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Password</FormLabel>
-                      <Input
-                        type="password"
-                        {...field}
-                        className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                      />
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showPassword ? "text" : "password"}
+                            className="w-full px-4 py-2 rounded-lg font-medium bg-green-50 border border-green-200 placeholder-gray-500 text-sm focus:outline-none focus:border-green-400 focus:bg-white pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-gray-500" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <PasswordStrengthBar password={field.value} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -195,19 +229,38 @@ const SignUpForm = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Re-Enter your password</FormLabel>
-                      <Input
-                        type="password"
-                        {...field}
-                        className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                      />
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="w-full px-4 py-2 rounded-lg font-medium bg-green-50 border border-green-200 placeholder-gray-500 text-sm focus:outline-none focus:border-green-400 focus:bg-white pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4 text-gray-500" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <Button
                   type="submit"
-                  className="mt-5 tracking-wide font-semibold bg-green-400 text-white w-full py-4 rounded-lg hover:bg-green-700 transition-all duration-300 ease-in-out flex items-center justify-center focus:shadow-outline focus:outline-none"
-                  disabled={isSubmitting}
+                  className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all duration-300 ease-in-out flex items-center justify-center"
+                  disabled={isSubmitting || !isFormValid}
                 >
                   {isSubmitting ? (
                     <>
@@ -220,12 +273,11 @@ const SignUpForm = () => {
                 </Button>
               </form>
             </Form>
-            <div className="mt-6 text-xs text-green-600 text-center">
-              If you already have an account, please&nbsp;  
-              <a href="/sign-in" className="border-b border-gray-500 border-dotted text-green-400">
+            <div className="mt-6 text-sm text-gray-600 text-center">
+              If you already have an account, please&nbsp;
+              <Link href="/sign-in" className="text-green-500 hover:underline">
                 Sign In
-              </a>
-              
+              </Link>
             </div>
           </div>
         </div>
