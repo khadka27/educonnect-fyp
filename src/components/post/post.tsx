@@ -92,12 +92,11 @@ export default function PostComponent({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [commentsShown, setCommentsShown] = useState(INITIAL_COMMENTS_SHOWN);
-  const [savedPosts, setSavedPosts] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+
 
   const isVideo = useCallback((url: string) => {
     return url?.match(/\.(mp4|webm|ogg)$/);

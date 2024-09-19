@@ -198,7 +198,7 @@ export default function EnhancedPostBox({
 
   return (
     <div className="w-full px-4 sm:px-6 md:px-8 lg:px-[25%] pt-14 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl">
-      {/* className="w-full  mb-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 "> */}
+     
       <div
         ref={dropZoneRef}
         className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl ${
