@@ -1,43 +1,57 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
-import {prisma} from '@/lib/prisma'; 
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options"; // Ensure path is correct
+import { prisma } from "@/lib/prisma";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getSession({ req });
+export async function POST(
+  req: Request,
+  { params }: { params: { postId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (req.method === 'POST') {
-    if (!session) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!session?.user || !session.user.id) {
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
     }
 
-    const postId = req.query.postId as string;
-    const userId = session.user.id as string;
+    const postId = params.postId; // Extract postId from params
+    const userId = session.user.id;
 
-    try {
-      // Check if the post is already saved by the user
-      const existingSave = await prisma.savedPost.findFirst({
-        where: { postId, userId },
-      });
-
-      if (existingSave) {
-        return res.status(400).json({ error: 'Post already saved' });
-      }
-
-      // Save the post
-      await prisma.savedPost.create({
-        data: {
-          postId,
-          userId,
-        },
-      });
-
-      return res.status(200).json({ message: 'Post saved successfully' });
-    } catch (error) {
-      console.error('Error saving post:', error);
-      return res.status(500).json({ error: 'Failed to save post' });
+    if (!postId || typeof postId !== "string") {
+      return new NextResponse("Invalid or missing postId", { status: 400 });
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+
+    // Check if the post is already saved by the user
+    const existingSave = await prisma.savedPost.findFirst({
+      where: { postId, userId },
+    });
+
+    if (existingSave) {
+      // Return an appropriate message if the post is already saved
+      return new NextResponse(JSON.stringify({ error: "Post already saved" }), {
+        status: 400,
+      });
+    }
+
+    // Save the post
+    await prisma.savedPost.create({
+      data: {
+        postId,
+        userId, // Ensure userId is always defined
+      },
+    });
+
+    return new NextResponse(
+      JSON.stringify({ message: "Post saved successfully" }),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error saving post:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }),
+      { status: 500 }
+    );
   }
 }

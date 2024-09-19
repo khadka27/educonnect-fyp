@@ -47,3 +47,59 @@
 //     return NextResponse.error();
 //   }
 // }
+
+
+// import { NextResponse } from "next/server";
+// import { getServerSession } from "next-auth/next";
+// import { authOptions } from "@/app/api/auth/[...nextauth]/options"; // Ensure path is correct
+// import { prisma } from "@/lib/prisma";
+
+// export async function POST(req: Request) {
+//   try {
+//     const session = await getServerSession(authOptions);
+
+//     if (!session?.user) {
+//       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+//         status: 401,
+//       });
+//     }
+
+//     const url = new URL(req.url);
+//     const postId = url.pathname.split("/")[3]; // Extract postId from URL
+//     const userId = session.user.id;
+
+//     console.log("postId", postId);
+//     console.log ("userId", userId);
+
+//     if (!userId) {
+//       return new NextResponse("Invalid or missing userId", { status: 400 });
+//     }
+
+//     if (!postId || typeof postId !== "string") {
+//       return new NextResponse("Invalid or missing postId", { status: 400 });
+//     }
+
+//     // Check if the post is already saved by the user
+//     const existingSave = await prisma.savedPost.findFirst({
+//       where: { postId, userId },
+//     });
+//     console.log("existingSave", existingSave);
+
+//     if (existingSave) {
+//       return new NextResponse("Post already saved", { status: 400 });
+//     }
+
+//     // Save the post
+//     await prisma.savedPost.create({
+//       data: {
+//         postId,
+//         userId,
+//       },
+//     });
+
+//     return new NextResponse("Post saved successfully", { status: 200 });
+//   } catch (error) {
+//     console.error("Error saving post:", error);
+//     return new NextResponse("Internal Server Error", { status: 500 });
+//   }
+// }
