@@ -79,6 +79,10 @@ export async function POST(req: Request) {
 //   }
 // }
 
+
+
+
+
 // GET: Fetch posts from the database with pagination
 
 // export async function GET(request: Request) {
@@ -115,7 +119,6 @@ export async function POST(req: Request) {
 //   }
 // }
 
-// Adjust this path based on your project structure
 
 export async function GET(request: Request) {
   const url = new URL(request.url);

@@ -41,7 +41,9 @@ import {
   Minimize,
 } from "lucide-react";
 import { FacebookIcon, TwitterIcon, LinkedinIcon } from "react-share";
+
 // import { useToast } from "@/hooks/use-toast";
+
 import axios from "axios";
 
 interface PostProps {
@@ -58,7 +60,9 @@ interface PostProps {
     };
     comments: Array<{
       id: string;
+
       user?: {
+
         username: string;
         profileImage?: string;
       };
@@ -74,12 +78,14 @@ interface PostProps {
   isLiked: boolean; // Add this line
   onSave: (postId: string) => void;
   onComment: ( comment: string) => void; // Update here
+
 }
 
 const MAX_CONTENT_LENGTH = 300;
 
 const PostComponent: React.FC<PostProps> = ({
   post,
+
   isLiked,
   onLike,
   onSave,
@@ -159,6 +165,7 @@ const PostComponent: React.FC<PostProps> = ({
   }, []);
 
   //post comment---------------------------------------------------
+
   // const handleCommentSubmit = async (e: React.FormEvent) => {
   //   e.preventDefault();
   //   if (newComment.trim()) {
@@ -171,6 +178,7 @@ const PostComponent: React.FC<PostProps> = ({
     e.preventDefault();
     if (newComment.trim()) {
       await onComment( newComment); // Pass post ID here
+
       setNewComment(""); // Clear the input field
     }
   };
@@ -205,6 +213,7 @@ const PostComponent: React.FC<PostProps> = ({
     fetchLikeStatus();
   }, [post.id, post.userId]); // Depend on post.id and post.userId
 
+
   // const handleLike = async () => {
   //   try {
   //     // Toggle the like state optimistically
@@ -218,6 +227,7 @@ const PostComponent: React.FC<PostProps> = ({
   //     setIsLiked((prev) => !prev);
   //   }
   // };
+
 
   const handlePlayPause = useCallback(() => {
     if (videoRef.current) {
@@ -364,7 +374,6 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
-  console.log(onComment);
 
   return (
     <Card className="w-full  mb-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl">
@@ -505,7 +514,9 @@ const PostComponent: React.FC<PostProps> = ({
               className={`${
                 isLiked ? "text-green-600 dark:text-green-400" : ""
               } px-2`}
+
               onClick={() => onLike(post.id)}
+
               aria-label={isLiked ? "Unlike post" : "Like post"}
             >
               <Heart
@@ -556,7 +567,9 @@ const PostComponent: React.FC<PostProps> = ({
               </Avatar>
               <div>
                 <p className="font-semibold text-gray-800 dark:text-gray-200">
-                  {comment.user?.username || comment.content}
+
+                  {comment.user?.username || "new user"}
+
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {comment.content}
@@ -626,7 +639,11 @@ const PostComponent: React.FC<PostProps> = ({
             </div>
           )} */}
 
+
           {/* {post.comments.map((comment) => (
+=======
+          {post.comments.map((comment) => (
+
             <div key={comment.id} className="flex items-start space-x-2">
               <Avatar>
                 <AvatarImage
@@ -652,7 +669,9 @@ const PostComponent: React.FC<PostProps> = ({
                 </p>
               </div>
             </div>
+
           ))} */}
+
         </div>
       )}
     </Card>
