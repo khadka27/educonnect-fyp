@@ -78,6 +78,8 @@ model SavedPost {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId]) // Ensure that a user can only save a post once
 }
 
 model Message {

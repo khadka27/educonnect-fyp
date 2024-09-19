@@ -48,7 +48,7 @@ const PostList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const { theme } = useTheme();
   const { toast } = useToast();
-  const [ref, inView] = useInView({
+  const [ref] = useInView({
     threshold: 0,
     triggerOnce: false,
   });
@@ -132,33 +132,107 @@ const PostList: React.FC = () => {
     }
   };
 
-  const handleSave = useCallback(
-    async (postId: string) => {
-      try {
-        const response = await axios.post(`/api/posts/${postId}/saved-posts`); // Ensure this matches your API route
-        const { isSaved } = response.data; // Assuming the API returns the updated isSaved status
+  //   try {
+  //     // Optimistically update the save status
+  //     setPosts((prevPosts) =>
+  //       prevPosts.map((post) =>
+  //         post.id === postId
+  //           ? { ...post, isSaved: !(post.isSaved ?? false) }
+  //           : post
+  //       )
+  //     );
 
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
-            post.id === postId ? { ...post, isSaved } : post
-          )
-        );
+  //     // Make the API call to update the save status
+  //     await axios.post(`/api/posts/${postId}/saved-posts`, { userId });
+  //   } catch (error) {
+  //     console.error("Error saving the post:", error);
+  //     // Revert the save status if there's an error
+  //     setPosts((prevPosts) =>
+  //       prevPosts.map((post) =>
+  //         post.id === postId
+  //           ? { ...post, isSaved: post.isSaved ?? false }
+  //           : post
+  //       )
+  //     );
+  //   }
+  // };
+
+  // const handleSavePost = async (postId: string) => {
+  //   try {
+  //     // Optimistically toggle save status
+  //     setPosts((prevPosts) =>
+  //       prevPosts.map((post) =>
+  //         post.id === postId
+  //           ? { ...post, isSaved: !(post.isSaved ?? false) }
+  //           : post
+  //       )
+  //     );
+
+  //     await axios.post(`/api/posts/${postId}/saved-posts`, { userId });
+  //     toast({
+  //       title: "Post saved",
+  //       description: "The post has been saved successfully!",
+  //       variant: "default",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error saving post:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "There was an error saving the post.",
+  //       variant: "destructive",
+  //     });
+  //     // Revert save status on error
+  //     setPosts((prevPosts) =>
+  //       prevPosts.map((post) =>
+  //         post.id === postId
+  //           ? { ...post, isSaved: post.isSaved ?? false }
+  //           : post
+  //       )
+  //     );
+  //   }
+  // };
+
+  const handleSave = async (postId: string, isSaved: boolean) => {
+    try {
+      // Optimistically update the save status
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, isSaved: !isSaved } : post
+        )
+      );
+
+      if (isSaved) {
+        await axios.delete(`/api/posts/${postId}/saved-posts`, {
+          data: { userId },
+        });
         toast({
-          title: "Success",
-          description: `Post has been ${isSaved ? "saved" : "unsaved"}.`,
+          title: "Post unsaved",
+          description: "The post has been unsaved.",
           variant: "default",
         });
-      } catch (error) {
-        console.error("Error saving the post:", error);
+      } else {
+        await axios.post(`/api/posts/${postId}/saved-posts`, { userId });
         toast({
-          title: "Error",
-          description: "There was an error saving the post. Please try again.",
-          variant: "destructive",
+          title: "Post saved",
+          description: "The post has been saved.",
+          variant: "default",
         });
       }
-    },
-    [toast]
-  );
+    } catch (error) {
+      console.error("Error saving/unsaving post:", error);
+      toast({
+        title: "Error",
+        description: "There was an error updating the post status.",
+        variant: "destructive",
+      });
+      // Revert the save status on error
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, isSaved: isSaved } : post
+        )
+      );
+    }
+  };
 
   const handleComment = useCallback(
     async (postId: string, comment: string) => {
@@ -281,7 +355,7 @@ const PostList: React.FC = () => {
                 post={post}
                 isLiked={postLikes[post.id] ?? false} // Pass the local like status
                 onLike={() => handleLike(post.id, post.userId)}
-                onSave={() => handleSave(post.id)}
+                onSave={() => handleSave(post.id, post.isSaved ?? false)}
                 onComment={(comment) => handleComment(post.id, comment)}
               />
             </motion.div>

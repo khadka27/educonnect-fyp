@@ -63,8 +63,6 @@ export async function POST(
   }
 }
 
-
-
 export async function GET(
   request: Request,
   { params }: { params: { postId: string } }
@@ -89,7 +87,9 @@ export async function GET(
       },
     });
 
-    return new Response(JSON.stringify({ isLiked: !!reaction }), { status: 200 });
+    return new Response(JSON.stringify({ isLiked: !!reaction }), {
+      status: 200,
+    });
   } catch (error) {
     console.error("Error fetching like status:", error);
     return new Response("Error fetching like status", { status: 500 });

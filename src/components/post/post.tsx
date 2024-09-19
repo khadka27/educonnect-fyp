@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { FacebookIcon, TwitterIcon, LinkedinIcon } from "react-share";
 import axios from "axios";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostProps {
   post: {
@@ -91,9 +92,12 @@ export default function PostComponent({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [commentsShown, setCommentsShown] = useState(INITIAL_COMMENTS_SHOWN);
+  const [savedPosts, setSavedPosts] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const isVideo = useCallback((url: string) => {
     return url?.match(/\.(mp4|webm|ogg)$/);
@@ -171,6 +175,44 @@ export default function PostComponent({
       setNewComment("");
     }
   };
+
+  useEffect(() => {
+    // Fetch initial like status on component mount
+    const fetchLikeStatus = async () => {
+      try {
+        const userId = post.userId; // Initialize userId
+        const response = await axios.get(`/api/posts/${post.id}/like`, {
+          params: { userId },
+        });
+        setLiked(response.data.isLiked);
+      } catch (error) {
+        console.error("Error fetching like status:", error);
+      }
+    };
+
+    fetchLikeStatus();
+  }, [post.id, post.userId]);
+
+  // const handleSave = async () => {
+  //   if (post.isSaved) {
+  //     const userId = post.userId; // Initialize userId
+  //     await axios.delete(`/api/posts/${post.id}/saved-posts`, { data: { userId } });
+  //     toast({
+  //       title: "Post unsaved",
+  //       description: "The post has been unsaved.",
+  //       variant: "default",
+  //     });
+  //   } else {
+  //     const userId = post.userId; // Initialize userId
+  //     await axios.post(`/api/posts/${post.id}/saved-posts`, { userId });
+  //     toast({
+  //       title: "Post saved",
+  //       description: "The post has been saved.",
+  //       variant: "default",
+  //     });
+  //   }
+  //   onSave(post.id); // This updates the UI state
+  // };
 
   const handleDownload = useCallback(() => {
     if (post.fileUrl) {
@@ -485,6 +527,21 @@ export default function PostComponent({
               Comment
             </Button>
           </div>
+          {/* <Button
+            variant="ghost"
+            size="sm"
+            className={`${
+              post.isSaved ? "text-green-600 dark:text-green-400" : ""
+            } px-2`}
+            onClick={() => onSave(post.id)}
+            aria-label={post.isSaved ? "Unsave post" : "Save post"}
+          >
+            <Bookmark
+              className={`h-5 w-5 ${post.isSaved ? "fill-current" : ""} mr-1`}
+            />
+            Save
+          </Button> */}
+
           <Button
             variant="ghost"
             size="sm"

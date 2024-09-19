@@ -152,19 +152,70 @@ export async function POST(req: Request) {
 //   }
 // }
 
+// export async function GET(request: Request) {
+//   const url = new URL(request.url);
+//   const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
+//   const limit = 10; // Number of posts per page
+
+//   try {
+//     const posts = await prisma.post.findMany({
+//       skip: (page - 1) * limit,
+//       take: limit,
+//       orderBy: { createdAt: "desc" },
+//       include: {
+//         user: {
+//           select: { username: true, profileImage: true }, // Include user's username and profileImage
+//         },
+//         comments: {
+//           select: {
+//             content: true,
+//             createdAt: true,
+//             user: {
+//               select: {
+//                 username: true, // Include the username of the user who made the comment
+//                 profileImage: true, // Optionally include profileImage if needed
+//               },
+//             },
+//           },
+//           take: 5, // Limit number of comments per post
+//         },
+//       },
+//     });
+
+//     const totalPosts = await prisma.post.count();
+//     const hasMore = page * limit < totalPosts;
+
+//     return NextResponse.json({
+//       posts,
+//       hasMore,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching posts:", (error as Error).message);
+//     return NextResponse.json(
+//       { error: "Failed to fetch posts" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
-  const limit = 10; // Number of posts per page
+  const limit = 10;
 
   try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
     const posts = await prisma.post.findMany({
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: "desc" },
       include: {
         user: {
-          select: { username: true, profileImage: true }, // Include user's username and profileImage
+          select: { username: true, profileImage: true }, // Include user details
         },
         comments: {
           select: {
@@ -172,21 +223,33 @@ export async function GET(request: Request) {
             createdAt: true,
             user: {
               select: {
-                username: true, // Include the username of the user who made the comment
-                profileImage: true, // Optionally include profileImage if needed
+                username: true,
+                profileImage: true,
               },
             },
           },
           take: 5, // Limit number of comments per post
         },
+        // Include saved posts if user is logged in
+        ...(userId && {
+          savedBy: {
+            where: { userId },
+            select: { id: true },
+          },
+        }),
       },
     });
 
     const totalPosts = await prisma.post.count();
     const hasMore = page * limit < totalPosts;
 
+    const postsWithSaveStatus = posts.map(post => ({
+      ...post,
+      isSaved: post.savedBy?.length > 0, // Check if post is saved by the current user
+    }));
+
     return NextResponse.json({
-      posts,
+      posts: postsWithSaveStatus,
       hasMore,
     });
   } catch (error) {
