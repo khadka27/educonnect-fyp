@@ -8,7 +8,6 @@ import React, {
   useEffect,
 } from "react";
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -41,9 +40,6 @@ import {
   Minimize,
 } from "lucide-react";
 import { FacebookIcon, TwitterIcon, LinkedinIcon } from "react-share";
-
-// import { useToast } from "@/hooks/use-toast";
-
 import axios from "axios";
 
 interface PostProps {
@@ -60,37 +56,32 @@ interface PostProps {
     };
     comments: Array<{
       id: string;
-
       user?: {
-
         username: string;
         profileImage?: string;
       };
       content: string;
       createdAt: Date;
     }>;
-
     isLiked?: boolean;
     isSaved?: boolean;
   };
-
   onLike: (postId: string) => void;
-  isLiked: boolean; // Add this line
+  isLiked: boolean;
   onSave: (postId: string) => void;
-  onComment: ( comment: string) => void; // Update here
-
+  onComment: (comment: string) => void;
 }
 
 const MAX_CONTENT_LENGTH = 300;
+const INITIAL_COMMENTS_SHOWN = 2;
 
-const PostComponent: React.FC<PostProps> = ({
+export default function PostComponent({
   post,
-
   isLiked,
   onLike,
   onSave,
   onComment,
-}) => {
+}: PostProps) {
   const [isCommentBoxVisible, setIsCommentBoxVisible] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isMediaPreviewOpen, setIsMediaPreviewOpen] = useState(false);
@@ -98,6 +89,8 @@ const PostComponent: React.FC<PostProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [liked, setLiked] = useState(isLiked);
+  const [commentsShown, setCommentsShown] = useState(INITIAL_COMMENTS_SHOWN);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -110,6 +103,13 @@ const PostComponent: React.FC<PostProps> = ({
     return url?.match(
       /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=|\/sandalsResorts#\w\/\w\/.*\/))([^\/&]{10,12})/
     );
+  }, []);
+
+  const getYouTubeVideoId = useCallback((url: string) => {
+    const match = url.match(
+      /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=|\/sandalsResorts#\w\/\w\/.*\/))([^\/&]{10,12})/
+    );
+    return match ? match[1] : null;
   }, []);
 
   useEffect(() => {
@@ -150,11 +150,11 @@ const PostComponent: React.FC<PostProps> = ({
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 
-    if (diff < 0) return "In the future"; // Handling future dates
+    if (diff < 0) return "In the future";
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    const months = Math.floor(days / 30.44); // Average days in a month
+    const months = Math.floor(days / 30.44);
     const years = Math.floor(months / 12);
 
     if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
@@ -164,22 +164,11 @@ const PostComponent: React.FC<PostProps> = ({
     return `${years} year${years !== 1 ? "s" : ""}`;
   }, []);
 
-  //post comment---------------------------------------------------
-
-  // const handleCommentSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (newComment.trim()) {
-  //     await onComment(newComment); // Include post ID
-  //     setNewComment(""); // Clear the input field
-  //   }
-  // };
-
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
-      await onComment( newComment); // Pass post ID here
-
-      setNewComment(""); // Clear the input field
+      await onComment(newComment);
+      setNewComment("");
     }
   };
 
@@ -195,39 +184,6 @@ const PostComponent: React.FC<PostProps> = ({
       document.body.removeChild(link);
     }
   }, [post.id, post.fileUrl, isVideo]);
-
-  useEffect(() => {
-    // Fetch initial like status on component mount
-    const fetchLikeStatus = async () => {
-      try {
-        const userId = post.userId; // Initialize userId
-        const response = await axios.get(`/api/posts/${post.id}/like`, {
-          params: { userId },
-        });
-        setIsLiked(response.data.isLiked);
-      } catch (error) {
-        console.error("Error fetching like status:", error);
-      }
-    };
-
-    fetchLikeStatus();
-  }, [post.id, post.userId]); // Depend on post.id and post.userId
-
-
-  // const handleLike = async () => {
-  //   try {
-  //     // Toggle the like state optimistically
-  //     setIsLiked((prev) => !prev);
-  //     const userId = post.userId; // Initialize userId
-  //     // Call the API to update the like status
-  //     await axios.post(`/api/posts/${post.id}/like`, { userId, type: "like" });
-  //   } catch (error) {
-  //     console.error("Error liking the post:", error);
-  //     // Revert the like state if there is an error
-  //     setIsLiked((prev) => !prev);
-  //   }
-  // };
-
 
   const handlePlayPause = useCallback(() => {
     if (videoRef.current) {
@@ -263,12 +219,6 @@ const PostComponent: React.FC<PostProps> = ({
   }, [isFullscreen]);
 
   const shareUrl = `https://localhost:3000/posts/${post.id}`;
-
-  const displayedComments = Array.isArray(post.comments)
-    ? post.comments.slice(0, 2)
-    : [];
-  const hasMoreComments =
-    Array.isArray(post.comments) && post.comments.length > 2;
 
   const renderContent = (content: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -344,10 +294,8 @@ const PostComponent: React.FC<PostProps> = ({
           </div>
         </div>
       );
-    } else if (isYouTube(post.postUrl)) {
-      const videoId = post.postUrl.match(
-        /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=|\/sandalsResorts#\w\/\w\/.*\/))([^\/&]{10,12})/
-      )?.[1];
+    } else if (isYouTube(post.content)) {
+      const videoId = getYouTubeVideoId(post.content);
       return (
         <div className="relative pt-[56.25%]">
           <iframe
@@ -362,10 +310,10 @@ const PostComponent: React.FC<PostProps> = ({
         <Image
           src={post.postUrl}
           alt="Post Image"
-          layout="fill" // Automatically adjusts to container size
-          // width={1920}
-          // height={1080}
-          objectFit="contain" // Ensures the entire image fits inside the container
+          layout="responsive"
+          width={1920}
+          height={1080}
+          objectFit="contain"
           className="rounded-md cursor-pointer transition-transform duration-300 hover:scale-105"
           sizes="(max-width: 640px) 360px, (max-width: 1280px) 720px, 1080px"
           onClick={() => setIsMediaPreviewOpen(true)}
@@ -374,9 +322,8 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
-
   return (
-    <Card className="w-full  mb-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl">
+    <Card className="w-full mb-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center space-x-4">
           <Avatar>
@@ -386,7 +333,7 @@ const PostComponent: React.FC<PostProps> = ({
               }
               alt={post.user?.username || "Unknown"}
             />
-            <AvatarFallback>{post.user?.username[0] || "U"}</AvatarFallback>
+            <AvatarFallback>{post.user?.username?.[0] || "U"}</AvatarFallback>
           </Avatar>
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-gray-200">
@@ -472,21 +419,23 @@ const PostComponent: React.FC<PostProps> = ({
                     controls
                     autoPlay
                   />
-                ) : isYouTube(post.postUrl) ? (
+                ) : isYouTube(post.content) ? (
                   <iframe
-                    src={`https://www.youtube.com/embed/dQw4w9WgXcQ`}
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                      post.postUrl
+                    )}`}
                     className="w-full h-full max-w-[80vw] max-h-[80vh]"
                     allowFullScreen
                   />
                 ) : (
-                  <div className="relative  overflow-hidden">
+                  <div className="relative overflow-hidden">
                     <Image
                       src={post.postUrl}
                       alt="Post Image"
-                      layout="cover" // Automatically adjusts to container size
+                      layout="responsive"
                       width={1500}
                       height={1500}
-                      objectFit="contain" // Ensures the full image is visible and scaled to fit
+                      objectFit="contain"
                       className="w-full h-auto rounded-md cursor-pointer"
                       sizes="(max-width: 640px) 360px, (max-width: 1280px) 720px, 1080px"
                     />
@@ -512,15 +461,16 @@ const PostComponent: React.FC<PostProps> = ({
               variant="ghost"
               size="sm"
               className={`${
-                isLiked ? "text-green-600 dark:text-green-400" : ""
+                liked ? "text-green-600 dark:text-green-400" : ""
               } px-2`}
-
-              onClick={() => onLike(post.id)}
-
-              aria-label={isLiked ? "Unlike post" : "Like post"}
+              onClick={() => {
+                onLike(post.id);
+                setLiked(!liked);
+              }}
+              aria-label={liked ? "Unlike post" : "Like post"}
             >
               <Heart
-                className={`h-5 w-5 ${isLiked ? "fill-current" : ""} mr-1`}
+                className={`h-5 w-5 ${liked ? "fill-current" : ""} mr-1`}
               />
               Like
             </Button>
@@ -551,7 +501,7 @@ const PostComponent: React.FC<PostProps> = ({
           </Button>
         </div>
         <div className="w-full">
-          {displayedComments.map((comment) => (
+          {post.comments.slice(0, commentsShown).map((comment) => (
             <div key={comment.id} className="flex items-start space-x-2 mb-2">
               <Avatar>
                 <AvatarImage
@@ -562,14 +512,12 @@ const PostComponent: React.FC<PostProps> = ({
                   alt={comment.user?.username || "Unknown"}
                 />
                 <AvatarFallback>
-                  {comment.user?.username[0] || "U"}
+                  {comment.user?.username?.[0] || "U"}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-semibold text-gray-800 dark:text-gray-200">
-
-                  {comment.user?.username || "new user"}
-
+                  {comment.user?.username || "Anonymous User"}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {comment.content}
@@ -581,10 +529,10 @@ const PostComponent: React.FC<PostProps> = ({
             </div>
           ))}
 
-          {hasMoreComments && (
+          {post.comments.length > commentsShown && (
             <Button
               variant="link"
-              onClick={() => setIsCommentBoxVisible(true)}
+              onClick={() => setCommentsShown(commentsShown + 5)}
               className="p-0 text-green-600 dark:text-green-400"
             >
               View more comments
@@ -607,75 +555,8 @@ const PostComponent: React.FC<PostProps> = ({
           >
             Post Comment
           </Button>
-          {/* {post.comments.length > 2 && (
-            <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-              {post.comments.map((comment) => (
-                <div key={comment.id} className="flex items-start space-x-2">
-                  <Avatar>
-                    <AvatarImage
-                      src={
-                        comment.user.profileImage ||
-                        "/placeholder.svg?height=40&width=40"
-                      }
-                      alt={comment.user.username || "Unknown"}
-                    />
-                    <AvatarFallback>
-                      {comment.user.username[0] || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      {comment.user.username}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {comment.content}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-600">
-                      {formatCreatedAt(new Date(comment.createdAt))}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )} */}
-
-
-          {/* {post.comments.map((comment) => (
-=======
-          {post.comments.map((comment) => (
-
-            <div key={comment.id} className="flex items-start space-x-2">
-              <Avatar>
-                <AvatarImage
-                  src={
-                    comment.user?.profileImage ||
-                    "/placeholder.svg?height=40&width=40"
-                  }
-                  alt={comment.user?.username || "new user"}
-                />
-                <AvatarFallback>
-                  {comment.user?.username?.[0] || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-gray-800 dark:text-gray-200">
-                  {comment.user?.username || "new user"}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {comment.content}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-600">
-                  {formatCreatedAt(new Date(comment.createdAt))}
-                </p>
-              </div>
-            </div>
-
-          ))} */}
-
         </div>
       )}
     </Card>
   );
-};
-
-export default PostComponent;
+}

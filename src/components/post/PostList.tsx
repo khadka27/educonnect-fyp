@@ -55,7 +55,7 @@ const PostList: React.FC = () => {
 
   const [comments, setComments] = useState<CommentsState>({});
 
-  const isLiked = posts.some((post) => post.isLiked);
+  // const isLiked = posts.some((post) => post.isLiked);
   const { data: session } = useSession(); // Retrieves the user session
   const userId = session?.user?.id;
 
@@ -114,51 +114,9 @@ const PostList: React.FC = () => {
     }
   };
 
-  // const handleLike = useCallback(
-  //   async (postId: string, userId: string) => {
-  //     // Optimistically update the post's like state
-  //     setPosts((prevPosts) =>
-  //       prevPosts.map((post) =>
-  //         post.id === postId ? { ...post, isLiked: !post.isLiked } : post
-  //       )
-  //     );
-  
-  //     try {
-  //       // Call the API to update the like status
-  //       const response = await axios.post(`/api/posts/${postId}/like`, {
-  //         userId,
-  //         type: "like", // Assuming 'like' is the type you want to set
-  //       });
-  
-  //       if (response.status !== 200) {
-  //         throw new Error("Failed to update like status");
-  //       }
-  
-  //     } catch (error) {
-  //       console.error("Error liking the post:", error);
-  
-  //       // Revert the like state in case of an error
-  //       setPosts((prevPosts) =>
-  //         prevPosts.map((post) =>
-  //           post.id === postId ? { ...post, isLiked: !post.isLiked } : post
-  //         )
-  //       );
-  
-  //       // Show error toast notification
-  //       toast({
-  //         title: "Error",
-  //         description: "There was an error liking the post. Please try again.",
-  //         variant: "destructive",
-  //       });
-  //     }
-  //   },
-  //   [toast]
-  // );
-
-
-  const [postLikes, setPostLikes] = useState<{ [key: string]: boolean | undefined }>(
-    posts.reduce((acc, post) => ({ ...acc, [post.id]: post.isLiked }), {})
-  );
+  const [postLikes, setPostLikes] = useState<{
+    [key: string]: boolean | undefined;
+  }>(posts.reduce((acc, post) => ({ ...acc, [post.id]: post.isLiked }), {}));
 
   const handleLike = async (postId: string, userId: string) => {
     try {
@@ -173,14 +131,13 @@ const PostList: React.FC = () => {
       setPostLikes((prev) => ({ ...prev, [postId]: !prev[postId] }));
     }
   };
-  
 
   const handleSave = useCallback(
     async (postId: string) => {
       try {
         const response = await axios.post(`/api/posts/${postId}/saved-posts`); // Ensure this matches your API route
         const { isSaved } = response.data; // Assuming the API returns the updated isSaved status
-  
+
         setPosts((prevPosts) =>
           prevPosts.map((post) =>
             post.id === postId ? { ...post, isSaved } : post
@@ -188,7 +145,7 @@ const PostList: React.FC = () => {
         );
         toast({
           title: "Success",
-          description: `Post has been ${isSaved ? 'saved' : 'unsaved'}.`,
+          description: `Post has been ${isSaved ? "saved" : "unsaved"}.`,
           variant: "default",
         });
       } catch (error) {
@@ -203,93 +160,50 @@ const PostList: React.FC = () => {
     [toast]
   );
 
-  // const handleComment = useCallback(
-  //   async (postId: string, comment: string) => {
-  //     if (!userId) {
-  //       toast({
-  //         title: "Error",
-  //         description: "You need to be logged in to comment.",
-  //         variant: "destructive",
-  //       });
-  //       return;
-  //     }
+  const handleComment = useCallback(
+    async (postId: string, comment: string) => {
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "You need to be logged in to comment.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-  //     try {
-  //       const response = await axios.post(`/api/posts/${postId}/comments`, {
-  //         postId,
-  //         content: comment,
-  //         userId,
-  //       });
+      try {
+        const response = await axios.post(`/api/posts/${postId}/comments`, {
+          postId,
+          content: comment,
+          userId,
+        });
 
-  //       const newComment = response.data;
-  //       setPosts((prevPosts) =>
-  //         prevPosts.map((post) =>
-  //           post.id === postId
-  //             ? { ...post, comments: [...post.comments, newComment] }
-  //             : post
-  //         )
-  //       );
+        const newComment: Comment = response.data;
+        setComments((prevComments: CommentsState) => ({
+          ...prevComments,
+          [postId]: {
+            data: [...(prevComments[postId]?.data || []), newComment],
+            hasMore: prevComments[postId]?.hasMore || false,
+          },
+        }));
 
-  //       toast({
-  //         title: "Comment added",
-  //         description: "Your comment has been added successfully.",
-  //       });
-  //     } catch (error) {
-  //       console.error("Error adding comment:", error);
-  //       toast({
-  //         title: "Error",
-  //         description:
-  //           "There was an error adding your comment. Please try again.",
-  //         variant: "destructive",
-  //       });
-  //     }
-  //   },
-  //   [userId, toast]
-  // );
+        toast({
+          title: "Comment added",
+          description: "Your comment has been added successfully.",
+        });
+      } catch (error) {
+        console.error("Error adding comment:", error);
+        toast({
+          title: "Error",
+          description:
+            "There was an error adding your comment. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [userId, toast]
+  );
 
-
-  const handleComment = useCallback(async (postId: string, comment: string) => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "You need to be logged in to comment.",
-        variant: "destructive",
-      });
-      return;
-    }
-  
-    try {
-      const response = await axios.post(`/api/posts/${postId}/comments`, {
-        postId,
-        content: comment,
-        userId,
-      });
-  
-      const newComment: Comment = response.data;
-      setComments((prevComments: CommentsState) => ({
-        ...prevComments,
-        [postId]: {
-          data: [...(prevComments[postId]?.data || []), newComment],
-          hasMore: prevComments[postId]?.hasMore || false,
-        },
-      }));
-  
-      toast({
-        title: "Comment added",
-        description: "Your comment has been added successfully.",
-      });
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      toast({
-        title: "Error",
-        description: "There was an error adding your comment. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [userId, toast]);
-
-
-  
   const fetchComments = useCallback(
     async (postId: string, pageNumber: number) => {
       try {
@@ -363,6 +277,7 @@ const PostList: React.FC = () => {
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
               <PostComponent
+                key={post.id}
                 post={post}
                 isLiked={postLikes[post.id] ?? false} // Pass the local like status
                 onLike={() => handleLike(post.id, post.userId)}
