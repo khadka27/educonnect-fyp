@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation"; // Ensure you're using Next.js 14 u
 import { useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 
-
 export default function AdminDashboard() {
   const { data: session } = useSession();
   const router = useRouter();

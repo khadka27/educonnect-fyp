@@ -39,7 +39,10 @@ export const authOptions: NextAuthOptions = {
 
           // Allow both admin and regular users to log in
           if (user.role === "USER" || user.role === "ADMIN") {
-            if (user.password && await bcrypt.compare(credentials.password, user.password)) {
+            if (
+              user.password &&
+              (await bcrypt.compare(credentials.password, user.password))
+            ) {
               return {
                 id: user.id,
                 email: user.email,
