@@ -37,20 +37,21 @@ export const authOptions: NextAuthOptions = {
           if (!user) throw new Error("No user found with this email");
           if (!user.isVerified) throw new Error("Please verify your account");
 
-          if (
-            user.password &&
-            (await bcrypt.compare(credentials.password, user.password))
-          ) {
-            // Ensure that null values are converted to undefined
-            return {
-              id: user.id,
-              email: user.email,
-              username: user.username ?? undefined, // Convert null to undefined
-              isVerified: user.isVerified,
-              role: user.role, // Assuming Role is an enum or correct type
-            };
+          // Allow both admin and regular users to log in
+          if (user.role === "USER" || user.role === "ADMIN") {
+            if (user.password && await bcrypt.compare(credentials.password, user.password)) {
+              return {
+                id: user.id,
+                email: user.email,
+                username: user.username ?? undefined,
+                isVerified: user.isVerified,
+                role: user.role,
+              };
+            } else {
+              throw new Error("Incorrect password");
+            }
           } else {
-            throw new Error("Incorrect password");
+            throw new Error("Unauthorized - Access denied");
           }
         } catch (err) {
           console.error("Authentication error:", err);
@@ -93,4 +94,3 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET || "",
 };
-
