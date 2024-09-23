@@ -76,7 +76,7 @@ interface PostProps {
 const MAX_CONTENT_LENGTH = 300;
 const INITIAL_COMMENTS_SHOWN = 2;
 
-export default function PostComponent({
+export default function TimelineComponent({
   post,
   isLiked,
   onLike,

@@ -68,7 +68,7 @@ export default function SignInForm() {
     }
 
     if (result?.url) {
-      router.replace("/Dashboard");
+      router.replace("/admin/dashboard" || "/Home");
     }
   };
 

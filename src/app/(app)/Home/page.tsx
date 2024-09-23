@@ -3,7 +3,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
+import TimelineList from "@/components/profile/TimelineList";
 const HomePage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -16,6 +16,11 @@ const HomePage = () => {
     <div>
       <h1>Welcome {session?.user?.name}</h1>
       {/* Rest of your page content */}
+
+      <h1>Welcome {session?.user?.username}</h1>
+      {/* Rest of your page content */}
+
+      <TimelineList />
     </div>
   );
 };

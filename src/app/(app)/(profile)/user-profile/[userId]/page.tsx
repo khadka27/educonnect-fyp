@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -14,6 +15,7 @@ import {
   Camera,
   Plus,
   Upload,
+  User,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import axios from "axios";
@@ -208,7 +210,7 @@ const ProfilePage = () => {
                   isDarkMode ? "text-gray-100" : "text-gray-900"
                 }`}
               >
-                {user?.name || "Please wait..."}
+                {user?.name || user?.username}
               </h1>
               <p
                 className={`text-lg ${
