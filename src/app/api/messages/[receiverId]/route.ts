@@ -1,6 +1,6 @@
 // /pages/api/messages/[receiverId].ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import {prisma} from "@/lib/prisma";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { prisma } from "@/lib/prisma";
 
 // GET /api/messages/:receiverId
 const getMessageHistory = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -12,7 +12,7 @@ const getMessageHistory = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).json({
         success: false,
         statusCode: 400,
-        message: 'Sender ID and Receiver ID are required',
+        message: "Sender ID and Receiver ID are required",
       });
     }
 
@@ -26,11 +26,13 @@ const getMessageHistory = async (req: NextApiRequest, res: NextApiResponse) => {
           { senderId: receiverId as string, receiverId: senderId as string },
         ],
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     };
 
     if (!getAll && nextCursor) {
-      queryOptions.cursor = { createdAt: new Date(parseInt(nextCursor as string, 10)) };
+      queryOptions.cursor = {
+        createdAt: new Date(parseInt(nextCursor as string, 10)),
+      };
       queryOptions.skip = 1;
     }
 
@@ -48,9 +50,10 @@ const getMessageHistory = async (req: NextApiRequest, res: NextApiResponse) => {
       },
     });
 
-    const nextCursorDate = messages.length === limitNumber
-      ? messages[messages.length - 1].createdAt.getTime()
-      : null;
+    const nextCursorDate =
+      messages.length === limitNumber
+        ? messages[messages.length - 1].createdAt.getTime()
+        : null;
 
     res.status(200).json({
       success: true,
@@ -63,7 +66,7 @@ const getMessageHistory = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(500).json({
       success: false,
       statusCode: 500,
-      message: (error as Error).message || 'Server error',
+      message: (error as Error).message || "Server error",
     });
   }
 };
