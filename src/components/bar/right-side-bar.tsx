@@ -1,8 +1,7 @@
 "use client";
 
-
-/* eslint-disable jsx-a11y/alt-text */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react"; // Add useEffect
+import axios from "axios"; // Import Axios
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,19 +36,29 @@ interface MessageBox {
   message: string;
 }
 
-const users: User[] = [
-  { id: "1", name: "Alice Johnson", avatar: "https://i.pravatar.cc/150?img=1" },
-  { id: "2", name: "Bob Smith", avatar: "https://i.pravatar.cc/150?img=2" },
-  { id: "3", name: "Charlie Brown", avatar: "https://i.pravatar.cc/150?img=3" },
-  { id: "4", name: "Diana Prince", avatar: "https://i.pravatar.cc/150?img=4" },
-  { id: "5", name: "Ethan Hunt", avatar: "https://i.pravatar.cc/150?img=5" },
-  // Add more users to test scrolling
-];
-
 const RightSidebar: React.FC = () => {
   const [messageBoxes, setMessageBoxes] = useState<MessageBox[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]); // State for users
+
+  // Fetch users from the API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get("/api/users"); // Fetch users from API
+        if (response.data.success) {
+          setUsers(response.data.data); // Set users in state
+        } else {
+          console.error("Failed to fetch users:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers(); // Call the fetch function
+  }, []);
 
   const handleUserClick = (user: User) => {
     const existingBox = messageBoxes.find((box) => box.user.id === user.id);
@@ -60,10 +69,7 @@ const RightSidebar: React.FC = () => {
         )
       );
     } else if (messageBoxes.length < 3) {
-      setMessageBoxes([
-        ...messageBoxes,
-        { user, isMinimized: false, message: "" },
-      ]);
+      setMessageBoxes([ ...messageBoxes, { user, isMinimized: false, message: "" } ]);
     }
   };
 
@@ -99,7 +105,6 @@ const RightSidebar: React.FC = () => {
     );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEmojiClick = (userId: string, emojiObject: any) => {
     setMessageBoxes(
       messageBoxes.map((box) =>
@@ -157,11 +162,7 @@ const RightSidebar: React.FC = () => {
                   onClick={() => handleMinimizeMessageBox(box.user.id)}
                   className="text-white hover:text-gray-200"
                 >
-                  {box.isMinimized ? (
-                    <Maximize2 size={18} />
-                  ) : (
-                    <Minimize2 size={18} />
-                  )}
+                  {box.isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
                 </button>
                 <button
                   onClick={() => handleCloseMessageBox(box.user.id)}
@@ -218,7 +219,6 @@ const RightSidebar: React.FC = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Image className="mr-2 h-4 w-4" />
-
                           <span>Add Image</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
@@ -245,140 +245,14 @@ const RightSidebar: React.FC = () => {
         ))}
       </div>
 
-      {/* Mobile view */}
-      <div className="sm:hidden">
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="fixed bottom-4 right-4 bg-green-500 text-white p-3 rounded-full shadow-lg"
+      {/* Mobile menu button */}
+      <div className="fixed top-3 right-3">
+        <Button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          variant="outline"
         >
-          <Menu size={24} />
-        </button>
-
-        {isMobileMenuOpen && (
-          <div className="fixed inset-0 bg-white dark:bg-gray-800 z-50 flex flex-col">
-            <div className="flex items-center justify-between p-4 bg-green-500 dark:bg-green-600 text-white">
-              <span className="font-medium">Contacts</span>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-white hover:text-gray-200"
-              >
-                <Minimize2 size={18} />
-              </button>
-            </div>
-            <div className="flex-grow overflow-y-auto p-4 space-y-4">
-              {users.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg"
-                  onClick={() => {
-                    handleUserClick(user);
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <Avatar>
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {user.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {messageBoxes.length > 0 && !isMobileMenuOpen && (
-          <div className="fixed inset-0 bg-white dark:bg-gray-800 z-40 flex flex-col">
-            <div className="flex items-center justify-between p-4 bg-green-500 dark:bg-green-600 text-white">
-              <div className="flex items-center space-x-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={messageBoxes[0].user.avatar}
-                    alt={messageBoxes[0].user.name}
-                  />
-                  <AvatarFallback>
-                    {messageBoxes[0].user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-medium">{messageBoxes[0].user.name}</span>
-              </div>
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="text-white hover:text-gray-200"
-              >
-                <Menu size={24} />
-              </button>
-            </div>
-            <div className="flex-grow overflow-y-auto p-4">
-              {/* Message history would go here */}
-            </div>
-            <div className="p-4 bg-gray-100 dark:bg-gray-700">
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={messageBoxes[0].message}
-                  onChange={(e) =>
-                    handleMessageChange(messageBoxes[0].user.id, e.target.value)
-                  }
-                  className="flex-grow"
-                />
-                <div className="relative">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() =>
-                      setShowEmojiPicker(
-                        showEmojiPicker === messageBoxes[0].user.id
-                          ? null
-                          : messageBoxes[0].user.id
-                      )
-                    }
-                  >
-                    <Smile className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                  </Button>
-                  {showEmojiPicker === messageBoxes[0].user.id && (
-                    <div className="absolute bottom-full right-0 mb-2">
-                      <EmojiPicker
-                        onEmojiClick={(emojiObject) =>
-                          handleEmojiClick(messageBoxes[0].user.id, emojiObject)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="icon" variant="ghost">
-                      <Paperclip className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Image className="mr-2 h-4 w-4" />
-                      <span>Add Image</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Video className="mr-2 h-4 w-4" />
-                      <span>Add Video</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <File className="mr-2 h-4 w-4" />
-                      <span>Add File</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  size="icon"
-                  onClick={() => handleSendMessage(messageBoxes[0].user.id)}
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+          <Menu />
+        </Button>
       </div>
     </>
   );
