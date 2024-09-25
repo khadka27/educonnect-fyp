@@ -29,12 +29,17 @@ model User {
   role             Role        @default(USER)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
-  messages         Message[]   @relation
+  // messages         Message[]   @relation
   posts            Post[] // Removed @relation(onDelete: Cascade)
   reactions        Reaction[]  @relation
   shares           Share[]     @relation
   savedPosts       SavedPost[] @relation
   comments         Comment[]   @relation
+  //-----------------------------------------chat schema-----------------------------------------
+  messages         Message[]    @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
+  groupMemberships GroupMember[] @relation
+  groupAdmin       Group[]      @relation("GroupAdmin")
 }
 
 model Post {
@@ -82,13 +87,13 @@ model SavedPost {
   @@unique([userId, postId]) // Ensure that a user can only save a post once
 }
 
-model Message {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// model Message {
+//   id        String   @id @default(cuid())
+//   content   String
+//   createdAt DateTime @default(now())
+//   userId    String
+//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
 
 model Comment {
   id        String   @id @default(cuid())
@@ -100,3 +105,51 @@ model Comment {
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
+
+
+
+//-----------------------------------------chat schema-----------------------------------------
+
+model Message {
+  id            String   @id @default(cuid())
+  content       String
+  createdAt     DateTime @default(now())
+  isRead        Boolean  @default(false)
+  isGroupMessage Boolean @default(false)
+
+  senderId      String
+  sender        User     @relation("SentMessages", fields: [senderId], references: [id])
+
+  receiverId    String?
+  receiver      User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  groupId       String?
+  group         Group?   @relation(fields: [groupId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([groupId])
+}
+
+
+model Group {
+  id        String      @id @default(cuid())
+  name      String
+  adminId   String
+  admin     User        @relation("GroupAdmin", fields: [adminId], references: [id])
+  members   GroupMember[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  messages  Message[]
+}
+
+model GroupMember {
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+}
+
