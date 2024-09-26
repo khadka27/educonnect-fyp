@@ -367,8 +367,11 @@
 import React from 'react';
 import UserProfile from '@/components/profile/user-profile'; // Adjust the import path as needed
 
+
 function UserProfilePage({ params }: { params: { userId: string } }) {
   return <UserProfile userId={params.userId} />;
 }
+
+
 
 export default UserProfilePage; // Fix the export statement

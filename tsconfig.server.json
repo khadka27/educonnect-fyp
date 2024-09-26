@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // For modern Node.js features
+    "module": "ESNext", // Use ESNext for ESM support
+    "moduleResolution": "node", // Resolve using Node.js modules
+    "outDir": "./dist", // Output directory for compiled files
+    "esModuleInterop": true, // Compatibility with ES modules
+    "skipLibCheck": true, // Skip library checking for node_modules
+    "strict": true // Strict type checking
+  },
+  "include": ["server.ts"],
+  "exclude": ["node_modules"]
+}

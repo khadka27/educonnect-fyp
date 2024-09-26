@@ -24,6 +24,8 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Avatar from "react-avatar";
 import { useToast } from "@/hooks/use-toast";
+import TimelineList from "./TimelineList";
+import EduConnectLoader from "../educonnectloader";
 
 interface UserProfileProps {
   userId: string;
@@ -112,7 +114,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div> <EduConnectLoader/> </div>;
   if (error) return <div>{error}</div>;
 
   const isDarkMode = theme === "dark";
@@ -364,6 +366,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           </div>
         </Card>
       </div>
+      <TimelineList userId={userId} />
     </div>
   );
 };

@@ -42,7 +42,11 @@ interface CommentsState {
   };
 }
 
-const TimelineList: React.FC = () => {
+interface TimelineListProps{
+  userId: string;
+}
+
+const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -57,8 +61,14 @@ const TimelineList: React.FC = () => {
   const [comments, setComments] = useState<CommentsState>({});
 
   // const isLiked = posts.some((post) => post.isLiked);
-  const { data: session } = useSession(); // Retrieves the user session
-  const userId = session?.user?.id;
+ // Retrieves the user session
+  // const userId = session?.user?.id;
+
+  useEffect(() => {
+    if (userId) {
+      fetchPosts(page);
+    }
+  }, [userId]);
 
   const fetchPosts = useCallback(
     async (pageNumber: number) => {
