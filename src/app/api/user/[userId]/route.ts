@@ -23,7 +23,6 @@ export async function GET(
       },
     });
 
-    console.log("User", user);
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
