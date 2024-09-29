@@ -1,5 +1,6 @@
-"use client";  // Make sure this line is present
+"use client";
 
 import io from "socket.io-client";
 
-export const socket = io('http://localhost:3000');  // Ensure this URL matches your server
+// Connect to the correct server URL
+export const socket = io("http://localhost:3000");

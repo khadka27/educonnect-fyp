@@ -1,54 +1,45 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Adjust the path as needed
+import { NextResponse } from 'next/server';
+import {prisma} from '@/lib/prisma'; // Ensure you have Prisma client instance set up
 
-export async function POST(request: Request) {
-  const { content, senderId, receiverId, fileUrl, fileType, groupId } =
-    await request.json();
+export async function POST(req: Request) {
+    const { senderId, receiverId, content, groupId } = await req.json();
 
-  try {
-    const messageData: any = {
-      content,
-      senderId,
-      fileUrl,
-      fileType,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Set expiry to 24 hours
-    };
-
-    if (groupId) {
-      messageData.isGroupMessage = true;
-      messageData.groupId = groupId;
-    } else {
-      messageData.receiverId = receiverId;
-    }
-
+    // Direct message
     const message = await prisma.message.create({
-      data: messageData,
+        data: {
+            content,
+            senderId,
+            receiverId,
+            groupId, // For group messages, if applicable
+        },
     });
 
-    // Note: Emitting the message via WebSocket would be handled separately
-
-    return NextResponse.json(message, { status: 201 });
-  } catch (error) {
-    console.error("Error saving message to database:", error);
-    return NextResponse.json(
-      { error: "Failed to save message." },
-      { status: 500 }
-    );
-  }
+    return NextResponse.json(message);
 }
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const groupId = searchParams.get("groupId");
-  const userId = searchParams.get("userId");
+    const url = new URL(req.url);
+    const userId = url.searchParams.get('userId'); // Retrieve messages for a specific user
 
-  const messages = await prisma.message.findMany({
-    where: {
-      OR: [{ receiverId: userId }, { groupId: groupId }],
-    },
-    include: { sender: true },
-    orderBy: { createdAt: "asc" },
-  });
+    if (!userId) {
+        return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
 
-  return NextResponse.json({ messages });
+    const messages = await prisma.message.findMany({
+        where: {
+            OR: [
+                { senderId: userId }, 
+                { receiverId: userId }
+            ]
+        },
+        include: {
+            sender: true,
+            receiver: true,
+        },
+        orderBy: {
+            createdAt: 'asc',
+        },
+    });
+
+    return NextResponse.json(messages);
 }
