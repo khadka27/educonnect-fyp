@@ -1,28 +1,28 @@
-// layout.tsx (Server Component)
-
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Providers from "./Providers/page"; // Move client-side logic here
-
-const inter = Inter({ subsets: ["latin"] });
+import Providers from '@/app/Providers/page'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "EduConnect",
-  description: "Connecting Education, Empowering Futures!!!!",
-};
-
-interface RootLayoutProps {
-  children: React.ReactNode;
+  title: 'Chat Application',
+  description: 'A real-time chat application',
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const session = await getServerSession(authOptions)
 
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Providers>{children}</Providers> {/* Use Providers component */}
+      <body>
+        <Providers session={session}>
+          {children}
+        </Providers>
       </body>
     </html>
-  );
+  )
 }
