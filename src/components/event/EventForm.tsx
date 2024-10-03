@@ -5,12 +5,13 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Calendar,
   MapPin,
   Mail,
   Phone,
-  Image,
+  ImageIcon,
   Clock,
   DollarSign,
   Percent,
@@ -43,12 +44,11 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-// Updated validation schema to include new fields for price and discount
 const eventSchema = yup.object().shape({
   title: yup.string().required("Title is required"),
   description: yup.string().optional(),
   date: yup.date().nullable().required("Date is required"),
-  startTime: yup.date().nullable().required("Start time is required"),
+  startTime: yup.string().required("Start time is required"),
   registrationEndDate: yup
     .date()
     .nullable()
@@ -58,14 +58,17 @@ const eventSchema = yup.object().shape({
     .string()
     .oneOf(["free", "premium"], "Type must be free or premium")
     .required("Event type is required"),
-  price: yup.number().when("type", (type: string) => {
-    return type === "premium"
-      ? yup
-          .number()
-          .required("Price is required for premium events")
-          .min(0, "Price must be a positive number")
-      : yup.number().nullable();
+  price: yup.number().when("type", (typeValue: string) => {
+    if (typeValue === "premium") {
+      return yup
+        .number()
+        .required("Price is required for premium events")
+        .min(0, "Price must be a positive number");
+    } else {
+      return yup.number().nullable();
+    }
   }),
+
   discountPercentage: yup
     .number()
     .min(0, "Discount percentage must be between 0 and 100")
@@ -86,8 +89,9 @@ type EventFormValues = yup.InferType<typeof eventSchema>;
 
 export default function EventForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const router = useRouter();
-  const toast = useToast();
+  const { toast } = useToast();
 
   const form = useForm<EventFormValues>({
     resolver: yupResolver(eventSchema),
@@ -95,7 +99,7 @@ export default function EventForm() {
       title: "",
       description: "",
       date: undefined,
-      startTime: undefined,
+      startTime: "",
       registrationEndDate: undefined,
       location: "",
       type: "free",
@@ -113,20 +117,24 @@ export default function EventForm() {
       const response = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          date: data.date?.toISOString(),
+          registrationEndDate: data.registrationEndDate?.toISOString(),
+        }),
       });
       if (response.ok) {
-        toast.toast({
+        toast({
           title: "Event created",
           description: "Your event has been successfully created.",
         });
-        router.push("/events");
+        router.push("/Events");
       } else {
         throw new Error("Failed to create event");
       }
     } catch (error) {
       console.error(error);
-      toast.toast({
+      toast({
         title: "Error",
         description: "Failed to create event. Please try again.",
         variant: "destructive",
@@ -191,10 +199,12 @@ export default function EventForm() {
                           className="pl-10"
                           {...field}
                           value={
-                            field.value instanceof Date &&
-                            !isNaN(field.value.getTime())
+                            field.value
                               ? field.value.toISOString().split("T")[0]
                               : ""
+                          }
+                          onChange={(e) =>
+                            field.onChange(new Date(e.target.value))
                           }
                         />
                       </div>
@@ -215,17 +225,7 @@ export default function EventForm() {
                           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                           size={18}
                         />
-                        <Input
-                          type="time"
-                          className="pl-10"
-                          {...field}
-                          value={
-                            field.value instanceof Date &&
-                            !isNaN(field.value.getTime())
-                              ? field.value.toISOString().split("T")[1].slice(0, 5)
-                              : ""
-                          }
-                        />
+                        <Input type="time" className="pl-10" {...field} />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -253,6 +253,9 @@ export default function EventForm() {
                           field.value
                             ? field.value.toISOString().split("T")[0]
                             : ""
+                        }
+                        onChange={(e) =>
+                          field.onChange(new Date(e.target.value))
                         }
                       />
                     </div>
@@ -308,7 +311,6 @@ export default function EventForm() {
                 </FormItem>
               )}
             />
-            {/* Price field, required only for premium events */}
             {form.watch("type") === "premium" && (
               <>
                 <FormField
@@ -328,6 +330,9 @@ export default function EventForm() {
                             placeholder="Event price"
                             className="pl-10"
                             {...field}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
                           />
                         </div>
                       </FormControl>
@@ -353,6 +358,9 @@ export default function EventForm() {
                             className="pl-10"
                             {...field}
                             value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
                           />
                         </div>
                       </FormControl>
@@ -370,7 +378,7 @@ export default function EventForm() {
                   <FormLabel>Banner URL</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Image
+                      <ImageIcon
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                         size={18}
                       />
@@ -378,6 +386,10 @@ export default function EventForm() {
                         placeholder="https://example.com/banner.jpg"
                         className="pl-10"
                         {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setPreviewImage(e.target.value);
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -388,6 +400,17 @@ export default function EventForm() {
                 </FormItem>
               )}
             />
+            {previewImage && (
+              <div className="mt-4">
+                <Image
+                  src={previewImage}
+                  alt="Banner preview"
+                  width={300}
+                  height={150}
+                  className="rounded-md"
+                />
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

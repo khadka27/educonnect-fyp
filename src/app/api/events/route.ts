@@ -1,29 +1,36 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-
-export async function GET() {
-  try {
-    const events = await prisma.event.findMany({
-      orderBy: {
-        date: 'asc', // Sorting events by date
-      },
-    });
-    return NextResponse.json({ events });
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
-  }
-}
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
     const data = await req.json();
 
     // Validating required fields
-    const { title, date, location, type, contactEmail, contactPhone, startTime, registrationEndDate } = data;
-    
-    if (!title || !date || !location || !type || !contactEmail || !contactPhone || !startTime || !registrationEndDate) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const {
+      title,
+      date,
+      location,
+      type,
+      contactEmail,
+      contactPhone,
+      startTime,
+      registrationEndDate,
+    } = data;
+
+    if (
+      !title ||
+      !date ||
+      !location ||
+      !type ||
+      !contactEmail ||
+      !contactPhone ||
+      !startTime ||
+      !registrationEndDate
+    ) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
     // Creating the event
@@ -46,7 +53,26 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ event }, { status: 201 });
   } catch (error) {
-    console.error('Error creating event:', error);
-    return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
+    console.error("Error creating event:", error);
+    return NextResponse.json(
+      { error: "Failed to create event" },
+      { status: 500 }
+    );
+  }
+}
+export async function GET() {
+  try {
+    const events = await prisma.event.findMany({
+      orderBy: {
+        date: "asc", // Sorting events by date
+      },
+    });
+    return NextResponse.json({ events });
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch events" },
+      { status: 500 }
+    );
   }
 }
