@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react'; // For user authentication
 
 interface Event {
   id: string;
@@ -19,8 +20,10 @@ interface Event {
 const EventDetailPage = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRegistered, setIsRegistered] = useState(false); // Track registration status
   const router = useRouter();
-  const { eventId } = useParams(); // Fetching the eventId from the URL
+  const { eventId } = useParams();
+  const { data: session } = useSession(); // Check if the user is logged in
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -41,6 +44,37 @@ const EventDetailPage = () => {
     }
   }, [eventId, router]);
 
+  const handleRegister = async () => {
+    if (!session) {
+      router.push('/login'); // Redirect to login if not logged in
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/events/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          eventId: event?.id,
+          userId: session?.user?.id, // The logged-in user ID from session
+          name: session?.user?.name,
+          email: session?.user?.email,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (res.ok) {
+        setIsRegistered(true);
+        alert('Successfully registered for the event!');
+      } else {
+        console.error('Failed to register for event');
+      }
+    } catch (error) {
+      console.error('Error during registration:', error);
+    }
+  };
+
   if (loading) {
     return <p>Loading event details...</p>;
   }
@@ -59,6 +93,13 @@ const EventDetailPage = () => {
       {event.bannerUrl && <img src={event.bannerUrl} alt={event.title} width="300" />}
       <p><strong>Contact Email:</strong> {event.contactEmail}</p>
       <p><strong>Contact Phone:</strong> {event.contactPhone}</p>
+
+      {/* Show registration button only if user is not already registered */}
+      {!isRegistered ? (
+        <button onClick={handleRegister}>Register for Event</button>
+      ) : (
+        <p>You are already registered for this event!</p>
+      )}
     </div>
   );
 };
