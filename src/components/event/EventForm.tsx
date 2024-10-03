@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Mail, Phone, Image, Type } from "lucide-react";
+import { Calendar, MapPin, Mail, Phone, Image, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,16 +29,21 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
+// Updated validation schema to include new fields
 const eventSchema = yup.object().shape({
   title: yup.string().required("Title is required"),
   description: yup.string().optional(),
   date: yup.date().nullable().required("Date is required"),
+  startTime: yup.date().nullable().required("Start time is required"),
+  registrationEndDate: yup
+    .date()
+    .nullable()
+    .required("Registration end date is required"),
   location: yup.string().required("Location is required"),
   type: yup
     .string()
@@ -68,6 +73,8 @@ export default function EventForm() {
       title: "",
       description: "",
       date: undefined,
+      startTime: undefined,
+      registrationEndDate: undefined,
       location: "",
       type: "free",
       bannerUrl: "",
@@ -173,20 +180,28 @@ export default function EventForm() {
               />
               <FormField
                 control={form.control}
-                name="location"
+                name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Start Time</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <MapPin
+                        <Clock
                           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                           size={18}
                         />
                         <Input
-                          placeholder="Event location"
+                          type="time"
                           className="pl-10"
                           {...field}
+                          value={
+                            field.value
+                              ? new Date(field.value).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : ""
+                          }
                         />
                       </div>
                     </FormControl>
@@ -195,6 +210,57 @@ export default function EventForm() {
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="registrationEndDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Registration End Date</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Calendar
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        size={18}
+                      />
+                      <Input
+                        type="date"
+                        className="pl-10"
+                        {...field}
+                        value={
+                          field.value
+                            ? field.value.toISOString().split("T")[0]
+                            : ""
+                        }
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <MapPin
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        size={18}
+                      />
+                      <Input
+                        placeholder="Event location"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="type"
