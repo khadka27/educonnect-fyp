@@ -5,7 +5,16 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Mail, Phone, Image, Clock } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Mail,
+  Phone,
+  Image,
+  Clock,
+  DollarSign,
+  Percent,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,7 +43,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-// Updated validation schema to include new fields
+// Updated validation schema to include new fields for price and discount
 const eventSchema = yup.object().shape({
   title: yup.string().required("Title is required"),
   description: yup.string().optional(),
@@ -49,6 +58,19 @@ const eventSchema = yup.object().shape({
     .string()
     .oneOf(["free", "premium"], "Type must be free or premium")
     .required("Event type is required"),
+  price: yup.number().when("type", (type: string) => {
+    return type === "premium"
+      ? yup
+          .number()
+          .required("Price is required for premium events")
+          .min(0, "Price must be a positive number")
+      : yup.number().nullable();
+  }),
+  discountPercentage: yup
+    .number()
+    .min(0, "Discount percentage must be between 0 and 100")
+    .max(100, "Discount percentage must be between 0 and 100")
+    .nullable(),
   bannerUrl: yup.string().url("Must be a valid URL").optional(),
   contactEmail: yup
     .string()
@@ -77,6 +99,8 @@ export default function EventForm() {
       registrationEndDate: undefined,
       location: "",
       type: "free",
+      price: undefined,
+      discountPercentage: undefined,
       bannerUrl: "",
       contactEmail: "",
       contactPhone: "",
@@ -167,7 +191,8 @@ export default function EventForm() {
                           className="pl-10"
                           {...field}
                           value={
-                            field.value
+                            field.value instanceof Date &&
+                            !isNaN(field.value.getTime())
                               ? field.value.toISOString().split("T")[0]
                               : ""
                           }
@@ -195,11 +220,9 @@ export default function EventForm() {
                           className="pl-10"
                           {...field}
                           value={
-                            field.value
-                              ? new Date(field.value).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                            field.value instanceof Date &&
+                            !isNaN(field.value.getTime())
+                              ? field.value.toISOString().split("T")[1].slice(0, 5)
                               : ""
                           }
                         />
@@ -285,6 +308,60 @@ export default function EventForm() {
                 </FormItem>
               )}
             />
+            {/* Price field, required only for premium events */}
+            {form.watch("type") === "premium" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <DollarSign
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Event price"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="discountPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount Percentage</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Percent
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Discount %"
+                            className="pl-10"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
             <FormField
               control={form.control}
               name="bannerUrl"
