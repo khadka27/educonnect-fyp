@@ -58,22 +58,23 @@ const eventSchema = yup.object().shape({
     .string()
     .oneOf(["free", "premium"], "Type must be free or premium")
     .required("Event type is required"),
-  price: yup.number().when("type", (typeValue: string) => {
-    if (typeValue === "premium") {
-      return yup
-        .number()
-        .required("Price is required for premium events")
-        .min(0, "Price must be a positive number");
-    } else {
-      return yup.number().nullable();
-    }
+  price: yup.number().when("type", {
+    is: "premium",
+    then: yup
+      .number()
+      .required("Price is required for premium events")
+      .min(0, "Price must be a positive number"),
+    otherwise: yup.number().nullable(),
   }),
-
-  discountPercentage: yup
-    .number()
-    .min(0, "Discount percentage must be between 0 and 100")
-    .max(100, "Discount percentage must be between 0 and 100")
-    .nullable(),
+  discountPercentage: yup.number().when("type", {
+    is: "premium",
+    then: yup
+      .number()
+      .min(0, "Discount percentage must be at least 0")
+      .max(100, "Discount percentage must not exceed 100")
+      .nullable(),
+    otherwise: yup.number().nullable(),
+  }),
   bannerUrl: yup.string().url("Must be a valid URL").optional(),
   contactEmail: yup
     .string()
@@ -327,12 +328,9 @@ export default function EventForm() {
                           />
                           <Input
                             type="number"
-                            placeholder="Event price"
                             className="pl-10"
+                            placeholder="Enter event price"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
                           />
                         </div>
                       </FormControl>
@@ -354,13 +352,9 @@ export default function EventForm() {
                           />
                           <Input
                             type="number"
-                            placeholder="Discount %"
                             className="pl-10"
+                            placeholder="Enter discount percentage"
                             {...field}
-                            value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
                           />
                         </div>
                       </FormControl>
@@ -383,7 +377,7 @@ export default function EventForm() {
                         size={18}
                       />
                       <Input
-                        placeholder="https://example.com/banner.jpg"
+                        placeholder="Enter banner image URL"
                         className="pl-10"
                         {...field}
                         onChange={(e) => {
@@ -393,74 +387,62 @@ export default function EventForm() {
                       />
                     </div>
                   </FormControl>
-                  <FormDescription>
-                    Provide a URL for your event banner image
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             {previewImage && (
               <div className="mt-4">
-                <Image
-                  src={previewImage}
-                  alt="Banner preview"
-                  width={300}
-                  height={150}
-                  className="rounded-md"
-                />
+                <Image src={previewImage} alt="Banner preview" width={400} height={200} />
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contactEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                          size={18}
-                        />
-                        <Input
-                          type="email"
-                          placeholder="contact@example.com"
-                          className="pl-10"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="contactPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Phone</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Phone
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                          size={18}
-                        />
-                        <Input
-                          placeholder="1234567890"
-                          className="pl-10"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <FormField
+              control={form.control}
+              name="contactEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Email</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Mail
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        size={18}
+                      />
+                      <Input
+                        placeholder="Enter contact email"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="contactPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Phone</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Phone
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        size={18}
+                      />
+                      <Input
+                        placeholder="Enter contact phone"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create Event"}
             </Button>
           </form>
