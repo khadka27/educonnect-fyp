@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
-// POST: Create a new event
 export async function POST(req: Request) {
   try {
-    // Parse incoming request data
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const data = await req.json();
-    
-    // Destructure required fields from the request body
+
     const {
       title,
       date,
@@ -17,13 +21,12 @@ export async function POST(req: Request) {
       contactPhone,
       startTime,
       registrationEndDate,
-      description,  // Optional field
-      bannerUrl,    // Optional field
-      price,        // Optional field
-      discountPercentage, // Optional field
+      description,
+      bannerUrl,
+      price,
+      discountPercentage,
     } = data;
 
-    // Validate required fields
     if (
       !title ||
       !date ||
@@ -40,32 +43,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ensure date and time fields are properly converted to Date objects
     const eventDate = new Date(date);
     const eventStartTime = new Date(startTime);
     const eventRegistrationEndDate = new Date(registrationEndDate);
 
-    // Create the new event using Prisma
+    if (!session.user.id) {
+      return NextResponse.json(
+        { error: "User ID is missing" },
+        { status: 400 }
+      );
+    }
+
     const event = await prisma.event.create({
       data: {
         title,
-        description: description || null, // Optional field
-        date: eventDate,  // Ensure date is in Date format
-        startTime: eventStartTime,  // Ensure startTime is in Date format
-        registrationEndDate: eventRegistrationEndDate,  // Ensure registrationEndDate is in Date format
+        description: description || null,
+        date: eventDate,
+        startTime: eventStartTime,
+        registrationEndDate: eventRegistrationEndDate,
         location,
         type,
-        bannerUrl: bannerUrl || null, // Optional field
+        bannerUrl: bannerUrl || null,
         contactEmail,
         contactPhone,
-        price: price || 0, // Optional, default to 0 if not provided
-        discountPercentage: discountPercentage || 0, // Optional, default to 0 if not provided
+        price: price ? parseFloat(price) : null,
+        discountPercentage: discountPercentage
+          ? parseFloat(discountPercentage)
+          : null,
+        userId: session.user.id,
       },
     });
 
-    // Return the created event with a 201 status code
     return NextResponse.json({ event }, { status: 201 });
-
   } catch (error) {
     console.error("Error creating event:", (error as Error).message);
     return NextResponse.json(
@@ -78,18 +87,16 @@ export async function POST(req: Request) {
 // GET: Fetch all events, sorted by date
 export async function GET() {
   try {
-    // Retrieve events from the database, sorted by date (ascending)
     const events = await prisma.event.findMany({
       orderBy: {
-        date: "asc", // Sorting events by the date in ascending order
+        date: "asc",
       },
     });
 
-    // Return the list of events
-    return NextResponse.json({ events });
-    
+    // Return the events array directly, not wrapped in an object
+    return NextResponse.json(events);
   } catch (error) {
-    console.error("Error fetching events:", error.message);
+    console.error("Error fetching events:", (error as Error).message);
     return NextResponse.json(
       { error: "Failed to fetch events" },
       { status: 500 }

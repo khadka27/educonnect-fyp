@@ -47,34 +47,29 @@ import { useToast } from "@/hooks/use-toast";
 const eventSchema = yup.object().shape({
   title: yup.string().required("Title is required"),
   description: yup.string().optional(),
-  date: yup.date().nullable().required("Date is required"),
+  date: yup.date().required("Date is required"),
   startTime: yup.string().required("Start time is required"),
-  registrationEndDate: yup
-    .date()
-    .nullable()
-    .required("Registration end date is required"),
+  registrationEndDate: yup.date().required("Registration end date is required"),
   location: yup.string().required("Location is required"),
   type: yup
     .string()
     .oneOf(["free", "premium"], "Type must be free or premium")
     .required("Event type is required"),
-  price: yup.number().when("type", {
-    is: "premium",
-    then: yup
-      .number()
-      .required("Price is required for premium events")
-      .min(0, "Price must be a positive number"),
-    otherwise: yup.number().nullable(),
-  }),
-  discountPercentage: yup.number().when("type", {
-    is: "premium",
-    then: yup
-      .number()
-      .min(0, "Discount percentage must be at least 0")
-      .max(100, "Discount percentage must not exceed 100")
-      .nullable(),
-    otherwise: yup.number().nullable(),
-  }),
+  price: yup
+    .number()
+    .when("type", (type, schema) =>
+      type === "premium"
+        ? schema
+            .required("Price is required for premium events")
+            .min(0, "Price must be a positive number")
+        : schema.nullable()
+    ),
+  discountPercentage: yup
+    .number()
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .min(0, "Discount percentage must be between 0 and 100")
+    .max(100, "Discount percentage must be between 0 and 100")
+    .nullable(),
   bannerUrl: yup.string().url("Must be a valid URL").optional(),
   contactEmail: yup
     .string()
@@ -88,7 +83,7 @@ const eventSchema = yup.object().shape({
 
 type EventFormValues = yup.InferType<typeof eventSchema>;
 
-export default function EventForm() {
+export default function CreateEventPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const router = useRouter();
@@ -121,6 +116,9 @@ export default function EventForm() {
         body: JSON.stringify({
           ...data,
           date: data.date?.toISOString(),
+          startTime: `${data.date?.toISOString().split("T")[0]}T${
+            data.startTime
+          }:00`,
           registrationEndDate: data.registrationEndDate?.toISOString(),
         }),
       });
@@ -146,49 +144,101 @@ export default function EventForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Create New Event</CardTitle>
-        <CardDescription>
-          Fill in the details to create a new event.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter event title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Describe your event" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="container mx-auto py-10">
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Create New Event</CardTitle>
+          <CardDescription>
+            Fill in the details to create a new event.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="date"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Event Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter event title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Describe your event" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Calendar
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
+                          <Input
+                            type="date"
+                            className="pl-10"
+                            {...field}
+                            value={
+                              field.value
+                                ? field.value.toISOString().split("T")[0]
+                                : ""
+                            }
+                            onChange={(e) =>
+                              field.onChange(new Date(e.target.value))
+                            }
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Time</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Clock
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
+                          <Input type="time" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="registrationEndDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Registration End Date</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Calendar
@@ -216,120 +266,168 @@ export default function EventForm() {
               />
               <FormField
                 control={form.control}
-                name="startTime"
+                name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel>Location</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Clock
+                        <MapPin
                           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                           size={18}
                         />
-                        <Input type="time" className="pl-10" {...field} />
+                        <Input
+                          placeholder="Event location"
+                          className="pl-10"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            <FormField
-              control={form.control}
-              name="registrationEndDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Registration End Date</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Calendar
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                        size={18}
-                      />
-                      <Input
-                        type="date"
-                        className="pl-10"
-                        {...field}
-                        value={
-                          field.value
-                            ? field.value.toISOString().split("T")[0]
-                            : ""
-                        }
-                        onChange={(e) =>
-                          field.onChange(new Date(e.target.value))
-                        }
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select event type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="free">Free</SelectItem>
+                        <SelectItem value="premium">Premium</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("type") === "premium" && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <DollarSign
+                              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                              size={18}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Event price"
+                              className="pl-10"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value))
+                              }
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="discountPercentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discount Percentage</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Percent
+                              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                              size={18}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Discount %"
+                              className="pl-10"
+                              {...field}
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value))
+                              }
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <MapPin
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                        size={18}
-                      />
-                      <Input
-                        placeholder="Event location"
-                        className="pl-10"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+              <FormField
+                control={form.control}
+                name="bannerUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Banner URL</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select event type" />
-                      </SelectTrigger>
+                      <div className="relative">
+                        <ImageIcon
+                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                          size={18}
+                        />
+                        <Input
+                          placeholder="https://example.com/banner.jpg"
+                          className="pl-10"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setPreviewImage(e.target.value);
+                          }}
+                        />
+                      </div>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+                    <FormDescription>
+                      Provide a URL for your event banner image
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {previewImage && (
+                <div className="mt-4">
+                  <Image
+                    src={previewImage}
+                    alt="Banner preview"
+                    width={300}
+                    height={150}
+                    className="rounded-md"
+                  />
+                </div>
               )}
-            />
-            {form.watch("type") === "premium" && (
-              <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="price"
+                  name="contactEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price</FormLabel>
+                      <FormLabel>Contact Email</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <DollarSign
+                          <Mail
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                             size={18}
                           />
                           <Input
-                            type="number"
+                            type="email"
+                            placeholder="contact@example.com"
                             className="pl-10"
-                            placeholder="Enter event price"
                             {...field}
                           />
                         </div>
@@ -340,20 +438,19 @@ export default function EventForm() {
                 />
                 <FormField
                   control={form.control}
-                  name="discountPercentage"
+                  name="contactPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Discount Percentage</FormLabel>
+                      <FormLabel>Contact Phone</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Percent
+                          <Phone
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                             size={18}
                           />
                           <Input
-                            type="number"
+                            placeholder="1234567890"
                             className="pl-10"
-                            placeholder="Enter discount percentage"
                             {...field}
                           />
                         </div>
@@ -362,92 +459,14 @@ export default function EventForm() {
                     </FormItem>
                   )}
                 />
-              </>
-            )}
-            <FormField
-              control={form.control}
-              name="bannerUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Banner URL</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <ImageIcon
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                        size={18}
-                      />
-                      <Input
-                        placeholder="Enter banner image URL"
-                        className="pl-10"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          setPreviewImage(e.target.value);
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {previewImage && (
-              <div className="mt-4">
-                <Image src={previewImage} alt="Banner preview" width={400} height={200} />
               </div>
-            )}
-            <FormField
-              control={form.control}
-              name="contactEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                        size={18}
-                      />
-                      <Input
-                        placeholder="Enter contact email"
-                        className="pl-10"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="contactPhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Phone</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Phone
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                        size={18}
-                      />
-                      <Input
-                        placeholder="Enter contact phone"
-                        className="pl-10"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Event"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Event"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

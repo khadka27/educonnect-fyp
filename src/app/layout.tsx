@@ -5,8 +5,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Chat Application',
-  description: 'A real-time chat application',
+  title: 'Edu Connect',
+  description: 'Edu connect',
 }
 
 export default async function RootLayout({
