@@ -1,4 +1,4 @@
-# Logbook: (No)
+# Logbook: (No:1)
 
 ## Meeting No: **\_** | Date: **\_**
 
@@ -31,5 +31,5 @@
 
 ---
 
-………………………… …………………………
-Student Name Supervisor Name (1st Supervisor)
+…………………………                                                                                                   …………………………
+Student Name                                                                                         Supervisor Name (1st Supervisor)
