@@ -88,6 +88,6 @@
 
 ---
 
-**Student Name**  
+**Abishek Khadka**  
 **Supervisor Name**  
 _(1st Supervisor)_
