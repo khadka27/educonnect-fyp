@@ -89,5 +89,5 @@
 ---
 
 **Abishek Khadka**  
-**Supervisor Name**  
+**Ashish Lamichhane**  
 _(1st Supervisor)_
