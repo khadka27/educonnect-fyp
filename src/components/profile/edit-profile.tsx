@@ -2,17 +2,27 @@
 
 import { useState, useEffect, ChangeEvent, DragEvent } from "react";
 import axios from "axios";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "src/components/ui/button";
+import { Input } from "src/components/ui/input";
+import { Label } from "src/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "src/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "src/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Eye, EyeOff } from "lucide-react";
 import ReactPasswordStrengthBar from "react-password-strength-bar";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "src/components/ui/textarea";
+import { ScrollArea } from "src/components/ui/scroll-area";
 import { useTheme } from "next-themes";
 
 function EditProfile() {

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "src/components/ui/button";
+import { Textarea } from "src/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
 import {
   Image as ImageIcon,
   FileIcon,

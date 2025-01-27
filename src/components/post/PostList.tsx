@@ -5,8 +5,8 @@ import axios from "axios";
 import { useTheme } from "next-themes";
 import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "framer-motion";
-import PostComponent from "@/components/post/post";
-import { Skeleton } from "@/components/ui/skeleton";
+import PostComponent from "src/components/post/post";
+import { Skeleton } from "src/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 

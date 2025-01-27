@@ -8,22 +8,22 @@ import React, {
   useEffect,
 } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "src/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "src/components/ui/avatar";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@/components/ui/card";
+} from "src/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+} from "src/components/ui/dropdown-menu";
+import { Textarea } from "src/components/ui/textarea";
+import { Dialog, DialogContent, DialogTrigger } from "src/components/ui/dialog";
 import {
   Heart,
   MessageCircle,

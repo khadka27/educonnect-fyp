@@ -3,11 +3,11 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "src/components/ui/button";
+import { Card } from "src/components/ui/card";
+import { Dialog, DialogContent, DialogTrigger } from "src/components/ui/dialog";
+import { Input } from "src/components/ui/input";
+import { Textarea } from "src/components/ui/textarea";
 import {
   MapPin,
   MessageSquare,
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import axios from "axios";
-import EditProfile from "@/components/profile/edit-profile";
+import EditProfile from "src/components/profile/edit-profile";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Avatar from "react-avatar";

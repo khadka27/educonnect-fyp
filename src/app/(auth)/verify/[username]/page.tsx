@@ -18,9 +18,9 @@ import {
   FormControl,
   FormMessage,
   Form,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from "src/components/ui/form";
+import { Input } from "src/components/ui/input";
+import { Button } from "src/components/ui/button";
 
 const VerifyAccount = () => {
   const { username } = useParams();

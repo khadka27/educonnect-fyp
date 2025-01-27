@@ -18,8 +18,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+} from "src/components/ui/card";
+import { Badge } from "src/components/ui/badge";
 import { Calendar, MapPin } from "lucide-react";
 
 interface Event {

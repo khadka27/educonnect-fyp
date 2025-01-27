@@ -17,11 +17,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
+} from "src/components/ui/form";
+import { Input } from "src/components/ui/input";
+import { Button } from "src/components/ui/button";
+import { useToast } from "src/hooks/use-toast";
+import GoogleSignInButton from "src/components/ui/GoogleSignInButton";
 
 const SignInSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),

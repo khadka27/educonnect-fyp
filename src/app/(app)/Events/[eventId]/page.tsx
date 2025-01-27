@@ -246,18 +246,18 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { Button } from "src/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+} from "src/components/ui/card";
+import { Skeleton } from "src/components/ui/skeleton";
+import { useToast } from "src/hooks/use-toast";
 import { Calendar, MapPin, Mail, Phone, Tag, ArrowLeft } from "lucide-react";
-import RegistrationForm from "@/components/event/registration-form";
+import RegistrationForm from "src/components/event/registration-form";
 
 interface Event {
   id: string;

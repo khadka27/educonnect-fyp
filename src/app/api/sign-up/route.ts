@@ -5,7 +5,7 @@ import { userSchema } from "@/Schema/Sign-up-schema";
 import { isValidEmail } from "@/utils/validation";
 import { sendVerificationEmail } from "@/utils/sendVerificationEmail"; // Ensure this function exists and is correct
 
-export async function POST(request: Request) {
+export default async function POST(req: unknown, res: unknown, request: Request) {
   try {
     const body = await request.json();
     const { username, email, password } = userSchema.parse(body); // Validate the request body

@@ -14,8 +14,8 @@ import {
   CheckCircle,
   BellOff,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
+import { Switch } from "src/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,13 +23,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "src/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "src/components/ui/tooltip";
 import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";

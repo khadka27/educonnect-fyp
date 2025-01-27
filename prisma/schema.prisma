@@ -237,7 +237,6 @@ model User {
   updatedAt        DateTime      @updatedAt
   posts            Post[] // Removed @relation(onDelete: Cascade)
   reactions        Reaction[]    @relation
-  shares           Share[]       @relation
   savedPosts       SavedPost[]   @relation
   comments         Comment[]     @relation
   messages         Message[]     @relation("SentMessages")
@@ -255,7 +254,6 @@ model Post {
   userId    String
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   reactions Reaction[]  @relation
-  shares    Share[]     @relation
   savedBy   SavedPost[] @relation
   comments  Comment[]   @relation
 }
@@ -272,14 +270,6 @@ model Reaction {
   @@unique([postId, userId, type]) // Ensure that a user can only have one reaction per post type
 }
 
-model Share {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-}
 
 model SavedPost {
   id        String   @id @default(cuid())
