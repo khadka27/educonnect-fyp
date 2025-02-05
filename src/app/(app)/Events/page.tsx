@@ -11,7 +11,7 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { Button } from "@/components/ui/button";
+import { Button } from "src/components/ui/button";
 import {
   Card,
   CardContent,

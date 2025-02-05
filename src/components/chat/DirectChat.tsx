@@ -58,10 +58,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "src/components/ui/scroll-area";
+import { Input } from "src/components/ui/input";
+import { Button } from "src/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
 import { Send, Paperclip, Phone, Video, Info, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useChat } from "@/context/ChatContext";
