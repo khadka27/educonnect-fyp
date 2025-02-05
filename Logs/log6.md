@@ -44,6 +44,6 @@
 
 ---
 
-**Student Name**  
+**Abishek Khadka**  
 **Ashish Lamichhane**  
 _(1st Supervisor)_
