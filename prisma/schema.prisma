@@ -243,7 +243,8 @@ model User {
   receivedMessages Message[]     @relation("ReceivedMessages")
   groupMemberships GroupMember[] @relation
   groupAdmin       Group[]       @relation("GroupAdmin")
-  events           Event[]       @relation("UserEvents" )
+  events           Event[]       @relation("UserEvents")
+  payments         Payment[] // Relation to Payment model
 }
 
 model Post {
@@ -269,7 +270,6 @@ model Reaction {
 
   @@unique([postId, userId, type]) // Ensure that a user can only have one reaction per post type
 }
-
 
 model SavedPost {
   id        String   @id @default(cuid())
@@ -345,25 +345,25 @@ model GroupMember {
 //-----------------------------------events schema-----------------------------------
 
 model Event {
-  id                 String         @id @default(cuid())
-  title              String
-  description        String?
-  date               DateTime       // Event date
-  startTime          DateTime?       // Event start time
-  registrationEndDate DateTime?     // Last date for registration
-  location           String
-  type               String         // 'free' or 'premium'
-  bannerUrl          String?
-  contactEmail       String
-  contactPhone       String
-  price              Float?         // Event price (if premium)
-  discountPercentage Float?         // Discount percentage (optional)
-  registrations      Registration[] // Linked to registration model
+  id                  String         @id @default(cuid())
+  title               String
+  description         String?
+  date                DateTime // Event date
+  startTime           DateTime? // Event start time
+  registrationEndDate DateTime? // Last date for registration
+  location            String
+  type                String // 'free' or 'premium'
+  bannerUrl           String?
+  contactEmail        String
+  contactPhone        String
+  price               Float? // Event price (if premium)
+  discountPercentage  Float? // Discount percentage (optional)
+  registrations       Registration[] // Linked to registration model
 
-  userId String
-  user   User @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade) // Cascade delete on user deletion
+  userId   String
+  user     User      @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade) // Cascade delete on user deletion
+  payments Payment[] // Relation to Payment model
 }
-
 
 model Registration {
   id            String   @id @default(cuid())
@@ -376,4 +376,20 @@ model Registration {
   paymentStatus String? // pending, completed, failed
   transactionId String? // Optional field for storing transaction IDs
   createdAt     DateTime @default(now())
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  transactionId  String   @unique
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  amount         Float
+  status         String
+  method         String
+  paymentGateway String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  failureReason  String?
 }

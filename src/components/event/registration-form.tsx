@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { Button } from "src/components/ui/button";
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
@@ -11,10 +10,7 @@ import {
 } from "src/components/ui/dialog";
 
 interface RegistrationFormProps {
-  event: {
-    id: string;
-    title: string;
-  };
+  event: { id: string; title: string; type: string };
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -25,45 +21,43 @@ export default function RegistrationForm({
   onClose,
 }: RegistrationFormProps) {
   const [loading, setLoading] = useState(false);
-  const { data: session } = useSession();
+  const [paymentMethod, setPaymentMethod] = useState("esewa");
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Ensure session exists before proceeding with form submission
-    if (!session?.user?.id) {
-      alert("Please log in before registering.");
-      return;
-    }
-
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const registrationData = {
+    const registrationData: any = {
       eventId: event.id,
-      userId: session.user.id, // Now, session is guaranteed to exist
-      name: formData.get("name"),
-      email: formData.get("email"),
-      phone: formData.get("phone"),
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      paymentMethod,
     };
 
     try {
       const res = await fetch("/api/events/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registrationData),
       });
 
-      if (!res.ok) {
-        throw new Error("Registration failed");
-      }
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.error || "Registration failed");
 
-      onSuccess();
+      if (responseData.paymentUrl) {
+        window.location.href = responseData.paymentUrl;
+      } else {
+        onSuccess();
+      }
     } catch (error) {
-      console.error("Error during registration:", error);
-      alert("Failed to register. Please try again.");
+      alert(error.message);
     } finally {
       setLoading(false);
     }
@@ -71,36 +65,71 @@ export default function RegistrationForm({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md p-6">
         <DialogHeader>
           <DialogTitle>Register for {event.title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
               name="name"
+              value={formData.name}
+              onChange={handleChange}
               required
-              defaultValue={session?.user?.name || ""}
             />
           </div>
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               name="email"
-              type="email"
+              value={formData.email}
+              onChange={handleChange}
               required
-              defaultValue={session?.user?.email || ""}
             />
           </div>
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" name="phone" required />
+            <Input
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+            />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
+
+          {event.type === "premium" && (
+            <div>
+              <Label>Payment Method</Label>
+              <div className="flex space-x-4">
+                <label>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="esewa"
+                    checked={paymentMethod === "esewa"}
+                    onChange={() => setPaymentMethod("esewa")}
+                  />
+                  eSewa
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="khalti"
+                    onChange={() => setPaymentMethod("khalti")}
+                  />
+                  Khalti
+                </label>
+              </div>
+            </div>
+          )}
+
+          <Button type="submit" disabled={loading}>
+            {loading ? "Processing..." : "Register"}
           </Button>
         </form>
       </DialogContent>

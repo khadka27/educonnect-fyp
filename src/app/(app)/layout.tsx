@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       <body className={inter.className}>
         <Navbar />
         <Providers>
-          <SidebarNavigation />
+          {/* <SidebarNavigation /> */}
      
           {children}</Providers>
         {/* <RightSidebar /> */}
