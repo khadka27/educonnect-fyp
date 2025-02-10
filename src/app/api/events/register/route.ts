@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { initiateEsewaPayment, initiateKhaltiPayment } from "src/lib/initiatePayments";
+import {
+  initiateEsewaPayment,
+  initiateKhaltiPayment,
+} from "src/lib/initiatePayments";
+import { EventType } from ".prisma/client";
 
-// Schema validation using Zod
+// Adjusted schema validation
 const registrationSchema = z.object({
-  eventId: z.string().uuid("Invalid event ID"),
+  eventId: z.string().min(1, "Event ID is required"), // Allow non-UUID formats if necessary
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits").max(15),
@@ -21,11 +25,15 @@ export async function POST(req: Request) {
     const event = await prisma.event.findUnique({
       where: { id: parsedBody.eventId },
     });
+
     if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Event not found or invalid ID" },
+        { status: 404 }
+      );
     }
 
-    const isPremiumEvent = event.type === "premium";
+    const isPremiumEvent = event.type === EventType.PREMIUM;
 
     if (isPremiumEvent && !parsedBody.paymentMethod) {
       return NextResponse.json(
@@ -52,9 +60,23 @@ export async function POST(req: Request) {
       // Initiate payment based on the selected method
       let paymentUrl;
       if (parsedBody.paymentMethod === "esewa") {
-        paymentUrl = await initiateEsewaPayment(parsedBody, event.price);
+        if (event.price !== null) {
+          paymentUrl = await initiateEsewaPayment(parsedBody, event.price);
+        } else {
+          return NextResponse.json(
+            { error: "Event price is not set" },
+            { status: 400 }
+          );
+        }
       } else if (parsedBody.paymentMethod === "khalti") {
-        paymentUrl = await initiateKhaltiPayment(parsedBody, event.price);
+        if (event.price !== null) {
+          paymentUrl = await initiateKhaltiPayment(parsedBody, event.price);
+        } else {
+          return NextResponse.json(
+            { error: "Event price is not set" },
+            { status: 400 }
+          );
+        }
       }
 
       return NextResponse.json({
@@ -83,6 +105,7 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
+    console.error("Server error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

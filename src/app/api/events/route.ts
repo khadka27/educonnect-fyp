@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import { EventType } from ".prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -27,18 +28,20 @@ export async function POST(req: Request) {
       discountPercentage,
     } = data;
 
-    if (
-      !title ||
-      !date ||
-      !location ||
-      !type ||
-      !contactEmail ||
-      !contactPhone ||
-      !startTime ||
-      !registrationEndDate
-    ) {
+    // Check for missing required fields
+    const requiredFields = [
+      title,
+      date,
+      location,
+      type,
+      contactEmail,
+      contactPhone,
+      startTime,
+      registrationEndDate,
+    ];
+    if (requiredFields.some((field) => !field)) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "All required fields must be provided" },
         { status: 400 }
       );
     }
@@ -47,9 +50,14 @@ export async function POST(req: Request) {
     const eventStartTime = new Date(startTime);
     const eventRegistrationEndDate = new Date(registrationEndDate);
 
-    if (!session.user.id) {
+    // Check for valid date objects
+    if (
+      isNaN(eventDate.getTime()) ||
+      isNaN(eventStartTime.getTime()) ||
+      isNaN(eventRegistrationEndDate.getTime())
+    ) {
       return NextResponse.json(
-        { error: "User ID is missing" },
+        { error: "Invalid date format provided" },
         { status: 400 }
       );
     }
@@ -62,7 +70,7 @@ export async function POST(req: Request) {
         startTime: eventStartTime,
         registrationEndDate: eventRegistrationEndDate,
         location,
-        type,
+        type: type === "PREMIUM" ? EventType.PREMIUM : EventType.FREE,
         bannerUrl: bannerUrl || null,
         contactEmail,
         contactPhone,
@@ -70,7 +78,7 @@ export async function POST(req: Request) {
         discountPercentage: discountPercentage
           ? parseFloat(discountPercentage)
           : null,
-        userId: session.user.id,
+        userId: session.user.id || "",
       },
     });
 
@@ -93,7 +101,6 @@ export async function GET() {
       },
     });
 
-    // Return the events array directly, not wrapped in an object
     return NextResponse.json(events);
   } catch (error) {
     console.error("Error fetching events:", (error as Error).message);

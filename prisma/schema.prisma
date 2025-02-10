@@ -203,7 +203,6 @@
 //   eventType String   // free or premium
 //   createdAt DateTime @default(now())
 // }
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -219,12 +218,37 @@ enum Role {
   TEACHER
 }
 
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentMethod {
+  ESEWA
+  KHALTI
+  PAYPAL
+  STRIPE
+}
+
+enum PaymentGateway {
+  ESEWA
+  KHALTI
+  PAYPAL
+  STRIPE
+}
+
+enum EventType {
+  FREE
+  PREMIUM
+}
+
 model User {
   id               String        @id @default(cuid())
   name             String?
   username         String?       @unique
   email            String?       @unique
-  password         String?
+  password         String
   bio              String?
   address          String?
   coverImage       String?
@@ -235,16 +259,65 @@ model User {
   role             Role          @default(USER)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
-  posts            Post[] // Removed @relation(onDelete: Cascade)
-  reactions        Reaction[]    @relation
-  savedPosts       SavedPost[]   @relation
-  comments         Comment[]     @relation
+  posts            Post[]
+  reactions        Reaction[]
+  savedPosts       SavedPost[]
+  comments         Comment[]
   messages         Message[]     @relation("SentMessages")
   receivedMessages Message[]     @relation("ReceivedMessages")
-  groupMemberships GroupMember[] @relation
+  groupMemberships GroupMember[]
   groupAdmin       Group[]       @relation("GroupAdmin")
   events           Event[]       @relation("UserEvents")
-  payments         Payment[] // Relation to Payment model
+  payments         Payment[]
+}
+
+model Event {
+  id                  String         @id @default(cuid())
+  title               String
+  description         String?
+  date                DateTime
+  startTime           DateTime?
+  registrationEndDate DateTime?
+  location            String
+  type                EventType
+  bannerUrl           String?
+  contactEmail        String
+  contactPhone        String
+  price               Float?
+  discountPercentage  Float?
+  registrations       Registration[]
+  userId              String
+  user                User           @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade)
+  payments            Payment[]
+}
+
+model Registration {
+  id            String         @id @default(cuid())
+  name          String
+  email         String
+  phone         String
+  eventId       String
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventType     EventType
+  paymentStatus PaymentStatus?
+  transactionId String?
+  createdAt     DateTime       @default(now())
+}
+
+model Payment {
+  id             String         @id @default(cuid())
+  transactionId  String         @unique
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId        String
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  amount         Float
+  status         PaymentStatus
+  method         PaymentMethod
+  paymentGateway PaymentGateway
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  failureReason  String?
 }
 
 model Post {
@@ -254,21 +327,21 @@ model Post {
   createdAt DateTime    @default(now())
   userId    String
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reactions Reaction[]  @relation
-  savedBy   SavedPost[] @relation
-  comments  Comment[]   @relation
+  reactions Reaction[]
+  savedBy   SavedPost[]
+  comments  Comment[]
 }
 
 model Reaction {
   id        String   @id @default(cuid())
-  type      String // Changed to String to handle different reaction types like 'like'
+  type      String
   createdAt DateTime @default(now())
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId, type]) // Ensure that a user can only have one reaction per post type
+  @@unique([postId, userId, type])
 }
 
 model SavedPost {
@@ -279,7 +352,7 @@ model SavedPost {
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, postId]) // Ensure that a user can only save a post once
+  @@unique([userId, postId])
 }
 
 model Comment {
@@ -293,7 +366,7 @@ model Comment {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
-//-----------------------------------------chat schema-----------------------------------------
+//----------------------------------------- Chat Schema -----------------------------------------
 
 model Message {
   id             String   @id @default(cuid())
@@ -301,10 +374,9 @@ model Message {
   createdAt      DateTime @default(now())
   isRead         Boolean  @default(false)
   isGroupMessage Boolean  @default(false)
-
-  fileUrl   String? // For file, image, video URL
-  fileType  String? // To store type of the file (e.g., 'image', 'video', 'file')
-  expiresAt DateTime @default(dbgenerated("now() + interval '1 day'")) // Auto-delete after 24 hours
+  fileUrl        String?
+  fileType       String?
+  expiresAt      DateTime @default(dbgenerated("now() + interval '1 day'"))
 
   senderId String
   sender   User   @relation("SentMessages", fields: [senderId], references: [id])
@@ -340,56 +412,4 @@ model GroupMember {
   group   Group  @relation(fields: [groupId], references: [id])
 
   @@id([userId, groupId])
-}
-
-//-----------------------------------events schema-----------------------------------
-
-model Event {
-  id                  String         @id @default(cuid())
-  title               String
-  description         String?
-  date                DateTime // Event date
-  startTime           DateTime? // Event start time
-  registrationEndDate DateTime? // Last date for registration
-  location            String
-  type                String // 'free' or 'premium'
-  bannerUrl           String?
-  contactEmail        String
-  contactPhone        String
-  price               Float? // Event price (if premium)
-  discountPercentage  Float? // Discount percentage (optional)
-  registrations       Registration[] // Linked to registration model
-
-  userId   String
-  user     User      @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade) // Cascade delete on user deletion
-  payments Payment[] // Relation to Payment model
-}
-
-model Registration {
-  id            String   @id @default(cuid())
-  name          String
-  email         String
-  phone         String
-  eventId       String
-  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventType     String // free or premium
-  paymentStatus String? // pending, completed, failed
-  transactionId String? // Optional field for storing transaction IDs
-  createdAt     DateTime @default(now())
-}
-
-model Payment {
-  id             String   @id @default(cuid())
-  transactionId  String   @unique
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventId        String
-  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  amount         Float
-  status         String
-  method         String
-  paymentGateway String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  failureReason  String?
 }

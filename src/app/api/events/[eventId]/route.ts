@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
-import {prisma} from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(req: Request, { params }: { params: { eventId: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { eventId: string } }
+) {
   const { eventId } = params;
 
   try {
@@ -10,11 +13,14 @@ export async function GET(req: Request, { params }: { params: { eventId: string 
     });
 
     if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     return NextResponse.json({ event });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch event' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch event" },
+      { status: 500 }
+    );
   }
 }

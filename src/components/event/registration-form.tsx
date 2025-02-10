@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { Button } from "src/components/ui/button";
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
@@ -8,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "src/components/ui/dialog";
+import { useToast } from "src/hooks/use-toast";
 
 interface RegistrationFormProps {
   event: { id: string; title: string; type: string };
@@ -22,42 +24,100 @@ export default function RegistrationForm({
 }: RegistrationFormProps) {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("esewa");
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const { toast } = useToast();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validateForm = () => {
+    if (!event.id.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Invalid event ID. Please refresh and try again.",
+      });
+      return false;
+    }
+    if (!formData.name.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Name is required.",
+      });
+      return false;
+    }
+    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please provide a valid email address.",
+      });
+      return false;
+    }
+    if (!formData.phone.match(/^\d{10,15}$/)) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Phone number must be between 10 and 15 digits.",
+      });
+      return false;
+    }
+    if (event.type.toLowerCase() === "premium" && !paymentMethod) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please select a payment method.",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setLoading(true);
 
-    const registrationData: any = {
+    const registrationData = {
       eventId: event.id,
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
-      paymentMethod,
+      paymentMethod:
+        event.type.toLowerCase() === "premium" ? paymentMethod : undefined,
     };
 
     try {
-      const res = await fetch("/api/events/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registrationData),
-      });
+      const { data } = await axios.post(
+        "/api/events/register",
+        registrationData
+      );
 
-      const responseData = await res.json();
-      if (!res.ok) throw new Error(responseData.error || "Registration failed");
-
-      if (responseData.paymentUrl) {
-        window.location.href = responseData.paymentUrl;
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
       } else {
+        toast({
+          title: "Success",
+          description: "You have successfully registered for the event.",
+        });
         onSuccess();
       }
-    } catch (error) {
-      alert(error.message);
+    } catch (error: any) {
+      const message =
+        error.response?.data?.error || error.message || "Registration failed.";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
     } finally {
       setLoading(false);
     }
@@ -77,6 +137,7 @@ export default function RegistrationForm({
               name="name"
               value={formData.name}
               onChange={handleChange}
+              placeholder="Enter your name"
               required
             />
           </div>
@@ -87,6 +148,7 @@ export default function RegistrationForm({
               name="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email"
               required
             />
           </div>
@@ -97,11 +159,12 @@ export default function RegistrationForm({
               name="phone"
               value={formData.phone}
               onChange={handleChange}
+              placeholder="Enter your phone number"
               required
             />
           </div>
 
-          {event.type === "premium" && (
+          {event.type.toLowerCase() === "premium" && (
             <div>
               <Label>Payment Method</Label>
               <div className="flex space-x-4">
@@ -120,6 +183,7 @@ export default function RegistrationForm({
                     type="radio"
                     name="paymentMethod"
                     value="khalti"
+                    checked={paymentMethod === "khalti"}
                     onChange={() => setPaymentMethod("khalti")}
                   />
                   Khalti
@@ -128,7 +192,7 @@ export default function RegistrationForm({
             </div>
           )}
 
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Processing..." : "Register"}
           </Button>
         </form>
