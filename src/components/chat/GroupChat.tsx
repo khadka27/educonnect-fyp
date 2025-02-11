@@ -101,12 +101,22 @@ const GroupChat: React.FC = () => {
   };
 
   useEffect(() => {
-    // Fetch users for adding to groups (could be replaced by API call)
     const fetchUsers = async () => {
-      // Replace with API call to fetch users if needed
-      const response = await fetch("/api/user"); // Adjust to match your backend
-      const data = await response.json();
-      setUsers(data);
+      try {
+        const response = await fetch("/api/user"); // Adjust the endpoint if necessary
+        const data = await response.json();
+
+        // Ensure the response contains an array
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else {
+          console.error("API did not return an array of users.");
+          setUsers([]); // Handle case where API returns unexpected data
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setUsers([]); // Fallback to empty array on error
+      }
     };
 
     fetchUsers();
