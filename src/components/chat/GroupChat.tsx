@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import io from "socket.io-client";
+import io  from "socket.io-client";
 import { useSession } from "next-auth/react";
 import { Input } from "src/components/ui/input";
 import { Button } from "src/components/ui/button";
@@ -51,6 +51,7 @@ const GroupChat: React.FC = () => {
       });
 
       return () => {
+        // Clean up socket listeners to prevent memory leaks
         socket.off("groupCreated");
         socket.off("newGroupMessage");
       };
@@ -59,12 +60,16 @@ const GroupChat: React.FC = () => {
 
   const fetchGroupMessages = useCallback(
     (groupId: string) => {
-      socket.emit("fetchGroupMessages", groupId);
       setSelectedGroup(groups.find((group) => group.id === groupId) || null);
+      socket.emit("fetchGroupMessages", groupId);
 
       socket.on("groupMessageHistory", (messages: Message[]) => {
         setGroupMessages(messages);
       });
+
+      return () => {
+        socket.off("groupMessageHistory");
+      };
     },
     [groups]
   );
@@ -86,6 +91,7 @@ const GroupChat: React.FC = () => {
         groupId: selectedGroup.id,
         userId: selectedUser,
       });
+      setSelectedUser(null);
     }
   };
 
@@ -103,19 +109,18 @@ const GroupChat: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("/api/user"); // Adjust the endpoint if necessary
+        const response = await fetch("/api/users");
         const data = await response.json();
 
-        // Ensure the response contains an array
         if (Array.isArray(data)) {
           setUsers(data);
         } else {
           console.error("API did not return an array of users.");
-          setUsers([]); // Handle case where API returns unexpected data
+          setUsers([]);
         }
       } catch (error) {
         console.error("Error fetching users:", error);
-        setUsers([]); // Fallback to empty array on error
+        setUsers([]);
       }
     };
 
@@ -142,15 +147,19 @@ const GroupChat: React.FC = () => {
       {/* List of groups */}
       <div className="mt-6">
         <h2 className="font-semibold">Groups</h2>
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className="p-2 border rounded cursor-pointer mt-2"
-            onClick={() => fetchGroupMessages(group.id)}
-          >
-            {group.name}
-          </div>
-        ))}
+        {groups.length > 0 ? (
+          groups.map((group) => (
+            <div
+              key={group.id}
+              className="p-2 border rounded cursor-pointer mt-2"
+              onClick={() => fetchGroupMessages(group.id)}
+            >
+              {group.name}
+            </div>
+          ))
+        ) : (
+          <p>No groups available. Create one to get started.</p>
+        )}
       </div>
 
       {/* Group members */}
