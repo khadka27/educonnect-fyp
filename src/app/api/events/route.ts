@@ -70,7 +70,8 @@ export async function POST(req: Request) {
         startTime: eventStartTime,
         registrationEndDate: eventRegistrationEndDate,
         location,
-        type: type === "PREMIUM" ? EventType.PREMIUM : EventType.FREE,
+        type:
+          type.toUpperCase() === "PREMIUM" ? EventType.PREMIUM : EventType.FREE,
         bannerUrl: bannerUrl || null,
         contactEmail,
         contactPhone,

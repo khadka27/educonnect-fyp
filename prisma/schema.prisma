@@ -378,12 +378,15 @@ model Message {
   fileType       String?
   expiresAt      DateTime @default(dbgenerated("now() + interval '1 day'"))
 
+  // Sender relation
   senderId String
   sender   User   @relation("SentMessages", fields: [senderId], references: [id])
 
+  // Receiver for private messages (optional if it’s a group message)
   receiverId String?
   receiver   User?   @relation("ReceivedMessages", fields: [receiverId], references: [id])
 
+  // Group relation for group messages
   groupId String?
   group   Group?  @relation(fields: [groupId], references: [id])
 
@@ -394,15 +397,19 @@ model Message {
 }
 
 model Group {
-  id        String        @id @default(cuid())
-  name      String
-  adminId   String
-  admin     User          @relation("GroupAdmin", fields: [adminId], references: [id])
-  members   GroupMember[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id      String @id @default(cuid())
+  name    String
+  adminId String
+  admin   User   @relation("GroupAdmin", fields: [adminId], references: [id])
 
+  // Members of the group
+  members GroupMember[]
+
+  // Messages in the group
   messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model GroupMember {
@@ -411,5 +418,6 @@ model GroupMember {
   groupId String
   group   Group  @relation(fields: [groupId], references: [id])
 
+  // Composite primary key to avoid duplicate memberships
   @@id([userId, groupId])
 }

@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   await prisma.payment.update({
     where: { transactionId },
-    data: { status: "completed" },
+    data: { status: "COMPLETED" },
   });
 
   return NextResponse.json({ message: "Payment successful" });
