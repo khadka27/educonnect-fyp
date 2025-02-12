@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import io  from "socket.io-client";
+import io from "socket.io-client";
 import { useSession } from "next-auth/react";
 import { Input } from "src/components/ui/input";
 import { Button } from "src/components/ui/button";
@@ -91,7 +91,11 @@ const GroupChat: React.FC = () => {
         groupId: selectedGroup.id,
         userId: selectedUser,
       });
+
+      // Clear selection after adding
       setSelectedUser(null);
+    } else {
+      console.error("No user or group selected.");
     }
   };
 
@@ -109,7 +113,7 @@ const GroupChat: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("/api/users");
+        const response = await fetch("/api/user"); // Ensure this endpoint returns an array of users
         const data = await response.json();
 
         if (Array.isArray(data)) {
@@ -167,9 +171,9 @@ const GroupChat: React.FC = () => {
         <div className="mt-6">
           <h2 className="font-semibold">Add Users to {selectedGroup.name}</h2>
           <select
+            value={selectedUser || ""}
             onChange={(e) => setSelectedUser(e.target.value)}
             className="mt-2 p-2 border rounded"
-            defaultValue=""
           >
             <option value="" disabled>
               Select a user to add
