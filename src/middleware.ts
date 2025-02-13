@@ -97,7 +97,7 @@ export async function middleware(request: NextRequest) {
   ) {
     if (token.role === "ADMIN") {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-    } else if (token.role === "USER") {
+    } else if (token.role === "USER" || token.role === "TEACHER") {
       return NextResponse.redirect(new URL("/Home", request.url));
     }
   }
@@ -109,6 +109,10 @@ export async function middleware(request: NextRequest) {
 
   // Restrict user routes
   if (token.role === "USER" && !userRoutes.includes(url.pathname)) {
+    return NextResponse.redirect(new URL("/Home", request.url));
+  }
+
+  if (token.role === "TEACHER" && !userRoutes.includes(url.pathname)) {
     return NextResponse.redirect(new URL("/Home", request.url));
   }
 

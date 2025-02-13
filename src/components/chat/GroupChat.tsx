@@ -35,29 +35,25 @@ const GroupChat: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
-  const { data: session } = useSession(); // Assuming session gives access to the user ID and role
+  const { data: session } = useSession();
 
+  // Fetch groups on mount
   useEffect(() => {
-    // Join socket room for real-time updates
     if (session?.user?.id) {
-      socket.emit("joinRoom", session.user.id);
+      socket.emit("fetchGroups", session.user.id);
+      socket.on("groupList", (data: Group[]) => setGroups(data));
 
-      socket.on("groupCreated", (group: Group) => {
-        setGroups((prev) => [...prev, group]);
-      });
-
-      socket.on("newGroupMessage", (message: Message) => {
-        setGroupMessages((prev) => [...prev, message]);
-      });
+      socket.emit("fetchUsers");
+      socket.on("userList", (data: User[]) => setUsers(data));
 
       return () => {
-        // Clean up socket listeners to prevent memory leaks
-        socket.off("groupCreated");
-        socket.off("newGroupMessage");
+        socket.off("groupList");
+        socket.off("userList");
       };
     }
   }, [session]);
 
+  // Fetch group messages
   const fetchGroupMessages = useCallback(
     (groupId: string) => {
       setSelectedGroup(groups.find((group) => group.id === groupId) || null);
@@ -74,6 +70,7 @@ const GroupChat: React.FC = () => {
     [groups]
   );
 
+  // Create a group (Only Teachers)
   const createGroup = () => {
     if (groupName.trim() && session?.user?.id) {
       socket.emit("createGroup", {
@@ -84,21 +81,22 @@ const GroupChat: React.FC = () => {
     }
   };
 
+  // Add user to group (Only Admin)
   const addUserToGroup = () => {
     if (selectedUser && selectedGroup) {
       socket.emit("addUserToGroup", {
-        teacherId: session?.user.id,
+        teacherId: session?.user?.id,
         groupId: selectedGroup.id,
         userId: selectedUser,
       });
 
-      // Clear selection after adding
       setSelectedUser(null);
     } else {
       console.error("No user or group selected.");
     }
   };
 
+  // Send a group message
   const handleSendGroupMessage = () => {
     if (newMessage.trim() && selectedGroup && session?.user?.id) {
       socket.emit("sendGroupMessage", {
@@ -109,27 +107,6 @@ const GroupChat: React.FC = () => {
       setNewMessage("");
     }
   };
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch("/api/user"); // Ensure this endpoint returns an array of users
-        const data = await response.json();
-
-        if (Array.isArray(data)) {
-          setUsers(data);
-        } else {
-          console.error("API did not return an array of users.");
-          setUsers([]);
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setUsers([]);
-      }
-    };
-
-    fetchUsers();
-  }, []);
 
   return (
     <div className="p-4">

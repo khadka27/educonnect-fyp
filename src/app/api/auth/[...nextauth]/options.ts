@@ -38,7 +38,11 @@ export const authOptions: NextAuthOptions = {
           if (!user.isVerified) throw new Error("Please verify your account");
 
           // Allow both admin and regular users to log in
-          if (user.role === "USER" || user.role === "ADMIN") {
+          if (
+            user.role === "USER" ||
+            user.role === "ADMIN" ||
+            user.role === "TEACHER"
+          ) {
             if (
               user.password &&
               (await bcrypt.compare(credentials.password, user.password))
@@ -90,10 +94,10 @@ export const authOptions: NextAuthOptions = {
     updateAge: 5 * 60, // Session will be updated every 5 minutes
   },
   jwt: {
-    secret: process.env.NEXTAUTH_SECRET || "",
+    secret: process.env.NEXTAUTH_SECRET ?? "",
   },
   pages: {
     signIn: "/sign-in",
   },
-  secret: process.env.NEXTAUTH_SECRET || "",
+  secret: process.env.NEXTAUTH_SECRET ?? "",
 };

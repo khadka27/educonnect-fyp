@@ -171,7 +171,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const port = parseInt(process.env.PORT || "3000", 10);
+const port = parseInt(process.env.PORT ?? "3000", 10);
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
@@ -184,33 +184,37 @@ app.prepare().then(() => {
 
   const io = new Server(httpServer);
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log("New client connected");
 
-    // User joins a room based on their user ID
-    socket.on("joinRoom", (userId) => {
-      socket.join(userId);
-      console.log(`User ${userId} joined room`);
-    });
-
-    // Fetch group messages
-    socket.on("fetchGroupMessages", async (groupId) => {
+    // Fetch all groups when a user connects
+    socket.on("fetchGroups", async (userId) => {
       try {
-        const messages = await prisma.message.findMany({
-          where: { groupId },
-          orderBy: { createdAt: "asc" },
+        const groups = await prisma.group.findMany({
+          where: {
+            OR: [{ adminId: userId }, { members: { some: { userId } } }],
+          },
+          include: { members: true },
         });
-
-        socket.emit("groupMessageHistory", messages);
+        socket.emit("groupList", groups);
       } catch (err) {
-        console.error("Error fetching group messages:", err);
+        console.error("Error fetching groups:", err);
       }
     });
 
-    // Teacher creates a group
+    // Fetch users from database
+    socket.on("fetchUsers", async () => {
+      try {
+        const users = await prisma.user.findMany();
+        socket.emit("userList", users);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    });
+
+    // Create a group (Only Teachers)
     socket.on("createGroup", async ({ teacherId, groupName }) => {
       try {
-        // Verify that the user creating the group is a teacher
         const teacher = await prisma.user.findFirst({
           where: { id: teacherId, role: "TEACHER" },
         });
@@ -227,78 +231,81 @@ app.prepare().then(() => {
           },
         });
 
-        socket.emit("groupCreated", group);
-        console.log("Group created by teacher:", group);
+        io.emit("groupCreated", group);
+        console.log("Group created:", group);
       } catch (err) {
         console.error("Error creating group:", err);
       }
     });
 
-    // Teacher adds a user to the group
-    socket.on("addUserToGroup", async ({ teacherId, groupId, userId }) => {
+    // Rename a group (Only Admin)
+    socket.on("renameGroup", async ({ adminId, groupId, newName }) => {
       try {
-        // Check if the teacher is the admin of the group
+        const group = await prisma.group.update({
+          where: { id: groupId, adminId },
+          data: { name: newName },
+        });
+
+        io.emit("groupUpdated", group);
+        console.log("Group renamed:", group);
+      } catch (err) {
+        console.error("Error renaming group:", err);
+      }
+    });
+
+    // Delete a group (Only Admin)
+    socket.on("deleteGroup", async ({ adminId, groupId }) => {
+      try {
+        await prisma.group.delete({ where: { id: groupId, adminId } });
+        io.emit("groupDeleted", groupId);
+        console.log(`Group ${groupId} deleted by admin.`);
+      } catch (err) {
+        console.error("Error deleting group:", err);
+      }
+    });
+
+    // Add user to group (Only Admin)
+    socket.on("addUserToGroup", async ({ adminId, groupId, userId }) => {
+      try {
         const group = await prisma.group.findFirst({
-          where: { id: groupId, adminId: teacherId },
+          where: { id: groupId, adminId },
         });
 
         if (!group) {
-          socket.emit("error", "You are not the admin of this group.");
+          socket.emit("error", "Only admins can add users.");
           return;
         }
 
-        // Check if the user is already a member of the group
-        const existingMember = await prisma.groupMember.findFirst({
-          where: { groupId, userId },
-        });
-
-        if (existingMember) {
-          socket.emit("error", "User is already a member of the group.");
-          return;
-        }
-
-        // Add the user to the group
-        await prisma.groupMember.create({
-          data: {
-            groupId,
-            userId,
-          },
-        });
-
-        socket.emit("userAddedToGroup", { groupId, userId });
+        await prisma.groupMember.create({ data: { groupId, userId } });
+        io.emit("userAddedToGroup", { groupId, userId });
         console.log(`User ${userId} added to group ${groupId}`);
       } catch (err) {
         console.error("Error adding user to group:", err);
       }
     });
 
-    // Send a group message
-    socket.on("sendGroupMessage", async (data) => {
+    // Kick user from group (Only Admin)
+    socket.on("removeUserFromGroup", async ({ adminId, groupId, userId }) => {
       try {
-        const message = await prisma.message.create({
-          data: {
-            content: data.content,
-            senderId: data.senderId,
-            groupId: data.groupId,
-            isGroupMessage: true,
-          },
+        const group = await prisma.group.findFirst({
+          where: { id: groupId, adminId },
         });
 
-        const newMessage = {
-          ...message,
-          createdAt: message.createdAt.toISOString(),
-        };
+        if (!group) {
+          socket.emit("error", "Only admins can remove users.");
+          return;
+        }
 
-        // Broadcast the message to all group members
-        io.to(`group-${data.groupId}`).emit("newGroupMessage", newMessage);
-        console.log("Group message sent:", newMessage);
+        await prisma.groupMember.deleteMany({ where: { groupId, userId } });
+        io.emit("userRemovedFromGroup", { groupId, userId });
+        console.log(`User ${userId} removed from group ${groupId}`);
       } catch (err) {
-        console.error("Error sending group message:", err);
+        console.error("Error removing user from group:", err);
       }
     });
 
-    socket.on("disconnect", (reason) => {
-      console.log("Client disconnected:", reason);
+    socket.on("disconnect", () => {
+      console.log("Client disconnected");
     });
   });
 
