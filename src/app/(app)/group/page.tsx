@@ -5,7 +5,8 @@ import React from "react";
 
 export default function group() {
   return (
-    <div>
+    <div className="mt-10px">
+      <h1>Group</h1>
       <GroupChat />
     </div>
   );

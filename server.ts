@@ -168,6 +168,7 @@ import { parse } from "url";
 import next from "next";
 import { Server } from "socket.io";
 import { PrismaClient } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
 
 const prisma = new PrismaClient();
 
@@ -182,12 +183,32 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl);
   });
 
-  const io = new Server(httpServer);
+  const io = new Server(httpServer, {
+    cors: {
+      origin: "*", // Change this for security in production
+      methods: ["GET", "POST"],
+    },
+  });
 
-  io.on("connection", async (socket) => {
-    console.log("New client connected");
+  io.on("connection", (socket) => {
+    console.log("New client connected:", socket.id);
 
-    // Fetch all groups when a user connects
+    /** ────────────────────────────
+     *  📌 USER ROOM JOINING
+     *  ─────────────────────────── */
+    socket.on("joinRoom", (userId) => {
+      socket.join(userId);
+      console.log(`User ${userId} joined room`);
+    });
+
+    socket.on("joinGroup", (groupId) => {
+      socket.join(`group-${groupId}`);
+      console.log(`User joined group room: group-${groupId}`);
+    });
+
+    /** ────────────────────────────
+     *  📌 FETCH GROUPS
+     *  ─────────────────────────── */
     socket.on("fetchGroups", async (userId) => {
       try {
         const groups = await prisma.group.findMany({
@@ -202,7 +223,9 @@ app.prepare().then(() => {
       }
     });
 
-    // Fetch users from database
+    /** ────────────────────────────
+     *  📌 FETCH USERS
+     *  ─────────────────────────── */
     socket.on("fetchUsers", async () => {
       try {
         const users = await prisma.user.findMany();
@@ -212,7 +235,9 @@ app.prepare().then(() => {
       }
     });
 
-    // Create a group (Only Teachers)
+    /** ────────────────────────────
+     *  📌 GROUP CHAT OPERATIONS
+     *  ─────────────────────────── */
     socket.on("createGroup", async ({ teacherId, groupName }) => {
       try {
         const teacher = await prisma.user.findFirst({
@@ -238,33 +263,6 @@ app.prepare().then(() => {
       }
     });
 
-    // Rename a group (Only Admin)
-    socket.on("renameGroup", async ({ adminId, groupId, newName }) => {
-      try {
-        const group = await prisma.group.update({
-          where: { id: groupId, adminId },
-          data: { name: newName },
-        });
-
-        io.emit("groupUpdated", group);
-        console.log("Group renamed:", group);
-      } catch (err) {
-        console.error("Error renaming group:", err);
-      }
-    });
-
-    // Delete a group (Only Admin)
-    socket.on("deleteGroup", async ({ adminId, groupId }) => {
-      try {
-        await prisma.group.delete({ where: { id: groupId, adminId } });
-        io.emit("groupDeleted", groupId);
-        console.log(`Group ${groupId} deleted by admin.`);
-      } catch (err) {
-        console.error("Error deleting group:", err);
-      }
-    });
-
-    // Add user to group (Only Admin)
     socket.on("addUserToGroup", async ({ adminId, groupId, userId }) => {
       try {
         const group = await prisma.group.findFirst({
@@ -277,35 +275,287 @@ app.prepare().then(() => {
         }
 
         await prisma.groupMember.create({ data: { groupId, userId } });
-        io.emit("userAddedToGroup", { groupId, userId });
+
+        io.to(`group-${groupId}`).emit("userAddedToGroup", { groupId, userId });
         console.log(`User ${userId} added to group ${groupId}`);
       } catch (err) {
         console.error("Error adding user to group:", err);
       }
     });
 
-    // Kick user from group (Only Admin)
-    socket.on("removeUserFromGroup", async ({ adminId, groupId, userId }) => {
+    socket.on("fetchGroupMessages", async (groupId) => {
+      try {
+        const messages = await prisma.message.findMany({
+          where: { groupId },
+          orderBy: { createdAt: "asc" },
+        });
+
+        socket.emit("groupMessageHistory", messages);
+      } catch (err) {
+        console.error("Error fetching group messages:", err);
+      }
+    });
+
+    socket.on("sendGroupMessage", async ({ content, senderId, groupId }) => {
+      try {
+        const message = await prisma.message.create({
+          data: {
+            content,
+            senderId,
+            groupId,
+            isGroupMessage: true,
+          },
+        });
+
+        const newMessage = {
+          id: message.id,
+          content: message.content,
+          senderId: message.senderId,
+          groupId: message.groupId,
+          createdAt: message.createdAt.toISOString(),
+        };
+
+        io.to(`group-${groupId}`).emit("newGroupMessage", newMessage);
+        console.log("Group message sent:", newMessage);
+      } catch (err) {
+        console.error("Error sending group message:", err);
+      }
+    });
+
+    //kick user from group
+    socket.on("kickUserFromGroup", async ({ adminId, groupId, userId }) => {
+      try {
+        // Verify the group exists and the sender is the admin.
+        const group = await prisma.group.findFirst({
+          where: { id: groupId, adminId },
+        });
+
+        if (!group) {
+          socket.emit("kickUserError", "Only admins can kick users.");
+          return;
+        }
+
+        // Remove the user from the group.
+        await prisma.groupMember.deleteMany({
+          where: { groupId, userId },
+        });
+
+        // Notify all clients in the group room.
+        io.to(`group-${groupId}`).emit("userKickedFromGroup", {
+          groupId,
+          userId,
+        });
+        console.log(`User ${userId} kicked from group ${groupId}`);
+      } catch (err) {
+        console.error("Error kicking user from group:", err);
+        socket.emit(
+          "kickUserError",
+          "An error occurred while kicking the user."
+        );
+      }
+    });
+
+    // leave group
+    socket.on("leaveGroup", async ({ userId, groupId }) => {
+      try {
+        await prisma.groupMember.deleteMany({
+          where: { groupId, userId },
+        });
+
+        io.to(`group-${groupId}`).emit("userLeftGroup", { groupId, userId });
+        console.log(`User ${userId} left group ${groupId}`);
+      } catch (err) {
+        console.error("Error leaving group:", err);
+      }
+    });
+
+    //rename group by admin
+    socket.on("renameGroup", async ({ adminId, groupId, newGroupName }) => {
       try {
         const group = await prisma.group.findFirst({
           where: { id: groupId, adminId },
         });
 
         if (!group) {
-          socket.emit("error", "Only admins can remove users.");
+          socket.emit("error", "Only admins can rename groups.");
           return;
         }
 
-        await prisma.groupMember.deleteMany({ where: { groupId, userId } });
-        io.emit("userRemovedFromGroup", { groupId, userId });
-        console.log(`User ${userId} removed from group ${groupId}`);
+        await prisma.group.update({
+          where: { id: groupId },
+          data: { name: newGroupName },
+        });
+
+        io.to(`group-${groupId}`).emit("groupRenamed", {
+          groupId,
+          newGroupName,
+        });
+        console.log(`Group ${groupId} renamed to ${newGroupName}`);
       } catch (err) {
-        console.error("Error removing user from group:", err);
+        console.error("Error renaming group:", err);
       }
     });
 
+    /** ────────────────────────────
+     *  📌 DIRECT CHAT
+     *  ─────────────────────────── */
+    socket.on("fetchMessages", async ({ senderId, receiverId }) => {
+      try {
+        const messages = await prisma.message.findMany({
+          where: {
+            OR: [
+              { senderId, receiverId },
+              { senderId: receiverId, receiverId: senderId },
+            ],
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
+        socket.emit("messageHistory", messages);
+      } catch (err) {
+        console.error("Error fetching message history:", err);
+      }
+    });
+
+    socket.on("sendMessage", async ({ content, senderId, receiverId }) => {
+      try {
+        const message = await prisma.message.create({
+          data: {
+            content,
+            senderId,
+            receiverId,
+          },
+        });
+
+        io.to(senderId).emit("newMessage", message);
+        io.to(receiverId).emit("newMessage", message);
+
+        console.log("Message sent:", message);
+      } catch (err) {
+        console.error("Error sending message:", err);
+      }
+    });
+
+    /** ────────────────────────────
+     *  📌 FILE MESSAGE (Direct & Group)
+     *  ─────────────────────────── */
+    socket.on(
+      "sendFile",
+      async ({ fileName, fileType, senderId, receiverId, groupId }) => {
+        try {
+          const storedFileName = uuidv4() + "_" + fileName;
+
+          const message = await prisma.message.create({
+            data: {
+              content: "File message",
+              sender: { connect: { id: senderId } },
+              fileUrl: `https://your-file-storage.com/${storedFileName}`,
+              fileType,
+              senderId,
+              receiverId,
+              groupId,
+            },
+          });
+
+          io.to(senderId).emit("newMessage", message);
+          io.to(receiverId).emit("newMessage", message);
+
+          console.log("File message sent:", message);
+        } catch (err) {
+          console.error("Error sending file message:", err);
+        }
+      }
+    );
+
+    /** ────────────────────────────
+     *  📌 MESSAGE STATUS
+     *  ─────────────────────────── */
+    socket.on("markAsRead", async (messageId) => {
+      try {
+        await prisma.message.update({
+          where: { id: messageId },
+          data: { isRead: true },
+        });
+
+        socket.emit("messageRead", messageId);
+      } catch (err) {
+        console.error("Error marking message as read:", err);
+      }
+    });
+
+    socket.on("fetchUnseenMessages", async (userId) => {
+      try {
+        const unseenMessages = await prisma.message.findMany({
+          where: { receiverId: userId, isRead: false },
+        });
+
+        socket.emit("unseenMessages", unseenMessages);
+      } catch (err) {
+        console.error("Error fetching unseen messages:", err);
+      }
+    });
+
+    // ────────────────────────────
+    //  📌 sent file in group
+    // ───────────────────────────
+
+    socket.on(
+      "sendFile",
+      async ({ fileName, fileType, senderId, receiverId, groupId }) => {
+        try {
+          // Optionally validate allowed file types
+          const allowedFileTypes = [
+            "pdf",
+            "doc",
+            "docx",
+            "zip",
+            "png",
+            "jpg",
+            "jpeg",
+            "gif",
+            "mp4",
+            "mov",
+          ];
+          if (!allowedFileTypes.includes(fileType.toLowerCase())) {
+            socket.emit("error", "File type not allowed");
+            return;
+          }
+
+          const storedFileName = uuidv4() + "_" + fileName;
+          const fileUrl = `https://your-file-storage.com/${storedFileName}`;
+
+          const message = await prisma.message.create({
+            data: {
+              content: "File message",
+              sender: { connect: { id: senderId } },
+              fileUrl,
+              fileType,
+              senderId,
+              receiverId,
+              groupId,
+            },
+          });
+
+          // If groupId exists, emit to the group room; otherwise, send as direct message
+          if (groupId) {
+            io.to(`group-${groupId}`).emit("newGroupMessage", message);
+            console.log("Group file message sent:", message);
+          } else {
+            io.to(senderId).emit("newMessage", message);
+            io.to(receiverId).emit("newMessage", message);
+            console.log("Direct file message sent:", message);
+          }
+        } catch (err) {
+          console.error("Error sending file message:", err);
+        }
+      }
+    );
+
+    /** ────────────────────────────
+     *  📌 DISCONNECT
+     *  ─────────────────────────── */
     socket.on("disconnect", () => {
-      console.log("Client disconnected");
+      console.log("Client disconnected:", socket.id);
     });
   });
 
