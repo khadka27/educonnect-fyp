@@ -53,7 +53,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   const fetchUserData = async () => {
     setLoading(true);
     try {
-        const response = await axios.get(`/api/user/${userId}`);
+      const response = await axios.get(`/api/user/${userId}`);
       setUser(response.data);
       setLoading(false);
     } catch (error) {
@@ -114,7 +114,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     }
   };
 
-  if (loading) return <div> <EduConnectLoader/> </div>;
+  if (loading)
+    return (
+      <div>
+        {" "}
+        <EduConnectLoader />{" "}
+      </div>
+    );
   if (error) return <div>{error}</div>;
 
   const isDarkMode = theme === "dark";
@@ -248,30 +254,33 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                 Send Message
               </Button>
               {session?.user?.id === user?.id && (
-              <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`flex-1 ${
-                      isDarkMode
-                        ? "border-gray-600 text-gray-300"
-                        : "border-gray-300 text-gray-700"
-                    }`}
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[1000px]">
-                  <EditProfile
-                    user={user}
-                    onClose={() => {
-                      setIsEditModalOpen(false);
-                      handleProfileUpdate();
-                    }}
-                  />
-                </DialogContent>
-              </Dialog>
+                <Dialog
+                  open={isEditModalOpen}
+                  onOpenChange={setIsEditModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`flex-1 ${
+                        isDarkMode
+                          ? "border-gray-600 text-gray-300"
+                          : "border-gray-300 text-gray-700"
+                      }`}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[1000px]">
+                    <EditProfile
+                      user={user}
+                      onClose={() => {
+                        setIsEditModalOpen(false);
+                        handleProfileUpdate();
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
               )}
               {session?.user?.id === user?.id && (
                 <Dialog

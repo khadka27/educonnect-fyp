@@ -177,7 +177,14 @@ function EditProfile() {
     setLoading(true);
 
     try {
-      await axios.put(`/api/user/${session?.user.id}/change-password`, {
+      // Extract the user id from your session (make sure session contains the user id)
+      const userId = session?.user?.id;
+      if (!userId) {
+        throw new Error("User id not found in session");
+      }
+
+      await axios.put(`/api/user/update-password`, {
+        id: userId,
         currentPassword,
         newPassword,
       });

@@ -1,51 +1,82 @@
-// src/app/api/user/update-password.ts
-import { NextApiRequest, NextApiResponse } from "next";
+// src/app/api/user/update-password/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "PUT") {
-    return res.status(405).end(); // Method Not Allowed
+export async function PUT(request: NextRequest) {
+  let payload;
+  try {
+    payload = await request.json();
+    console.log("Received payload:", payload);
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    return NextResponse.json(
+      { message: "Invalid JSON" },
+      { status: 400 }
+    );
   }
 
-  const { id, currentPassword, newPassword } = req.body;
+  const { id, currentPassword, newPassword } = payload;
+
+  // Validate required fields
+  if (!id || typeof id !== "string") {
+    console.error("Missing user id");
+    return NextResponse.json(
+      { message: "User id is required" },
+      { status: 400 }
+    );
+  }
+  if (!currentPassword || !newPassword) {
+    console.error("Missing current or new password");
+    return NextResponse.json(
+      { message: "Current password and new password are required" },
+      { status: 400 }
+    );
+  }
 
   try {
-    // Fetch user by ID
+    // Fetch user by id
     const user = await prisma.user.findUnique({
       where: { id },
     });
 
-
     if (!user || !user.password) {
-      return res.status(404).json({ message: "User not found" });
+      console.error("User not found or missing password");
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Compare provided current password with stored hash
-    const isPasswordCorrect = await bcrypt.compare(
-      currentPassword,
-      user.password
-    );
-
+    const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordCorrect) {
-      return res.status(400).json({ message: "Current password is incorrect" });
+      console.error("Current password is incorrect");
+      return NextResponse.json(
+        { message: "Current password is incorrect" },
+        { status: 400 }
+      );
     }
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user with new password
+    // Update user's password
     await prisma.user.update({
       where: { id },
       data: { password: hashedPassword },
     });
 
-    return res.status(200).json({ message: "Password updated successfully" });
+    console.log("Password updated successfully for user:", id);
+    return NextResponse.json(
+      { message: "Password updated successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error updating password:", error);
-    return res.status(500).json({ message: "Error updating password" });
+    return NextResponse.json(
+      { message: "Error updating password" },
+      { status: 500 }
+    );
   }
 }

@@ -169,6 +169,14 @@ import next from "next";
 import { Server } from "socket.io";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary using environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const prisma = new PrismaClient();
 
@@ -501,9 +509,16 @@ app.prepare().then(() => {
 
     socket.on(
       "sendFile",
-      async ({ fileName, fileType, senderId, receiverId, groupId }) => {
+      async ({
+        fileName,
+        fileType,
+        fileData,
+        senderId,
+        receiverId,
+        groupId,
+      }) => {
         try {
-          // Optionally validate allowed file types
+          // Validate allowed file types
           const allowedFileTypes = [
             "pdf",
             "doc",
@@ -521,8 +536,36 @@ app.prepare().then(() => {
             return;
           }
 
+          // Determine Cloudinary resource type based on fileType
+          let resourceType = "raw";
+          if (/(png|jpg|jpeg|gif)/i.test(fileType)) {
+            resourceType = "image";
+          } else if (/(mp4|mov)/i.test(fileType)) {
+            resourceType = "video";
+          }
+
+          // Generate a unique file name for Cloudinary
           const storedFileName = uuidv4() + "_" + fileName;
-          const fileUrl = `https://your-file-storage.com/${storedFileName}`;
+
+          console.log(
+            "Uploading file to Cloudinary with public_id:",
+            storedFileName
+          );
+          // Upload file to Cloudinary.
+          // fileData should be a valid file path, URL, or Base64 string.
+          const uploadResult = await cloudinary.uploader.upload(fileData, {
+            resource_type: resourceType as "raw" | "image" | "video" | "auto",
+            public_id: storedFileName,
+          });
+
+          console.log("Cloudinary upload result:", uploadResult);
+
+          const fileUrl = uploadResult.secure_url;
+          if (!fileUrl) {
+            console.error("Cloudinary did not return a secure_url");
+            socket.emit("error", "File upload failed: No URL returned");
+            return;
+          }
 
           const message = await prisma.message.create({
             data: {
@@ -536,21 +579,14 @@ app.prepare().then(() => {
             },
           });
 
-          // If groupId exists, emit to the group room; otherwise, send as direct message
-          if (groupId) {
-            io.to(`group-${groupId}`).emit("newGroupMessage", message);
-            console.log("Group file message sent:", message);
-          } else {
-            io.to(senderId).emit("newMessage", message);
-            io.to(receiverId).emit("newMessage", message);
-            console.log("Direct file message sent:", message);
-          }
+          socket.emit("newFileMessage", message);
+          console.log("File message sent:", message);
         } catch (err) {
           console.error("Error sending file message:", err);
+          socket.emit("error", "An error occurred while uploading the file.");
         }
       }
     );
-
     /** ────────────────────────────
      *  📌 DISCONNECT
      *  ─────────────────────────── */
