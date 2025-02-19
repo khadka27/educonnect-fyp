@@ -27,6 +27,7 @@ interface Event {
   bannerUrl?: string;
   contactEmail: string;
   contactPhone: string;
+  price: string;
 }
 
 export default function EventDetailPage() {
@@ -97,6 +98,7 @@ export default function EventDetailPage() {
       title: "Thank You!",
       description:
         "You've successfully registered for the event. Check your email for the ticket.",
+      variant: "success",
     });
   };
 
@@ -187,6 +189,12 @@ export default function EventDetailPage() {
               <a href={`tel:${event.contactPhone}`} className="hover:underline">
                 {event.contactPhone}
               </a>
+            </div>
+
+            {/* price */}
+            <div className="flex items-center">
+              <Tag className="mr-2 h-4 w-4" />
+              <span className="capitalize">{event.price}</span>
             </div>
           </div>
         </CardContent>

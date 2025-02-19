@@ -116,7 +116,7 @@
 
 import { NextResponse } from "next/server";
 
-// Helper to validate necessary environment variables
+// Validate required environment variables
 function validateEnvironmentVariables() {
   const requiredEnvVars = [
     "NEXT_PUBLIC_BASE_URL",
@@ -151,16 +151,20 @@ export async function POST(req: Request) {
     }
 
     if (method.toLowerCase() === "khalti") {
+      // Remove extra query parameter from return_url
       const khaltiConfig = {
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?method=khalti`,
+        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`, // No ?method=khalti here
         website_url: process.env.NEXT_PUBLIC_BASE_URL!,
-        amount: Math.round(Number(amount) * 100), // Ensure amount is in paisa (integer format)
+        amount: Math.round(Number(amount) * 100), // Convert amount to paisa (integer format)
         purchase_order_id: transactionId,
         purchase_order_name: productName,
       };
 
-      // API endpoint for Khalti (Use sandbox during development)
-      const KHALTI_API_URL = "https://dev.khalti.com/api/v2/epayment/initiate/";
+      // Use sandbox endpoint in development and production endpoint in production
+      const KHALTI_API_URL =
+        process.env.NODE_ENV === "production"
+          ? "https://khalti.com/api/v2/epayment/initiate/"
+          : "https://dev.khalti.com/api/v2/epayment/initiate/";
 
       // Send POST request to Khalti
       const response = await fetch(KHALTI_API_URL, {
