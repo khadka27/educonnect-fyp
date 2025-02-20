@@ -111,7 +111,6 @@ async function verifyKhaltiPayment(pidx: string) {
       console.error("Khalti Lookup API Error:", errorData);
       throw new Error(`Khalti Lookup API Error: ${JSON.stringify(errorData)}`);
     }
-
     return await response.json();
   } catch (error) {
     console.error("Error verifying payment:", error);
@@ -126,7 +125,6 @@ export async function GET(req: Request) {
     const params = new URLSearchParams(url.search);
     const session = await getServerSession(authOptions);
 
-    // Default method to "khalti" if missing
     const methodParam = params.get("method") || "khalti";
     const pidx = params.get("pidx");
     const transactionId = params.get("transaction_id");
@@ -135,7 +133,6 @@ export async function GET(req: Request) {
     const purchaseOrderId = params.get("purchase_order_id");
     const purchaseOrderName = params.get("purchase_order_name");
 
-    // Validate required parameters
     if (
       !pidx ||
       !transactionId ||
@@ -166,7 +163,6 @@ export async function GET(req: Request) {
       );
     }
 
-    // Convert the method string to uppercase and cast to enums
     const methodUpper = methodParam.toUpperCase();
     if (methodUpper !== "KHALTI" && methodUpper !== "ESEWA") {
       return NextResponse.json(
@@ -176,23 +172,21 @@ export async function GET(req: Request) {
     }
     const paymentMethodEnum: PaymentMethod = methodUpper as PaymentMethod;
     const paymentGatewayEnum: PaymentGateway = methodUpper as PaymentGateway;
-    // Set status to COMPLETED (from PaymentStatus enum)
     const completedStatus: PaymentStatus = PaymentStatus.COMPLETED;
 
-    // Extract eventId from purchaseOrderId assuming format "txn_<timestamp>_<eventId>"
+    // Extract eventId from purchaseOrderId (format: "txn_<timestamp>_<eventId>")
     const parts = purchaseOrderId.split("_");
     const eventId = parts[2] || "unknown";
 
     // Convert amount from paisa to NPR
     const numericAmount = parseFloat(amount) / 100;
 
-    // Get userId from session (if available)
     const userId = session?.user?.id || "";
 
-    // Create a Payment record in the database
+    // Create a Payment record
     const newPayment = await prisma.payment.create({
       data: {
-        transactionId: purchaseOrderId, // using purchaseOrderId as unique transaction identifier
+        transactionId: purchaseOrderId,
         userId,
         eventId,
         amount: numericAmount,
@@ -203,28 +197,27 @@ export async function GET(req: Request) {
     });
     console.log("Payment stored:", newPayment);
 
-    // For premium events, also store a Registration record
-    // We'll assume registration details (name, email, phone) are stored in the session.
-    if (
-      paymentMethodEnum === PaymentMethod.KHALTI ||
-      paymentMethodEnum === PaymentMethod.ESEWA
-    ) {
-      // Assume that a premium event means event type PREMIUM.
-      const newRegistration = await prisma.registration.create({
-        data: {
-          name: session?.user?.name || "Unknown",
-          email: session?.user?.email || "",
-          phone: session?.user?.phone || "",
+    // For premium events, update the corresponding Registration record
+    if (eventId !== "unknown") {
+      const registration = await prisma.registration.findFirst({
+        where: {
           eventId,
-          eventType: EventType.PREMIUM, // since this is for premium events
-          paymentStatus: completedStatus, // PaymentStatus enum, COMPLETED in this case
-          transactionId: transactionId, // use the transaction id from Khalti
+          email: session?.user?.email,
+          paymentStatus: PaymentStatus.PENDING,
         },
       });
-      console.log("Registration stored:", newRegistration);
+      if (registration) {
+        const updatedRegistration = await prisma.registration.update({
+          where: { id: registration.id },
+          data: {
+            paymentStatus: completedStatus,
+            transactionId: transactionId,
+          },
+        });
+        console.log("Registration updated:", updatedRegistration);
+      }
     }
 
-    // Redirect the user to a friendly thank-you page with the transaction id
     const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/thank-you?transaction_id=${transactionId}`;
     return NextResponse.redirect(redirectUrl);
   } catch (error) {

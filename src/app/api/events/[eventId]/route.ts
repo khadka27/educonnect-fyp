@@ -5,7 +5,8 @@ export async function GET(
   req: Request,
   { params }: { params: { eventId: string } }
 ) {
-  const { eventId } = params;
+  const resolvedParams = await params;
+  const { eventId } = resolvedParams;
 
   try {
     const event = await prisma.event.findUnique({

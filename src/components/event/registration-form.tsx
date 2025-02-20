@@ -288,10 +288,12 @@ export default function RegistrationForm({
 
     try {
       if (event.type.toLowerCase() === "premium") {
-        // Initiate payment for premium events
+        // First, save the registration record with paymentStatus = PENDING
+        await registerForPaidEvent();
+        // Then, initiate payment for premium events
         await initiatePayment(paymentMethod, event.price || "0", event.id);
       } else {
-        // Register directly for free events
+        // For free events, register the user directly
         await registerForEvent();
       }
     } catch (error) {
@@ -361,6 +363,28 @@ export default function RegistrationForm({
       description: "You have successfully registered for the event.",
     });
     onSuccess();
+  };
+
+  //register for paid event
+  const registerForPaidEvent = async () => {
+    const response = await fetch("/api/events/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId: event.id,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        // For premium events, paymentMethod is included
+        paymentMethod:
+          event.type.toLowerCase() === "premium" ? paymentMethod : "pending",
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Registration failed.");
+    }
+    // Optionally, process the returned registration data if needed.
   };
 
   return (

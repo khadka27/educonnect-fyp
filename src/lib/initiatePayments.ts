@@ -2,7 +2,8 @@ import { generateEsewaSignature } from "@/lib/generateEsewaSignature";
 
 export async function initiateEsewaPayment(
   registrationData: any,
-  amount: number
+  amount: number,
+  id: string
 ) {
   const transactionUuid = `${Date.now()}-${registrationData.transactionId}`;
   const esewaConfig = {

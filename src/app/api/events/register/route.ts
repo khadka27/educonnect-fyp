@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { EventType, PaymentStatus } from ".prisma/client";
 import {
   initiateEsewaPayment,
   initiateKhaltiPayment,
 } from "src/lib/initiatePayments";
-import { EventType } from ".prisma/client";
 
 // Schema for validating registration input
 const registrationSchema = z.object({
@@ -18,7 +18,6 @@ const registrationSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    // Parse and validate input
     const body = await req.json();
     const parsedBody = registrationSchema.parse(body);
 
@@ -33,18 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Determine if this is a premium event
-    const isPremiumEvent = event.type === EventType.PREMIUM;
-
-    // For premium events, a payment method must be provided
-    if (isPremiumEvent && !parsedBody.paymentMethod) {
-      return NextResponse.json(
-        { error: "Payment method is required for premium events" },
-        { status: 400 }
-      );
-    }
-
-    // Prevent duplicate registration (by checking eventId and email)
+    // Prevent duplicate registration (by eventId and email)
     const existingRegistration = await prisma.registration.findFirst({
       where: {
         eventId: parsedBody.eventId,
@@ -58,12 +46,41 @@ export async function POST(req: Request) {
       );
     }
 
-    // If the event is premium, initiate payment before registration
+    const isPremiumEvent = event.type === EventType.PREMIUM;
+
+    // For premium events, ensure a payment method is provided
+    if (isPremiumEvent && !parsedBody.paymentMethod) {
+      return NextResponse.json(
+        { error: "Payment method is required for premium events" },
+        { status: 400 }
+      );
+    }
+
+    // Create a registration record.
+    // For premium events, set paymentStatus as PENDING.
+    const registration = await prisma.registration.create({
+      data: {
+        eventId: parsedBody.eventId,
+        name: parsedBody.name,
+        email: parsedBody.email,
+        phone: parsedBody.phone,
+        eventType: event.type,
+        paymentStatus: isPremiumEvent ? PaymentStatus.PENDING : null,
+        transactionId: null,
+      },
+    });
+
+    // If premium, initiate payment and return payment URL
     if (isPremiumEvent) {
       let paymentUrl: string | undefined;
       if (parsedBody.paymentMethod === "esewa") {
         if (event.price !== null) {
-          paymentUrl = await initiateEsewaPayment(parsedBody, event.price);
+          // Pass registration.id so it can be linked later on payment success
+          paymentUrl = await initiateEsewaPayment(
+            parsedBody,
+            event.price,
+            registration.id
+          );
         } else {
           return NextResponse.json(
             { error: "Event price is not set" },
@@ -72,7 +89,11 @@ export async function POST(req: Request) {
         }
       } else if (parsedBody.paymentMethod === "khalti") {
         if (event.price !== null) {
-          paymentUrl = await initiateKhaltiPayment(parsedBody, event.price);
+          paymentUrl = await initiateKhaltiPayment(
+            parsedBody,
+            event.price,
+            registration.id
+          );
         } else {
           return NextResponse.json(
             { error: "Event price is not set" },
@@ -80,24 +101,17 @@ export async function POST(req: Request) {
           );
         }
       }
+
       return NextResponse.json({
         success: true,
-        message: "Payment initiation successful. Redirect to payment gateway.",
+        message:
+          "Registration created and payment initiation successful. Redirect to payment gateway.",
         paymentUrl,
+        registration,
       });
     }
 
-    // For free events, register the user directly
-    const registration = await prisma.registration.create({
-      data: {
-        eventId: parsedBody.eventId,
-        name: parsedBody.name,
-        email: parsedBody.email,
-        phone: parsedBody.phone,
-        eventType: event.type, // FREE in this case
-      },
-    });
-
+    // For free events, registration is complete
     return NextResponse.json(
       { success: true, message: "Registration successful.", registration },
       { status: 201 }
