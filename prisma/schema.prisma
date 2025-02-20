@@ -227,15 +227,11 @@ enum PaymentStatus {
 enum PaymentMethod {
   ESEWA
   KHALTI
-  PAYPAL
-  STRIPE
 }
 
 enum PaymentGateway {
   ESEWA
   KHALTI
-  PAYPAL
-  STRIPE
 }
 
 enum EventType {

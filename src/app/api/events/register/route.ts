@@ -7,9 +7,9 @@ import {
 } from "src/lib/initiatePayments";
 import { EventType } from ".prisma/client";
 
-// Adjusted schema validation
+// Schema for validating registration input
 const registrationSchema = z.object({
-  eventId: z.string().min(1, "Event ID is required"), // Allow non-UUID formats if necessary
+  eventId: z.string().min(1, "Event ID is required"),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits").max(15),
@@ -18,6 +18,7 @@ const registrationSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Parse and validate input
     const body = await req.json();
     const parsedBody = registrationSchema.parse(body);
 
@@ -25,7 +26,6 @@ export async function POST(req: Request) {
     const event = await prisma.event.findUnique({
       where: { id: parsedBody.eventId },
     });
-
     if (!event) {
       return NextResponse.json(
         { error: "Event not found or invalid ID" },
@@ -33,8 +33,10 @@ export async function POST(req: Request) {
       );
     }
 
+    // Determine if this is a premium event
     const isPremiumEvent = event.type === EventType.PREMIUM;
 
+    // For premium events, a payment method must be provided
     if (isPremiumEvent && !parsedBody.paymentMethod) {
       return NextResponse.json(
         { error: "Payment method is required for premium events" },
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check for duplicate registration
+    // Prevent duplicate registration (by checking eventId and email)
     const existingRegistration = await prisma.registration.findFirst({
       where: {
         eventId: parsedBody.eventId,
@@ -56,9 +58,9 @@ export async function POST(req: Request) {
       );
     }
 
+    // If the event is premium, initiate payment before registration
     if (isPremiumEvent) {
-      // Initiate payment based on the selected method
-      let paymentUrl;
+      let paymentUrl: string | undefined;
       if (parsedBody.paymentMethod === "esewa") {
         if (event.price !== null) {
           paymentUrl = await initiateEsewaPayment(parsedBody, event.price);
@@ -78,7 +80,6 @@ export async function POST(req: Request) {
           );
         }
       }
-
       return NextResponse.json({
         success: true,
         message: "Payment initiation successful. Redirect to payment gateway.",
@@ -86,14 +87,14 @@ export async function POST(req: Request) {
       });
     }
 
-    // For free events, directly register the user
+    // For free events, register the user directly
     const registration = await prisma.registration.create({
       data: {
         eventId: parsedBody.eventId,
         name: parsedBody.name,
         email: parsedBody.email,
         phone: parsedBody.phone,
-        eventType: event.type,
+        eventType: event.type, // FREE in this case
       },
     });
 
