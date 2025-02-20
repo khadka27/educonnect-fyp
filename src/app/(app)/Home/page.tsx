@@ -21,7 +21,7 @@ const HomePage = () => {
       {/* Rest of your page content */}
 
       <TimelineList userId={session?.user?.id ?? ''} /> 
-     
+
     </div>
   );
 };
