@@ -418,3 +418,8 @@ model GroupMember {
   // Composite primary key to avoid duplicate memberships
   @@id([userId, groupId])
 }
+
+//Sample data
+model GroupMemberDemo {
+  groupMemberId String @id @default(cuid())
+}
