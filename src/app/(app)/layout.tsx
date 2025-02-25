@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import Navbar from "src/components/bar/Navbar/Navbar";
 // import RightSidebar from "@/components/bar/right-side-bar";
 import Providers from "src/app/Providers/page";
-import SidebarNavigation from "src/components/bar/Sidebar";
+import Sidebar from "src/components/bar/Sidebar12";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -23,8 +23,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       <body className={inter.className}>
         <Navbar />
         <Providers>
-          {/* <SidebarNavigation /> */}
-     
+          <Sidebar />
           {children}</Providers>
         {/* <RightSidebar /> */}
       </body>

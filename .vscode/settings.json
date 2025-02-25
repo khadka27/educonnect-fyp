@@ -1,6 +1,7 @@
 {
   "WillLuke.nextjs.addTypesOnSave": true,
   "WillLuke.nextjs.hasPrompted": true,
-  "cSpell.words": ["Esewa", "Khalti"],
-  "peacock.color": "#0065cc"
+  "cSpell.words": ["cuid", "dbgenerated", "Esewa", "Khalti"],
+  "peacock.color": "#0065cc",
+  "postman.settings.dotenv-detection-notification-visibility": false
 }
