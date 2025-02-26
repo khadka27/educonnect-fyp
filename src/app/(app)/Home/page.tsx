@@ -20,8 +20,7 @@ const HomePage = () => {
       <h1>Welcome {session?.user?.username}</h1>
       {/* Rest of your page content */}
 
-      <TimelineList userId={session?.user?.id ?? ''} /> 
-
+      <TimelineList userId={session?.user?.id ?? ""} />
     </div>
   );
 };

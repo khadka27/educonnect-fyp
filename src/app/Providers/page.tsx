@@ -23,6 +23,8 @@ export default function Providers({ children, session }: ProvidersProps) {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <QueryClientProvider client={queryClient}>
               {children}
+              {/* <SidebarTrigger /> */}
+
               <Toaster />
             </QueryClientProvider>
           </ThemeProvider>
