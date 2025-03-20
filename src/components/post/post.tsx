@@ -462,314 +462,317 @@ export default function PostComponent({
   };
 
   return (
-    <Card
-      className={cn(
-        "w-full bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl overflow-hidden",
-        viewMode === "grid" ? "h-full flex flex-col" : ""
-      )}
-    >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center space-x-4">
-          <Avatar className="border-2 border-primary/30">
-            <AvatarImage
-              src={
-                post.user?.profileImage || "/placeholder.svg?height=40&width=40"
-              }
-              alt={post.user?.username || "Unknown"}
-            />
-            <AvatarFallback>{post.user?.username?.[0] || "U"}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">
-              {post.user?.username || "Unknown"}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {formatCreatedAt(new Date(post.createdAt))}
-            </p>
-          </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="More options">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => setShowShareOptions(!showShareOptions)}
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </DropdownMenuItem>
-            {(post.fileUrl || post.postUrl) && (
-              <DropdownMenuItem onSelect={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
-                Download Media
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => handleShare("copy")}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Link
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleReport} className="text-red-500">
-              <Flag className="h-4 w-4 mr-2" />
-              Report Post
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardHeader>
-      <CardContent
-        className={cn("space-y-4", viewMode === "grid" ? "flex-grow" : "")}
+    <>
+      <Card
+        className={cn(
+          "w-full bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl overflow-hidden",
+          viewMode === "grid" ? "h-full flex flex-col" : ""
+        )}
       >
-        {post.content && (
-          <div className="text-gray-800 dark:text-gray-200">
-            <p>
-              {isContentExpanded
-                ? renderContent(post.content)
-                : renderContent(truncatedContent)}
-            </p>
-            {typeof post.content === "string" &&
-              post.content.length > MAX_CONTENT_LENGTH && (
-                <Button
-                  variant="link"
-                  onClick={() => setIsContentExpanded(!isContentExpanded)}
-                  className="p-0 h-auto text-primary"
-                >
-                  {isContentExpanded ? "Show less" : "Show more"}
-                </Button>
-              )}
-          </div>
-        )}
-
-        {(post.postUrl || post.fileUrl) && (
-          <Dialog
-            open={isMediaPreviewOpen}
-            onOpenChange={setIsMediaPreviewOpen}
-          >
-            <DialogTrigger asChild>
-              <div className="cursor-pointer overflow-hidden rounded-md">
-                {renderMedia()}
-              </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[80vw] p-0 bg-transparent border-none">
-              <div className="relative w-full h-full flex items-center justify-center bg-black/90 rounded-lg">
-                {post.postUrl && isVideo(post.postUrl) ? (
-                  <video
-                    src={post.postUrl}
-                    className="max-w-full max-h-[80vh] object-contain"
-                    controls
-                    autoPlay
-                  />
-                ) : post.content && isYouTube(post.content) ? (
-                  <iframe
-                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(
-                      post.content
-                    )}`}
-                    className="w-full h-full max-w-[80vw] max-h-[80vh]"
-                    allowFullScreen
-                  />
-                ) : (
-                  <div className="relative max-h-[80vh] max-w-[80vw]">
-                    <Image
-                      src={post.postUrl || post.fileUrl || ""}
-                      alt="Post Image"
-                      width={1200}
-                      height={800}
-                      className="object-contain max-h-[80vh]"
-                    />
-                  </div>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
-                  onClick={() => setIsMediaPreviewOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {/* Share options */}
-        <AnimatePresence>
-          {showShareOptions && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex space-x-2 py-2"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => handleShare("facebook")}
-              >
-                <FacebookIcon size={16} round />
-                Facebook
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => handleShare("twitter")}
-              >
-                <TwitterIcon size={16} round />
-                Twitter
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => handleShare("linkedin")}
-              >
-                <LinkedinIcon size={16} round />
-                LinkedIn
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </CardContent>
-      <CardFooter className="flex flex-col">
-        <div className="flex justify-between w-full mb-4">
-          <div className="flex space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`${
-                liked ? "text-red-600 dark:text-red-400" : ""
-              } px-2`}
-              onClick={handleLikeClick}
-              aria-label={liked ? "Unlike post" : "Like post"}
-            >
-              <Heart
-                className={`h-5 w-5 ${liked ? "fill-red-500" : ""} mr-1`}
-              />
-              Like
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setIsCommentBoxVisible(!isCommentBoxVisible);
-                if (!isCommentBoxVisible && commentInputRef.current) {
-                  setTimeout(() => commentInputRef.current?.focus(), 100);
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center space-x-4">
+            <Avatar className="border-2 border-primary/30">
+              <AvatarImage
+                src={
+                  post.user?.profileImage ||
+                  "/placeholder.svg?height=40&width=40"
                 }
-              }}
-              aria-label="Toggle comment box"
-              className="px-2"
+                alt={post.user?.username || "Unknown"}
+              />
+              <AvatarFallback>{post.user?.username?.[0] || "U"}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                {post.user?.username || "Unknown"}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {formatCreatedAt(new Date(post.createdAt))}
+              </p>
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="More options">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setShowShareOptions(!showShareOptions)}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </DropdownMenuItem>
+              {(post.fileUrl || post.postUrl) && (
+                <DropdownMenuItem onSelect={handleDownload}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Media
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => handleShare("copy")}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Link
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleReport} className="text-red-500">
+                <Flag className="h-4 w-4 mr-2" />
+                Report Post
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+        <CardContent
+          className={cn("space-y-4", viewMode === "grid" ? "flex-grow" : "")}
+        >
+          {post.content && (
+            <div className="text-gray-800 dark:text-gray-200">
+              <p>
+                {isContentExpanded
+                  ? renderContent(post.content)
+                  : renderContent(truncatedContent)}
+              </p>
+              {typeof post.content === "string" &&
+                post.content.length > MAX_CONTENT_LENGTH && (
+                  <Button
+                    variant="link"
+                    onClick={() => setIsContentExpanded(!isContentExpanded)}
+                    className="p-0 h-auto text-primary"
+                  >
+                    {isContentExpanded ? "Show less" : "Show more"}
+                  </Button>
+                )}
+            </div>
+          )}
+
+          {(post.postUrl || post.fileUrl) && (
+            <Dialog
+              open={isMediaPreviewOpen}
+              onOpenChange={setIsMediaPreviewOpen}
             >
-              <MessageCircle className="h-5 w-5 mr-1" />
-              Comment
+              <DialogTrigger asChild>
+                <div className="cursor-pointer overflow-hidden rounded-md">
+                  {renderMedia()}
+                </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[80vw] p-0 bg-transparent border-none">
+                <div className="relative w-full h-full flex items-center justify-center bg-black/90 rounded-lg">
+                  {post.postUrl && isVideo(post.postUrl) ? (
+                    <video
+                      src={post.postUrl}
+                      className="max-w-full max-h-[80vh] object-contain"
+                      controls
+                      autoPlay
+                    />
+                  ) : post.content && isYouTube(post.content) ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                        post.content
+                      )}`}
+                      className="w-full h-full max-w-[80vw] max-h-[80vh]"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="relative max-h-[80vh] max-w-[80vw]">
+                      <Image
+                        src={post.postUrl || post.fileUrl || ""}
+                        alt="Post Image"
+                        width={1200}
+                        height={800}
+                        className="object-contain max-h-[80vh]"
+                      />
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                    onClick={() => setIsMediaPreviewOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Share options */}
+          <AnimatePresence>
+            {showShareOptions && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex space-x-2 py-2"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => handleShare("facebook")}
+                >
+                  <FacebookIcon size={16} round />
+                  Facebook
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => handleShare("twitter")}
+                >
+                  <TwitterIcon size={16} round />
+                  Twitter
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => handleShare("linkedin")}
+                >
+                  <LinkedinIcon size={16} round />
+                  LinkedIn
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+        <CardFooter className="flex flex-col">
+          <div className="flex justify-between w-full mb-4">
+            <div className="flex space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  liked ? "text-red-600 dark:text-red-400" : ""
+                } px-2`}
+                onClick={handleLikeClick}
+                aria-label={liked ? "Unlike post" : "Like post"}
+              >
+                <Heart
+                  className={`h-5 w-5 ${liked ? "fill-red-500" : ""} mr-1`}
+                />
+                Like
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsCommentBoxVisible(!isCommentBoxVisible);
+                  if (!isCommentBoxVisible && commentInputRef.current) {
+                    setTimeout(() => commentInputRef.current?.focus(), 100);
+                  }
+                }}
+                aria-label="Toggle comment box"
+                className="px-2"
+              >
+                <MessageCircle className="h-5 w-5 mr-1" />
+                Comment
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`${post.isSaved ? "text-primary" : ""} px-2`}
+              onClick={() => onSave(post.id)}
+              aria-label={post.isSaved ? "Unsave post" : "Save post"}
+            >
+              <Bookmark
+                className={`h-5 w-5 ${post.isSaved ? "fill-primary" : ""} mr-1`}
+              />
+              Save
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`${post.isSaved ? "text-primary" : ""} px-2`}
-            onClick={() => onSave(post.id)}
-            aria-label={post.isSaved ? "Unsave post" : "Save post"}
-          >
-            <Bookmark
-              className={`h-5 w-5 ${post.isSaved ? "fill-primary" : ""} mr-1`}
-            />
-            Save
-          </Button>
-        </div>
+
+          <AnimatePresence>
+            {post.comments && post.comments.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="w-full"
+              >
+                {post.comments.slice(0, commentsShown).map((comment) => (
+                  <motion.div
+                    key={comment.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-start space-x-2 mb-3"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={
+                          comment.user?.profileImage ||
+                          "/placeholder.svg?height=32&width=32"
+                        }
+                        alt={comment.user?.username || "Unknown"}
+                      />
+                      <AvatarFallback>
+                        {comment.user?.username?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                      <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">
+                        {comment.user?.username || "Anonymous User"}
+                      </p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        {comment.content}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {formatCreatedAt(new Date(comment.createdAt))}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+
+                {post.comments.length > commentsShown && (
+                  <Button
+                    variant="link"
+                    onClick={() => setCommentsShown(commentsShown + 5)}
+                    className="p-0 text-primary"
+                  >
+                    View more comments
+                  </Button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardFooter>
 
         <AnimatePresence>
-          {post.comments && post.comments.length > 0 && (
+          {isCommentBoxVisible && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="w-full"
+              className="px-4 pb-4"
             >
-              {post.comments.slice(0, commentsShown).map((comment) => (
-                <motion.div
-                  key={comment.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-start space-x-2 mb-3"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={
-                        comment.user?.profileImage ||
-                        "/placeholder.svg?height=32&width=32"
-                      }
-                      alt={comment.user?.username || "Unknown"}
-                    />
-                    <AvatarFallback>
-                      {comment.user?.username?.[0] || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
-                    <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-                      {comment.user?.username || "Anonymous User"}
-                    </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      {comment.content}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formatCreatedAt(new Date(comment.createdAt))}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-
-              {post.comments.length > commentsShown && (
+              <form onSubmit={handleCommentSubmit} className="space-y-2">
+                <Textarea
+                  ref={commentInputRef}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="border-primary/20 focus:border-primary focus:ring-primary/30"
+                />
                 <Button
-                  variant="link"
-                  onClick={() => setCommentsShown(commentsShown + 5)}
-                  className="p-0 text-primary"
+                  type="submit"
+                  disabled={!newComment.trim() || isSubmitting}
+                  className="bg-primary hover:bg-primary/90 text-white"
                 >
-                  View more comments
+                  {isSubmitting ? (
+                    <>
+                      <Loader className="h-4 w-4 mr-2 animate-spin" />
+                      Posting...
+                    </>
+                  ) : (
+                    "Post Comment"
+                  )}
                 </Button>
-              )}
+              </form>
             </motion.div>
           )}
         </AnimatePresence>
-      </CardFooter>
-
-      <AnimatePresence>
-        {isCommentBoxVisible && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="px-4 pb-4"
-          >
-            <form onSubmit={handleCommentSubmit} className="space-y-2">
-              <Textarea
-                ref={commentInputRef}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="border-primary/20 focus:border-primary focus:ring-primary/30"
-              />
-              <Button
-                type="submit"
-                disabled={!newComment.trim() || isSubmitting}
-                className="bg-primary hover:bg-primary/90 text-white"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader className="h-4 w-4 mr-2 animate-spin" />
-                    Posting...
-                  </>
-                ) : (
-                  "Post Comment"
-                )}
-              </Button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Card>
+      </Card>
+    </>
   );
 }

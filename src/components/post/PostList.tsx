@@ -337,7 +337,10 @@ const PostList: React.FC = () => {
             if (post.id === postId) {
               return {
                 ...post,
-                comments: [...post.comments, newComment as unknown as Post["comments"][number]],
+                comments: [
+                  ...post.comments,
+                  newComment as unknown as Post["comments"][number],
+                ],
               };
             }
             return post;
@@ -416,7 +419,7 @@ const PostList: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className={`w-full px-4 sm:px-6 md:px-8 lg:px-[15%] py-4 min-h-screen ${
+      className={`w-full px-4 sm:px-6 md:px-8  py-4 min-h-screen ${
         theme === "light"
           ? "bg-gradient-to-br from-green-50 to-blue-50"
           : "bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"

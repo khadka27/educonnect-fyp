@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import EnhancedPostBox from "src/components/post/PostForm";
 import Feeds from "src/components/post/PostList";
 
+
 const PostPage = () => {
   const [post, setPosts] = useState<any[]>([]); // State to manage posts
 

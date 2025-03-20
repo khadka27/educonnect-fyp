@@ -10,7 +10,8 @@ import queryClient from "@/lib/queryClient";
 import { SessionProvider } from "next-auth/react";
 import { ChatProvider } from "src/context/ChatContext";
 import { SidebarProvider } from "src/context/SidebarContext";
-import Sidebar from "src/components/bar/Sidebar12";
+// import Sidebar from "src/components/bar/Sidebar12";
+import {TooltipProvider} from "src/components/ui/tooltip";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -23,21 +24,23 @@ export default function Providers({ children, session }: ProvidersProps) {
   return (
     <SessionProvider session={session}>
       <AuthProvider>
-        <ChatProvider userId={userId}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <QueryClientProvider client={queryClient}>
-              <SidebarProvider>
-                <div className="flex h-screen overflow-hidden">
-                  <Sidebar />
-                  <main className="flex-1 relative overflow-y-auto">
-                    {children}
-                  </main>
-                </div>
-                <Toaster />
-              </SidebarProvider>
-            </QueryClientProvider>
-          </ThemeProvider>
-        </ChatProvider>
+        <TooltipProvider>
+          <ChatProvider userId={userId}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <QueryClientProvider client={queryClient}>
+                <SidebarProvider>
+                  <div className="flex h-screen overflow-hidden">
+                    {/* <Sidebar /> */}
+                    <main className="flex-1 relative overflow-y-auto">
+                      {children}
+                    </main>
+                  </div>
+                  <Toaster />
+                </SidebarProvider>
+              </QueryClientProvider>
+            </ThemeProvider>
+          </ChatProvider>
+        </TooltipProvider>
       </AuthProvider>
     </SessionProvider>
   );
