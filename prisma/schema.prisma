@@ -265,6 +265,8 @@ model User {
   groupAdmin       Group[]       @relation("GroupAdmin")
   events           Event[]       @relation("UserEvents")
   payments         Payment[]
+  books            Book[]
+  articles         Article[]
 }
 
 model Event {
@@ -422,4 +424,35 @@ model GroupMember {
 //Sample data
 model GroupMemberDemo {
   groupMemberId String @id @default(cuid())
+}
+
+//e-learning 
+
+model Book {
+  id            String   @id @default(uuid())
+  title         String
+  author        String
+  description   String?  @db.Text
+  imageUrl      String?
+  fileUrl       String?
+  isbn          String?
+  category      String?
+  publishedYear Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     User     @relation(fields: [userId], references: [id])
+  userId        String
+}
+
+model Article {
+  id        String   @id @default(uuid())
+  title     String
+  abstract  String?  @db.Text
+  content   String   @db.Text
+  imageUrl  String?
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy User     @relation(fields: [userId], references: [id])
+  userId    String
 }
