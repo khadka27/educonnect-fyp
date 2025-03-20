@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from "src/components/ui/card";
 import { Badge } from "src/components/ui/badge";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, PlusCircle } from "lucide-react";
 
 interface Event {
   id: string;
@@ -74,23 +74,30 @@ export default function EventsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 text-center">
-        Loading events...
-      </div>
+      <div className="ml-[25%] pr-6 py-10 text-center">Loading events...</div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto py-10 text-center text-red-500">
+      <div className="ml-[25%] pr-6 py-10 text-center text-red-500">
         Error: {error}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-4xl font-bold mb-8">Upcoming Events</h1>
+    <div className="ml-[20%] pr-6 py-10 mt-10">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">Upcoming Events</h1>
+        <Button
+          className="flex items-center gap-2"
+          onClick={() => router.push("/events/create")}
+        >
+          <PlusCircle className="h-5 w-5" />
+          Create Event
+        </Button>
+      </div>
 
       {/* Slider for random events */}
       {randomEvents.length > 0 && (
@@ -139,7 +146,10 @@ export default function EventsPage() {
           columnClassName="pl-4 bg-clip-padding"
         >
           {events.map((event) => (
-            <Card key={event.id} className="mb-4">
+            <Card
+              key={event.id}
+              className="mb-4 hover:shadow-lg transition-shadow duration-300"
+            >
               <CardHeader className="relative p-0">
                 <Image
                   src={event.bannerUrl || "/default-events.jpg"}
@@ -175,7 +185,12 @@ export default function EventsPage() {
           ))}
         </Masonry>
       ) : (
-        <div className="text-center">No events found.</div>
+        <div className="text-center p-10 bg-gray-50 rounded-lg">
+          <p className="text-lg mb-4">No events found.</p>
+          <Button onClick={() => router.push("/events/create")}>
+            Create Your First Event
+          </Button>
+        </div>
       )}
     </div>
   );
