@@ -11,7 +11,7 @@ import { SessionProvider } from "next-auth/react";
 import { ChatProvider } from "src/context/ChatContext";
 import { SidebarProvider } from "src/context/SidebarContext";
 // import Sidebar from "src/components/bar/Sidebar12";
-import {TooltipProvider} from "src/components/ui/tooltip";
+import { TooltipProvider } from "src/components/ui/tooltip";
 
 interface ProvidersProps {
   children: React.ReactNode;

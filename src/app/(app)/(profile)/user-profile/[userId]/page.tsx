@@ -363,15 +363,18 @@
 // };
 
 // export default ProfilePage;
+import React from "react";
+import UserProfile from "src/components/profile/user-profile";
 
-import React from 'react';
-import UserProfile from 'src/components/profile/user-profile'; // Adjust the import path as needed
+// Make the component async and extract userId early
+export default async function UserProfilePage({
+  params,
+}: {
+  readonly params: { readonly userId: string };
+}) {
+  // Extract the userId from params right away
+  const userId = params.userId;
 
-
-function UserProfilePage({ params }: { params: { userId: string } }) {
-  return <UserProfile userId={params.userId} />;
+  // Now we can safely use userId
+  return <UserProfile userId={userId} />;
 }
-
-
-
-export default UserProfilePage; // Fix the export statement

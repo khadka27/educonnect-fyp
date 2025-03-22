@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
   req: Request,
-  { params }: { params: { postId: string } }
+  { params }: { readonly params: { readonly postId: string } }
 ) {
   try {
+    // Ensure params is properly resolved before using its properties
+    const postId = params.postId;
     const { userId, type } = await req.json();
 
     // Validate input
@@ -22,7 +25,7 @@ export async function POST(
     const existingReaction = await prisma.reaction.findUnique({
       where: {
         postId_userId_type: {
-          postId: params.postId,
+          postId,
           userId,
           type,
         },
@@ -46,7 +49,7 @@ export async function POST(
       data: {
         type,
         user: { connect: { id: userId } },
-        post: { connect: { id: params.postId } },
+        post: { connect: { id: postId } },
       },
     });
 
@@ -65,23 +68,25 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { postId: string } }
+  { params }: { readonly params: { readonly postId: string } }
 ) {
-  const url = new URL(request.url);
-  const userId = url.searchParams.get("userId");
-
-  if (!userId) {
-    return new Response("Missing userId", { status: 400 });
-  }
-
-  if (!params?.postId) {
-    return new Response("Missing postId", { status: 400 });
-  }
-
   try {
+    // Extract and store postId right away
+    const postId = params.postId;
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+
+    if (!userId) {
+      return new Response("Missing userId", { status: 400 });
+    }
+
+    if (!postId) {
+      return new Response("Missing postId", { status: 400 });
+    }
+
     const reaction = await prisma.reaction.findFirst({
       where: {
-        postId: params.postId,
+        postId,
         userId,
         type: "like",
       },

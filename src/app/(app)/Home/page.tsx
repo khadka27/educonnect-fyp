@@ -19,18 +19,19 @@ import { Skeleton } from "src/components/ui/skeleton";
 import { Bell, BookOpen } from "lucide-react";
 
 const HomePage = () => {
+  // 1. All hooks must be called at the top level
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("feed");
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Debug output to help troubleshoot
+  // 2. Debug output to help troubleshoot
   useEffect(() => {
     console.log("Session data:", session);
     console.log("User ID being passed to TimelineList:", session?.user?.id);
   }, [session]);
 
-  // Handle scroll effects
+  // 3. Handle scroll effects
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -40,10 +41,17 @@ const HomePage = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle loading state with a nice skeleton UI
+  // 4. Redirect if not authenticated - MOVED UP to maintain hooks order
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/sign-in");
+    }
+  }, [status, router]);
+
+  // 5. Handle UI rendering based on status
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto py-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-1">
@@ -66,14 +74,17 @@ const HomePage = () => {
     );
   }
 
-  // Redirect if not authenticated
-  if (!session) {
-    router.push("/sign-in");
-    return null; // Return null to prevent flash of content
+  if (!session && status === "unauthenticated") {
+    return <div>Loading...</div>; // Simple loading state
   }
 
+  if (status === "unauthenticated") {
+    return null; // Prevent flash of protected content
+  }
+
+  // 6. Main render for authenticated users
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-900">
       <div className="container mx-auto py-6 px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar - 1/4 width on desktop */}
@@ -92,7 +103,7 @@ const HomePage = () => {
               transition={{ duration: 0.5 }}
             >
               {/* Welcome card */}
-              <Card className="mb-6 overflow-hidden border-none shadow-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+              <Card className="mb-6 overflow-hidden border-none shadow-md bg-white/90 dark:bg-emerald-950/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-semibold flex items-center">
@@ -128,14 +139,14 @@ const HomePage = () => {
 
               {/* Feeds with enhanced styling */}
               <div className="relative">
-                <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-gray-50 to-transparent dark:from-gray-900 dark:to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-emerald-50 to-transparent dark:from-emerald-950 dark:to-transparent z-10 pointer-events-none"></div>
                 <div className="rounded-xl overflow-hidden">
                   {session?.user?.id ? (
                     <Feeds />
                   ) : (
                     <Card className="p-4 border-none shadow-md">
                       <CardContent>
-                        <div className="text-red-500 flex items-center">
+                        <div className="text-destructive flex items-center">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-5 w-5 mr-2"
@@ -154,7 +165,7 @@ const HomePage = () => {
                     </Card>
                   )}
                 </div>
-                <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-gray-50 to-transparent dark:from-gray-900 dark:to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-emerald-50 to-transparent dark:from-emerald-950 dark:to-transparent z-10 pointer-events-none"></div>
               </div>
             </motion.div>
           </div>

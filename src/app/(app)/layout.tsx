@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Navbar from "src/components/bar/Navbar/Navbar";
-// import RightSidebar from "@/components/bar/right-side-bar";
 import Providers from "src/app/Providers/page";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "src/app/api/auth/[...nextauth]/route";
 
-
+// Load font only once
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -17,12 +18,16 @@ interface RootLayoutProps {
 }
 
 export default async function RootLayout({ children }: RootLayoutProps) {
+  // Get session for auth provider
+  const session = await getServerSession(authOptions);
+
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <body className={inter.className}>
         <Navbar />
-
-        <Providers>{children}</Providers>
+        <main>
+          <Providers session={session}>{children}</Providers>
+        </main>
       </body>
     </html>
   );
