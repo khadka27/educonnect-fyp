@@ -17,6 +17,7 @@ import {
 } from "src/components/ui/card";
 import { Skeleton } from "src/components/ui/skeleton";
 import { Bell, BookOpen } from "lucide-react";
+// import RightSidebar from "src/components/bar/right-side-bar";
 
 const HomePage = () => {
   // 1. All hooks must be called at the top level
@@ -174,6 +175,9 @@ const HomePage = () => {
           <div className="hidden md:block md:col-span-1 sticky top-6 h-[calc(100vh-3rem)] overflow-y-auto">
             <TrendingTopics />
           </div>
+          {/* <div className="hidden md:block md:col-span-1 sticky top-6 h-[calc(100vh-3rem)] overflow-y-auto">
+            <RightSidebar />
+          </div> */}
         </div>
       </div>
 

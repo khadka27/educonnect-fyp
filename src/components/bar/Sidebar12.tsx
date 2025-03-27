@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from "framer-motion"
-import { cn } from "src/lib/utils"
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "src/lib/utils";
 import {
   Home,
   Bell,
   MessageSquare,
-  Bookmark,
+  Book,
   User,
   Settings,
   LogOut,
@@ -24,83 +24,101 @@ import {
   Compass,
   Calendar,
   Users,
-} from "lucide-react"
-import { Button } from "src/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "src/components/ui/tooltip"
-import { Badge } from "src/components/ui/badge"
-import { signOut } from "next-auth/react"
+} from "lucide-react";
+import { Button } from "src/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "src/components/ui/tooltip";
+import { Badge } from "src/components/ui/badge";
+import { signOut } from "next-auth/react";
 
 interface SidebarProps {
-  activeTab: string
-  setActiveTab: (tab: string) => void
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
 type NavItem = {
-  name: string
-  icon: React.ElementType
-  path: string
-  notifications?: number
-  color?: string
-}
+  name: string;
+  icon: React.ElementType;
+  path: string;
+  notifications?: number;
+  color?: string;
+};
 
-export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProps) {
-  const { data: session } = useSession()
-  const { theme, setTheme } = useTheme()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-  const [isHovering, setIsHovering] = useState(false)
+export default function EnhancedSidebar({
+  activeTab,
+  setActiveTab,
+}: SidebarProps) {
+  const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   // For demo purposes - in a real app, these would come from an API
-  const [notifications, setNotifications] = useState(3)
-  const [messages, setMessages] = useState(5)
+  const [notifications, setNotifications] = useState(3);
+  const [messages, setMessages] = useState(5);
 
   // Ensure theme toggle works correctly with SSR
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   const primaryNavItems: NavItem[] = [
     { name: "Home", icon: Home, path: "feed" },
-    { name: "Explore", icon: Compass, path: "explore" },
-    { name: "Notifications", icon: Bell, path: "notifications", notifications: notifications },
-    { name: "Messages", icon: MessageSquare, path: "messages", notifications: messages },
-    { name: "Bookmarks", icon: Bookmark, path: "bookmarks" },
+    { name: "Post", icon: Compass, path: "posts" },
+    {
+      name: "Notifications",
+      icon: Bell,
+      path: "notifications",
+      notifications: notifications,
+    },
+    {
+      name: "Messages",
+      icon: MessageSquare,
+      path: "chat",
+      notifications: messages,
+    },
+    { name: "Library", icon: Book, path: "library" },
     { name: "Profile", icon: User, path: "profile" },
-  ]
+  ];
 
   const secondaryNavItems: NavItem[] = [
     { name: "Trending", icon: Hash, path: "trending" },
-    { name: "Events", icon: Calendar, path: "events" },
-    { name: "Communities", icon: Users, path: "communities" },
-  ]
+    { name: "Events", icon: Calendar, path: "Events" },
+    { name: "Group", icon: Users, path: "group" },
+  ];
 
   const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: "/sign-in" })
-  }
+    await signOut({ redirect: true, callbackUrl: "/sign-in" });
+  };
 
   const toggleTheme = () => {
     if (isMounted) {
-      setTheme(theme === "dark" ? "light" : "dark")
+      setTheme(theme === "dark" ? "light" : "dark");
     }
-  }
+  };
 
   const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed)
-  }
+    setIsCollapsed(!isCollapsed);
+  };
 
   const handleNavigation = (path: string) => {
-    setActiveTab(path)
-    if (path === "notifications") setNotifications(0)
-    if (path === "messages") setMessages(0)
-  }
+    setActiveTab(path);
+    if (path === "notifications") setNotifications(0);
+    if (path === "messages") setMessages(0);
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
       <motion.div
         className={cn(
           "h-screen sticky top-0 flex flex-col border-r dark:border-gray-800 bg-white dark:bg-gray-950 transition-all duration-300 ease-in-out z-30",
-          isCollapsed ? "w-[80px]" : "w-[280px]",
+          isCollapsed ? "w-[80px]" : "w-[280px]"
         )}
         initial={false}
         animate={{ width: isCollapsed ? 80 : 280 }}
@@ -109,7 +127,12 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
         onMouseLeave={() => setIsHovering(false)}
       >
         {/* Logo and collapse button */}
-        <div className={cn("flex items-center justify-between p-4 h-16", isCollapsed && "justify-center")}>
+        <div
+          className={cn(
+            "flex items-center justify-between p-4 h-16",
+            isCollapsed && "justify-center"
+          )}
+        >
           {!isCollapsed && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -130,10 +153,15 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
             onClick={toggleCollapse}
             className={cn(
               "rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all",
-              isCollapsed && "absolute right-0 -mr-3 bg-white dark:bg-gray-950 shadow-md border",
+              isCollapsed &&
+                "absolute right-0 -mr-3 bg-white dark:bg-gray-950 shadow-md border"
             )}
           >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
         </div>
 
@@ -148,8 +176,9 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                       variant={activeTab === item.path ? "default" : "ghost"}
                       className={cn(
                         "w-full justify-start relative group transition-all duration-200",
-                        activeTab === item.path && "bg-primary text-primary-foreground font-medium",
-                        isCollapsed && "justify-center px-2",
+                        activeTab === item.path &&
+                          "bg-primary text-primary-foreground font-medium",
+                        isCollapsed && "justify-center px-2"
                       )}
                       onClick={() => handleNavigation(item.path)}
                     >
@@ -159,18 +188,20 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                           isCollapsed ? "mr-0" : "mr-3",
                           activeTab === item.path
                             ? "text-primary-foreground"
-                            : "text-muted-foreground group-hover:text-foreground",
+                            : "text-muted-foreground group-hover:text-foreground"
                         )}
                       />
 
-                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      {!isCollapsed && (
+                        <span className="truncate">{item.name}</span>
+                      )}
 
                       {item.notifications && item.notifications > 0 && (
                         <Badge
                           variant="destructive"
                           className={cn(
                             "ml-auto flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs",
-                            isCollapsed && "absolute -top-1 -right-1",
+                            isCollapsed && "absolute -top-1 -right-1"
                           )}
                         >
                           {item.notifications}
@@ -181,7 +212,11 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                         <motion.div
                           className="absolute inset-y-0 left-0 w-1 bg-primary rounded-r-full"
                           layoutId="activeTab"
-                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30,
+                          }}
                         />
                       )}
                     </Button>
@@ -191,7 +226,9 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                   <TooltipContent side="right" className="font-medium">
                     {item.name}
                     {item.notifications && item.notifications > 0 && (
-                      <span className="ml-1 text-xs">({item.notifications})</span>
+                      <span className="ml-1 text-xs">
+                        ({item.notifications})
+                      </span>
                     )}
                   </TooltipContent>
                 )}
@@ -201,7 +238,9 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
 
           {!isCollapsed && (
             <div className="mt-6 mb-4">
-              <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Discover</h3>
+              <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Discover
+              </h3>
             </div>
           )}
 
@@ -214,8 +253,9 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                       variant={activeTab === item.path ? "default" : "ghost"}
                       className={cn(
                         "w-full justify-start relative group transition-all duration-200",
-                        activeTab === item.path && "bg-primary/10 text-primary font-medium",
-                        isCollapsed && "justify-center px-2",
+                        activeTab === item.path &&
+                          "bg-primary/10 text-primary font-medium",
+                        isCollapsed && "justify-center px-2"
                       )}
                       onClick={() => handleNavigation(item.path)}
                     >
@@ -225,17 +265,23 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                           isCollapsed ? "mr-0" : "mr-3",
                           activeTab === item.path
                             ? "text-primary"
-                            : "text-muted-foreground group-hover:text-foreground",
+                            : "text-muted-foreground group-hover:text-foreground"
                         )}
                       />
 
-                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      {!isCollapsed && (
+                        <span className="truncate">{item.name}</span>
+                      )}
 
                       {activeTab === item.path && !isCollapsed && (
                         <motion.div
                           className="absolute inset-y-0 left-0 w-1 bg-primary rounded-r-full"
                           layoutId="activeTabSecondary"
-                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30,
+                          }}
                         />
                       )}
                     </Button>
@@ -252,38 +298,63 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
         </nav>
 
         {/* Settings and theme toggle */}
-        <div className={cn("p-4 border-t dark:border-gray-800", isCollapsed && "flex flex-col items-center")}>
+        <div
+          className={cn(
+            "p-4 border-t dark:border-gray-800",
+            isCollapsed && "flex flex-col items-center"
+          )}
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                className={cn("w-full justify-start mb-2", isCollapsed && "justify-center px-2")}
+                className={cn(
+                  "w-full justify-start mb-2",
+                  isCollapsed && "justify-center px-2"
+                )}
                 onClick={() => setActiveTab("settings")}
               >
-                <Settings className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")} />
+                <Settings
+                  className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
+                />
                 {!isCollapsed && <span>Settings</span>}
               </Button>
             </TooltipTrigger>
-            {isCollapsed && <TooltipContent side="right">Settings</TooltipContent>}
+            {isCollapsed && (
+              <TooltipContent side="right">Settings</TooltipContent>
+            )}
           </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                className={cn("w-full justify-start mb-2", isCollapsed && "justify-center px-2")}
+                className={cn(
+                  "w-full justify-start mb-2",
+                  isCollapsed && "justify-center px-2"
+                )}
                 onClick={toggleTheme}
               >
                 {isMounted && theme === "dark" ? (
-                  <Sun className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")} />
+                  <Sun
+                    className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
+                  />
                 ) : (
-                  <Moon className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")} />
+                  <Moon
+                    className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
+                  />
                 )}
-                {!isCollapsed && <span>{isMounted && theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
+                {!isCollapsed && (
+                  <span>
+                    {isMounted && theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </span>
+                )}
               </Button>
             </TooltipTrigger>
             {isCollapsed && (
-              <TooltipContent side="right">{isMounted && theme === "dark" ? "Light Mode" : "Dark Mode"}</TooltipContent>
+              <TooltipContent side="right">
+                {isMounted && theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </TooltipContent>
             )}
           </Tooltip>
 
@@ -293,15 +364,19 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                 variant="ghost"
                 className={cn(
                   "w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20",
-                  isCollapsed && "justify-center px-2",
+                  isCollapsed && "justify-center px-2"
                 )}
                 onClick={handleLogout}
               >
-                <LogOut className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")} />
+                <LogOut
+                  className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
+                />
                 {!isCollapsed && <span>Logout</span>}
               </Button>
             </TooltipTrigger>
-            {isCollapsed && <TooltipContent side="right">Logout</TooltipContent>}
+            {isCollapsed && (
+              <TooltipContent side="right">Logout</TooltipContent>
+            )}
           </Tooltip>
         </div>
 
@@ -317,12 +392,15 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
                 "p-4 border-t dark:border-gray-800 flex items-center",
                 isCollapsed &&
                   isHovering &&
-                  "absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 shadow-lg rounded-tr-lg",
+                  "absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 shadow-lg rounded-tr-lg"
               )}
             >
               <Avatar className="h-10 w-10 border-2 border-primary/20">
                 <AvatarImage
-                  src={session?.user?.image || "/placeholder.svg?height=40&width=40"}
+                  src={
+                    session?.user?.image ||
+                    "/placeholder.svg?height=40&width=40"
+                  }
                   alt={session?.user?.name || "User"}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary">
@@ -331,11 +409,19 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
               </Avatar>
 
               <div className="ml-3 overflow-hidden">
-                <p className="text-sm font-medium truncate">{session?.user?.name || "User"}</p>
-                <p className="text-xs text-muted-foreground truncate">{session?.user?.email || "srcusername"}</p>
+                <p className="text-sm font-medium truncate">
+                  {session?.user?.name || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {session?.user?.email || "srcusername"}
+                </p>
               </div>
 
-              <Button variant="ghost" size="icon" className="ml-auto rounded-full">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ml-auto rounded-full"
+              >
                 <Settings className="h-4 w-4 text-muted-foreground" />
               </Button>
             </motion.div>
@@ -347,7 +433,9 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
           <div className="p-4 flex justify-center">
             <Avatar className="h-10 w-10 border-2 border-primary/20">
               <AvatarImage
-                src={session?.user?.image || "/placeholder.svg?height=40&width=40"}
+                src={
+                  session?.user?.image || "/placeholder.svg?height=40&width=40"
+                }
                 alt={session?.user?.name || "User"}
               />
               <AvatarFallback className="bg-primary/10 text-primary">
@@ -358,6 +446,5 @@ export default function EnhancedSidebar({ activeTab, setActiveTab }: SidebarProp
         )}
       </motion.div>
     </TooltipProvider>
-  )
+  );
 }
-

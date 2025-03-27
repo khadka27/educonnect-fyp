@@ -381,7 +381,6 @@
 // };
 
 // export default UserProfile;
-
 "use client";
 
 import type React from "react";
@@ -401,7 +400,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "src/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "src/components/ui/dialog";
 import { Textarea } from "src/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "src/components/ui/tabs";
 import { Badge } from "src/components/ui/badge";
 import { Skeleton } from "src/components/ui/skeleton";
 import {
@@ -817,13 +821,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
         <div className="text-destructive text-4xl mb-4">⚠️</div>
         <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
         <p className="text-muted-foreground mb-4">{error}</p>
-        <Button onClick={() => router.push("/")}>Go Home</Button>
+        <Button
+          onClick={() => router.push("/")}
+          className="bg-teal-600 hover:bg-teal-700 text-white"
+        >
+          Go Home
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className={cn("min-h-screen bg-background")}>
+    <div
+      className={cn(
+        "min-h-screen bg-gradient-to-b from-teal-50/50 to-blue-50/50 dark:from-teal-950/20 dark:to-blue-950/20"
+      )}
+    >
       {/* Hidden file inputs */}
       <input
         type="file"
@@ -841,7 +854,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
       />
 
       {/* Cover Image */}
-      <div className="relative h-48 sm:h-64 md:h-80 overflow-hidden">
+      <div className="relative h-48 sm:h-64 md:h-80 overflow-hidden rounded-b-3xl shadow-md">
         <div
           className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 z-10"
           aria-hidden="true"
@@ -860,6 +873,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
             layout="fill"
             objectFit="cover"
             priority
+            className="transition-transform duration-700 ease-in-out group-hover:scale-105"
           />
 
           {isOwnProfile && (
@@ -879,7 +893,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               <div className="relative" onClick={handleProfileImageClick}>
                 <div
                   className={cn(
-                    "h-32 w-32 sm:h-40 sm:w-40 rounded-full border-4 border-background overflow-hidden relative cursor-pointer group",
+                    "h-32 w-32 sm:h-40 sm:w-40 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden relative cursor-pointer group shadow-lg",
                     isOwnProfile && "hover:opacity-90 transition-opacity"
                   )}
                 >
@@ -889,11 +903,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       alt="Profile"
                       layout="fill"
                       objectFit="cover"
-                      className="rounded-full"
+                      className="rounded-full transition-transform duration-700 ease-in-out group-hover:scale-110"
                     />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-muted">
-                      <User className="h-16 w-16 text-muted-foreground" />
+                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-teal-100 to-blue-100 dark:from-teal-900/40 dark:to-blue-900/40">
+                      <User className="h-16 w-16 text-teal-600 dark:text-teal-400" />
                     </div>
                   )}
 
@@ -914,22 +928,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       transition={{ duration: 0.5 }}
                       className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30"
                     >
-                      <Check className="w-16 h-16 text-primary" />
+                      <Check className="w-16 h-16 text-teal-500" />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
               <div className="mt-4 sm:mt-0 sm:ml-6 text-center sm:text-left">
-                <h1 className="text-2xl sm:text-3xl font-bold">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
                   {user?.name || "User"}
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-teal-600 dark:text-teal-400">
                   @{user?.username || "username"}
                 </p>
 
                 {user?.role && (
-                  <Badge variant="outline" className="mt-2">
+                  <Badge
+                    variant="outline"
+                    className="mt-2 bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800"
+                  >
                     {user.role}
                   </Badge>
                 )}
@@ -946,8 +963,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     className={cn(
                       "transition-all",
                       isFollowing
-                        ? "border-primary text-primary hover:bg-primary/10"
-                        : ""
+                        ? "border-teal-500 text-teal-600 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20"
+                        : "bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-800"
                     )}
                   >
                     {isFollowing ? (
@@ -963,7 +980,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     )}
                   </Button>
 
-                  <Button>
+                  <Button className="bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700">
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Message
                   </Button>
@@ -977,7 +994,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     onOpenChange={setIsEditModalOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button variant="outline">
+                      <Button
+                        variant="outline"
+                        className="border-teal-200 text-teal-700 hover:bg-teal-50 hover:text-teal-800 dark:border-teal-800 dark:text-teal-400 dark:hover:bg-teal-900/20"
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Profile
                       </Button>
@@ -998,13 +1018,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     onOpenChange={setIsAddPostModalOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button>
+                      <Button className="bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-800">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Post
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[500px]">
-                      <h2 className="text-2xl font-bold mb-4">
+                      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
                         Create a New Post
                       </h2>
 
@@ -1013,7 +1033,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                           placeholder="What's on your mind?"
                           value={postContent}
                           onChange={handlePostContentChange}
-                          className="mb-4 min-h-[120px]"
+                          className="mb-4 min-h-[120px] focus-visible:ring-teal-500"
                         />
 
                         <div className="flex items-center justify-between mb-4">
@@ -1027,6 +1047,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                                     onClick={() =>
                                       fileInputRef.current?.click()
                                     }
+                                    className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:text-teal-300 dark:hover:bg-teal-900/20"
                                   >
                                     <ImageIcon className="h-5 w-5" />
                                   </Button>
@@ -1044,6 +1065,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                                     onClick={() =>
                                       fileInputRef.current?.click()
                                     }
+                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
                                   >
                                     <Video className="h-5 w-5" />
                                   </Button>
@@ -1055,7 +1077,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/20"
+                                  >
                                     <FileText className="h-5 w-5" />
                                   </Button>
                                 </TooltipTrigger>
@@ -1066,7 +1092,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900/20"
+                                  >
                                     <Link className="h-5 w-5" />
                                   </Button>
                                 </TooltipTrigger>
@@ -1077,7 +1107,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/20"
+                                  >
                                     <Smile className="h-5 w-5" />
                                   </Button>
                                 </TooltipTrigger>
@@ -1088,15 +1122,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
 
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-teal-200 hover:border-teal-300 dark:border-teal-800 dark:hover:border-teal-700"
+                              >
                                 {postPrivacy === "public" && (
-                                  <Globe className="h-4 w-4 mr-2" />
+                                  <Globe className="h-4 w-4 mr-2 text-teal-600 dark:text-teal-400" />
                                 )}
                                 {postPrivacy === "friends" && (
-                                  <Users className="h-4 w-4 mr-2" />
+                                  <Users className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
                                 )}
                                 {postPrivacy === "private" && (
-                                  <Lock className="h-4 w-4 mr-2" />
+                                  <Lock className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
                                 )}
                                 {postPrivacy === "public" && "Public"}
                                 {postPrivacy === "friends" && "Friends"}
@@ -1106,18 +1144,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                             <DropdownMenuContent>
                               <DropdownMenuItem
                                 onClick={() => setPostPrivacy("public")}
+                                className="text-teal-600 dark:text-teal-400 focus:text-teal-700 dark:focus:text-teal-300 focus:bg-teal-50 dark:focus:bg-teal-900/20"
                               >
                                 <Globe className="h-4 w-4 mr-2" />
                                 Public
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => setPostPrivacy("friends")}
+                                className="text-blue-600 dark:text-blue-400 focus:text-blue-700 dark:focus:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/20"
                               >
                                 <Users className="h-4 w-4 mr-2" />
                                 Friends
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => setPostPrivacy("private")}
+                                className="text-purple-600 dark:text-purple-400 focus:text-purple-700 dark:focus:text-purple-300 focus:bg-purple-50 dark:focus:bg-purple-900/20"
                               >
                                 <Lock className="h-4 w-4 mr-2" />
                                 Private
@@ -1135,7 +1176,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                         />
 
                         {mediaPreview && (
-                          <div className="relative mt-2 rounded-md overflow-hidden border border-border">
+                          <div className="relative mt-2 rounded-md overflow-hidden border border-teal-200 dark:border-teal-800 shadow-sm">
                             {postMedia?.type.startsWith("image") ? (
                               <Image
                                 src={mediaPreview || "/placeholder.svg"}
@@ -1168,7 +1209,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
 
                       <Button
                         onClick={handlePostSubmit}
-                        className="w-full"
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-800"
                         disabled={!postContent.trim() && !postMedia}
                       >
                         <Send className="w-4 h-4 mr-2" />
@@ -1181,7 +1222,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800/50"
+                  >
                     <MoreHorizontal className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1194,6 +1239,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                         description: "Profile link copied to clipboard",
                       });
                     }}
+                    className="text-teal-600 dark:text-teal-400 focus:text-teal-700 dark:focus:text-teal-300 focus:bg-teal-50 dark:focus:bg-teal-900/20"
                   >
                     <Share2 className="h-4 w-4 mr-2" />
                     Share Profile
@@ -1203,11 +1249,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     <>
                       <DropdownMenuItem
                         onClick={() => router.push("/settings")}
+                        className="text-blue-600 dark:text-blue-400 focus:text-blue-700 dark:focus:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/20"
                       >
                         <Settings className="h-4 w-4 mr-2" />
                         Settings
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem className="text-rose-600 dark:text-rose-400 focus:text-rose-700 dark:focus:text-rose-300 focus:bg-rose-50 dark:focus:bg-rose-900/20">
                         <LogOut className="h-4 w-4 mr-2" />
                         Logout
                       </DropdownMenuItem>
@@ -1221,20 +1268,28 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           {/* User Stats */}
           <div className="mt-6 flex justify-center md:justify-start">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{userStats.posts}</p>
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-800/50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                  {userStats.posts}
+                </p>
                 <p className="text-muted-foreground text-sm">Posts</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{userStats.followers}</p>
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-800/50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {userStats.followers}
+                </p>
                 <p className="text-muted-foreground text-sm">Followers</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{userStats.following}</p>
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-800/50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {userStats.following}
+                </p>
                 <p className="text-muted-foreground text-sm">Following</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{userStats.saved}</p>
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-800/50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                  {userStats.saved}
+                </p>
                 <p className="text-muted-foreground text-sm">Saved</p>
               </div>
             </div>
@@ -1243,34 +1298,38 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
 
         {/* Bio and Location */}
         <div className="mb-6 max-w-3xl mx-auto">
-          <Card className="bg-card">
+          <Card className="bg-white/90 dark:bg-gray-800/60 shadow-sm hover:shadow-md transition-shadow border-teal-100 dark:border-teal-900/50">
             <CardContent className="p-6">
-              {user?.bio && <p className="mb-4">{user.bio}</p>}
+              {user?.bio && (
+                <p className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {user.bio}
+                </p>
+              )}
 
               <div className="flex flex-wrap gap-4">
                 {user?.address && (
-                  <div className="flex items-center text-muted-foreground">
+                  <div className="flex items-center text-teal-600 dark:text-teal-400">
                     <MapPin className="w-4 h-4 mr-1" />
                     <span>{user.address}</span>
                   </div>
                 )}
 
                 {user?.email && (
-                  <div className="flex items-center text-muted-foreground">
+                  <div className="flex items-center text-blue-600 dark:text-blue-400">
                     <Mail className="w-4 h-4 mr-1" />
                     <span>{user.email}</span>
                   </div>
                 )}
 
                 {user?.phone && (
-                  <div className="flex items-center text-muted-foreground">
+                  <div className="flex items-center text-purple-600 dark:text-purple-400">
                     <Phone className="w-4 h-4 mr-1" />
                     <span>{user.phone}</span>
                   </div>
                 )}
 
                 {user?.joinedAt && (
-                  <div className="flex items-center text-muted-foreground">
+                  <div className="flex items-center text-amber-600 dark:text-amber-400">
                     <Calendar className="w-4 h-4 mr-1" />
                     <span>
                       Joined {format(new Date(user.joinedAt), "MMMM yyyy")}
@@ -1289,11 +1348,31 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           onValueChange={setActiveTab}
           className="mb-8"
         >
-          <TabsList className="grid grid-cols-4 max-w-md mx-auto">
-            <TabsTrigger value="posts">Posts</TabsTrigger>
-            <TabsTrigger value="saved">Saved</TabsTrigger>
-            <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
+          <TabsList className="grid grid-cols-4 max-w-md mx-auto bg-white/70 dark:bg-gray-800/50 p-1 rounded-full">
+            <TabsTrigger
+              value="posts"
+              className="rounded-full data-[state=active]:bg-teal-100 data-[state=active]:text-teal-800 dark:data-[state=active]:bg-teal-900/40 dark:data-[state=active]:text-teal-100"
+            >
+              Posts
+            </TabsTrigger>
+            <TabsTrigger
+              value="saved"
+              className="rounded-full data-[state=active]:bg-blue-100 data-[state=active]:text-blue-800 dark:data-[state=active]:bg-blue-900/40 dark:data-[state=active]:text-blue-100"
+            >
+              Saved
+            </TabsTrigger>
+            <TabsTrigger
+              value="gallery"
+              className="rounded-full data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800 dark:data-[state=active]:bg-purple-900/40 dark:data-[state=active]:text-purple-100"
+            >
+              Gallery
+            </TabsTrigger>
+            <TabsTrigger
+              value="about"
+              className="rounded-full data-[state=active]:bg-amber-100 data-[state=active]:text-amber-800 dark:data-[state=active]:bg-amber-900/40 dark:data-[state=active]:text-amber-100"
+            >
+              About
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="posts" className="mt-6">
@@ -1309,7 +1388,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               {galleryImages.map((image, index) => (
                 <div
                   key={index}
-                  className="aspect-square relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                  className="aspect-square relative rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shadow-sm hover:shadow-md group"
                   onClick={() => {
                     setModalImage(image);
                     setShowGalleryIndex(index);
@@ -1321,7 +1400,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     alt={`Gallery image ${index + 1}`}
                     layout="fill"
                     objectFit="cover"
+                    className="transition-transform duration-700 ease-in-out group-hover:scale-110"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-start p-3">
+                    <p className="text-white text-sm font-medium">
+                      Image {index + 1}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1330,15 +1415,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           <TabsContent value="about" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Education */}
-              <Card>
+              <Card className="bg-white/90 dark:bg-gray-800/60 shadow-sm hover:shadow-md transition-shadow border-teal-100 dark:border-teal-900/50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold flex items-center">
+                    <h3 className="text-xl font-semibold flex items-center text-teal-700 dark:text-teal-300">
                       <School className="mr-2 h-5 w-5" />
                       Education
                     </h3>
                     {isOwnProfile && (
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:text-teal-300 dark:hover:bg-teal-900/20"
+                      >
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
@@ -1350,10 +1439,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       {user.education.map((edu, index) => (
                         <div
                           key={index}
-                          className="border-b pb-4 last:border-0 last:pb-0"
+                          className="border-b border-teal-100 dark:border-teal-900/50 pb-4 last:border-0 last:pb-0"
                         >
-                          <h4 className="font-medium">{edu.school}</h4>
-                          <p className="text-muted-foreground">{edu.degree}</p>
+                          <h4 className="font-medium text-gray-800 dark:text-gray-200">
+                            {edu.school}
+                          </h4>
+                          <p className="text-teal-600 dark:text-teal-400">
+                            {edu.degree}
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             {edu.year}
                           </p>
@@ -1369,15 +1462,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </Card>
 
               {/* Work Experience */}
-              <Card>
+              <Card className="bg-white/90 dark:bg-gray-800/60 shadow-sm hover:shadow-md transition-shadow border-blue-100 dark:border-blue-900/50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold flex items-center">
+                    <h3 className="text-xl font-semibold flex items-center text-blue-700 dark:text-blue-300">
                       <Briefcase className="mr-2 h-5 w-5" />
                       Work Experience
                     </h3>
                     {isOwnProfile && (
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+                      >
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
@@ -1389,10 +1486,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       {user.work.map((work, index) => (
                         <div
                           key={index}
-                          className="border-b pb-4 last:border-0 last:pb-0"
+                          className="border-b border-blue-100 dark:border-blue-900/50 pb-4 last:border-0 last:pb-0"
                         >
-                          <h4 className="font-medium">{work.company}</h4>
-                          <p className="text-muted-foreground">
+                          <h4 className="font-medium text-gray-800 dark:text-gray-200">
+                            {work.company}
+                          </h4>
+                          <p className="text-blue-600 dark:text-blue-400">
                             {work.position}
                           </p>
                           <p className="text-sm text-muted-foreground">
@@ -1410,15 +1509,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </Card>
 
               {/* Skills */}
-              <Card>
+              <Card className="bg-white/90 dark:bg-gray-800/60 shadow-sm hover:shadow-md transition-shadow border-purple-100 dark:border-purple-900/50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold flex items-center">
+                    <h3 className="text-xl font-semibold flex items-center text-purple-700 dark:text-purple-300">
                       <Award className="mr-2 h-5 w-5" />
                       Skills
                     </h3>
                     {isOwnProfile && (
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900/20"
+                      >
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
@@ -1428,7 +1531,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                   {user?.skills && user.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {user.skills.map((skill, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
+                        >
                           {skill}
                         </Badge>
                       ))}
@@ -1442,15 +1549,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               </Card>
 
               {/* Interests */}
-              <Card>
+              <Card className="bg-white/90 dark:bg-gray-800/60 shadow-sm hover:shadow-md transition-shadow border-amber-100 dark:border-amber-900/50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold flex items-center">
+                    <h3 className="text-xl font-semibold flex items-center text-amber-700 dark:text-amber-300">
                       <Heart className="mr-2 h-5 w-5" />
                       Interests
                     </h3>
                     {isOwnProfile && (
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/20"
+                      >
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
@@ -1460,7 +1571,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                   {user?.interests && user.interests.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {user.interests.map((interest, index) => (
-                        <Badge key={index} variant="outline">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-900/20"
+                        >
                           {interest}
                         </Badge>
                       ))}
@@ -1481,7 +1596,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none">
           <div className="relative">
-            <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg">
+            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 rounded-lg">
               {modalImage && (
                 <div className="relative">
                   <Image
@@ -1489,7 +1604,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     alt="Full size image"
                     width={1200}
                     height={800}
-                    className="max-h-[80vh] w-auto object-contain mx-auto"
+                    className="max-h-[80vh] w-auto object-contain mx-auto rounded-md"
                   />
 
                   {activeTab === "gallery" && (
@@ -1497,7 +1612,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full bg-background/80 hover:bg-background"
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                         onClick={handlePrevGalleryImage}
                       >
                         <ChevronLeft className="h-6 w-6" />
@@ -1505,7 +1620,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-background/80 hover:bg-background"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                         onClick={handleNextGalleryImage}
                       >
                         <ChevronRight className="h-6 w-6" />
@@ -1519,7 +1634,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-2 right-2 rounded-full bg-background/80 hover:bg-background"
+              className="absolute top-2 right-2 rounded-full bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               onClick={() => setIsImageModalOpen(false)}
             >
               <X className="h-4 w-4" />
@@ -1534,9 +1649,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
 // Profile Skeleton component for loading state
 const ProfileSkeleton = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50/50 to-blue-50/50 dark:from-teal-950/20 dark:to-blue-950/20">
       {/* Cover Image Skeleton */}
-      <div className="relative h-48 sm:h-64 md:h-80">
+      <div className="relative h-48 sm:h-64 md:h-80 rounded-b-3xl overflow-hidden">
         <Skeleton className="h-full w-full" />
       </div>
 
@@ -1582,7 +1697,7 @@ const ProfileSkeleton = () => {
 
         {/* Tabs Skeleton */}
         <div className="mb-8">
-          <Skeleton className="h-10 max-w-md mx-auto rounded-lg mb-6" />
+          <Skeleton className="h-10 max-w-md mx-auto rounded-full mb-6" />
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-64 w-full rounded-lg" />

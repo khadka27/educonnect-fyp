@@ -1244,7 +1244,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+            <Loader2 className="h-16 w-16 animate-spin text-emerald-500 mb-4" />
             <p className="text-muted-foreground">
               Loading your profile data...
             </p>
@@ -1266,6 +1266,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 size="sm"
                 onClick={handleDiscardChanges}
                 disabled={saving}
+                className="hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
               >
                 Cancel
               </Button>
@@ -1276,7 +1277,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 className={cn(
                   "transition-all",
                   hasChanges
-                    ? "bg-primary hover:bg-primary/90"
+                    ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 text-white"
                     : "bg-muted text-muted-foreground"
                 )}
               >
@@ -1305,11 +1306,31 @@ const EditProfile: React.FC<EditProfileProps> = ({
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-6">
-              <TabsTrigger value="personal">Personal Info</TabsTrigger>
-              <TabsTrigger value="additional">Additional Info</TabsTrigger>
-              <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-6 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <TabsTrigger
+                value="personal"
+                className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800 dark:data-[state=active]:bg-emerald-900/40 dark:data-[state=active]:text-emerald-100"
+              >
+                Personal Info
+              </TabsTrigger>
+              <TabsTrigger
+                value="additional"
+                className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800 dark:data-[state=active]:bg-emerald-900/40 dark:data-[state=active]:text-emerald-100"
+              >
+                Additional Info
+              </TabsTrigger>
+              <TabsTrigger
+                value="security"
+                className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800 dark:data-[state=active]:bg-emerald-900/40 dark:data-[state=active]:text-emerald-100"
+              >
+                Security
+              </TabsTrigger>
+              <TabsTrigger
+                value="account"
+                className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800 dark:data-[state=active]:bg-emerald-900/40 dark:data-[state=active]:text-emerald-100"
+              >
+                Account
+              </TabsTrigger>
             </TabsList>
 
             <ScrollArea className="h-[calc(80vh-10rem)] pr-4">
@@ -1332,7 +1353,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             setProfileImage(null);
                             setProfileImagePreview(null);
                           }}
-                          className="h-8 px-2 text-destructive"
+                          className="h-8 px-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                         >
                           <X className="h-4 w-4 mr-1" />
                           Remove
@@ -1344,8 +1365,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
                       className={cn(
                         "relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-all",
                         isDraggingProfile
-                          ? "border-primary bg-primary/5"
-                          : "border-muted-foreground/25 hover:border-muted-foreground/50",
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                          : "border-muted-foreground/25 hover:border-emerald-300 dark:hover:border-emerald-700",
                         profileImagePreview ? "h-64" : "h-40"
                       )}
                       onDragOver={handleDragOver}
@@ -1377,8 +1398,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center mb-4">
-                          <User className="h-16 w-16 text-muted-foreground" />
+                        <div className="w-32 h-32 rounded-full bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center mb-4">
+                          <User className="h-16 w-16 text-emerald-300 dark:text-emerald-700" />
                         </div>
                       )}
 
@@ -1396,9 +1417,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => profileInputRef.current?.click()}
-                        className="mt-2"
+                        className="mt-2 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
                       >
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                         {profileImagePreview ? "Change Image" : "Upload Image"}
                       </Button>
 
@@ -1425,7 +1446,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             setCoverImage(null);
                             setCoverImagePreview(null);
                           }}
-                          className="h-8 px-2 text-destructive"
+                          className="h-8 px-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                         >
                           <X className="h-4 w-4 mr-1" />
                           Remove
@@ -1437,8 +1458,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
                       className={cn(
                         "relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-all",
                         isDraggingCover
-                          ? "border-primary bg-primary/5"
-                          : "border-muted-foreground/25 hover:border-muted-foreground/50",
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                          : "border-muted-foreground/25 hover:border-emerald-300 dark:hover:border-emerald-700",
                         coverImagePreview ? "h-64" : "h-40"
                       )}
                       onDragOver={handleDragOver}
@@ -1470,8 +1491,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="w-full h-32 rounded-md bg-muted flex items-center justify-center mb-4">
-                          <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                        <div className="w-full h-32 rounded-md bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center mb-4">
+                          <ImageIcon className="h-12 w-12 text-emerald-300 dark:text-emerald-700" />
                         </div>
                       )}
 
@@ -1489,9 +1510,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => coverInputRef.current?.click()}
-                        className="mt-2"
+                        className="mt-2 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
                       >
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                         {coverImagePreview ? "Change Image" : "Upload Image"}
                       </Button>
 
@@ -1502,11 +1523,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Basic Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Basic Information</h3>
+                  <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                    Basic Information
+                  </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -1516,6 +1539,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Your full name"
+                        className="focus-visible:ring-emerald-500"
                       />
                     </div>
 
@@ -1526,6 +1550,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="Your username"
+                        className="focus-visible:ring-emerald-500"
                       />
                     </div>
                   </div>
@@ -1537,7 +1562,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell us about yourself"
-                      className="min-h-[120px]"
+                      className="min-h-[120px] focus-visible:ring-emerald-500"
                     />
                     <p className="text-xs text-muted-foreground">
                       {bio.length}/500 characters
@@ -1548,13 +1573,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor="address">Location</Label>
                       <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                         <Input
                           id="address"
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
                           placeholder="City, Country"
-                          className="pl-10"
+                          className="pl-10 focus-visible:ring-emerald-500"
                         />
                       </div>
                     </div>
@@ -1562,13 +1587,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                         <Input
                           id="phone"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="+1 (555) 123-4567"
-                          className="pl-10"
+                          className="pl-10 focus-visible:ring-emerald-500"
                         />
                       </div>
                     </div>
@@ -1577,13 +1602,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
                     <div className="relative">
-                      <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-3 h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                       <Input
                         id="website"
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
                         placeholder="https://yourwebsite.com"
-                        className="pl-10"
+                        className="pl-10 focus-visible:ring-emerald-500"
                       />
                     </div>
                   </div>
@@ -1594,20 +1619,23 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 {/* Social Links */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Social Links</h3>
+                    <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                      Social Links
+                    </h3>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleAddSocialLink}
+                      className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                       Add Link
                     </Button>
                   </div>
 
                   {socialLinks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg">
-                      <Link className="h-10 w-10 text-muted-foreground mb-2" />
+                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg border-emerald-200 dark:border-emerald-800">
+                      <Link className="h-10 w-10 text-emerald-400 dark:text-emerald-600 mb-2" />
                       <p className="text-muted-foreground text-center">
                         No social links added yet. Add your social media
                         profiles to connect with others.
@@ -1626,7 +1654,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                               handleUpdateSocialLink(link.id, "platform", value)
                             }
                           >
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[140px] focus:ring-emerald-500">
                               <SelectValue placeholder="Platform" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1652,14 +1680,14 @@ const EditProfile: React.FC<EditProfileProps> = ({
                               )
                             }
                             placeholder="https://..."
-                            className="flex-1"
+                            className="flex-1 focus-visible:ring-emerald-500"
                           />
 
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveSocialLink(link.id)}
-                            className="h-10 w-10 text-destructive"
+                            className="h-10 w-10 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -1669,25 +1697,28 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   )}
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Education */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Education</h3>
+                    <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                      Education
+                    </h3>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleAddEducation}
+                      className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                       Add Education
                     </Button>
                   </div>
 
                   {education.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg">
-                      <School className="h-10 w-10 text-muted-foreground mb-2" />
+                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg border-emerald-200 dark:border-emerald-800">
+                      <School className="h-10 w-10 text-emerald-400 dark:text-emerald-600 mb-2" />
                       <p className="text-muted-foreground text-center">
                         No education history added yet. Add your educational
                         background to showcase your qualifications.
@@ -1698,15 +1729,17 @@ const EditProfile: React.FC<EditProfileProps> = ({
                       {education.map((edu) => (
                         <div
                           key={edu.id}
-                          className="p-4 border rounded-lg space-y-4"
+                          className="p-4 border rounded-lg space-y-4 border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800"
                         >
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium">Education Entry</h4>
+                            <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                              Education Entry
+                            </h4>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleRemoveEducation(edu.id)}
-                              className="h-8 w-8 text-destructive"
+                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -1728,6 +1761,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="Harvard University"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
 
@@ -1744,6 +1778,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="Bachelor of Science"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
                           </div>
@@ -1763,6 +1798,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                 )
                               }
                               placeholder="Computer Science"
+                              className="focus-visible:ring-emerald-500"
                             />
                           </div>
 
@@ -1782,6 +1818,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="2018"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
 
@@ -1798,6 +1835,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="2022 or Present"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
                           </div>
@@ -1817,6 +1855,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                 )
                               }
                               placeholder="Brief description of your studies, achievements, etc."
+                              className="focus-visible:ring-emerald-500"
                             />
                           </div>
                         </div>
@@ -1825,25 +1864,28 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   )}
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Work Experience */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Work Experience</h3>
+                    <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                      Work Experience
+                    </h3>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleAddWorkExperience}
+                      className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                       Add Experience
                     </Button>
                   </div>
 
                   {workExperience.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg">
-                      <Briefcase className="h-10 w-10 text-muted-foreground mb-2" />
+                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg border-emerald-200 dark:border-emerald-800">
+                      <Briefcase className="h-10 w-10 text-emerald-400 dark:text-emerald-600 mb-2" />
                       <p className="text-muted-foreground text-center">
                         No work experience added yet. Add your professional
                         experience to showcase your career.
@@ -1854,10 +1896,10 @@ const EditProfile: React.FC<EditProfileProps> = ({
                       {workExperience.map((work) => (
                         <div
                           key={work.id}
-                          className="p-4 border rounded-lg space-y-4"
+                          className="p-4 border rounded-lg space-y-4 border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800"
                         >
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium">
+                            <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
                               Work Experience Entry
                             </h4>
                             <Button
@@ -1866,7 +1908,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                               onClick={() =>
                                 handleRemoveWorkExperience(work.id)
                               }
-                              className="h-8 w-8 text-destructive"
+                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -1888,6 +1930,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="Google"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
 
@@ -1906,6 +1949,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="Software Engineer"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
                           </div>
@@ -1925,6 +1969,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                 )
                               }
                               placeholder="Mountain View, CA"
+                              className="focus-visible:ring-emerald-500"
                             />
                           </div>
 
@@ -1944,6 +1989,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="2018-01-01"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
 
@@ -1962,6 +2008,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                   )
                                 }
                                 placeholder="2022-01-01 or Present"
+                                className="focus-visible:ring-emerald-500"
                               />
                             </div>
                           </div>
@@ -1981,6 +2028,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                                 )
                               }
                               placeholder="Brief description of your responsibilities and achievements"
+                              className="focus-visible:ring-emerald-500"
                             />
                           </div>
                         </div>
@@ -1989,25 +2037,28 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   )}
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Skills */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Skills</h3>
+                    <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                      Skills
+                    </h3>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleAddSkill}
+                      className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                       Add Skill
                     </Button>
                   </div>
 
                   {skills.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg">
-                      <FileText className="h-10 w-10 text-muted-foreground mb-2" />
+                    <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg border-emerald-200 dark:border-emerald-800">
+                      <FileText className="h-10 w-10 text-emerald-400 dark:text-emerald-600 mb-2" />
                       <p className="text-muted-foreground text-center">
                         No skills added yet. Add your skills to showcase your
                         expertise.
@@ -2030,7 +2081,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                               )
                             }
                             placeholder="Skill name"
-                            className="flex-1"
+                            className="flex-1 focus-visible:ring-emerald-500"
                           />
 
                           <Select
@@ -2039,7 +2090,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                               handleUpdateSkill(skill.id, "level", value)
                             }
                           >
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[140px] focus:ring-emerald-500">
                               <SelectValue placeholder="Level" />
                             </SelectTrigger>
                             <SelectContent>
@@ -2056,7 +2107,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveSkill(skill.id)}
-                            className="h-10 w-10 text-destructive"
+                            className="h-10 w-10 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -2066,11 +2117,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   )}
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Interests */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Interests</h3>
+                  <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                    Interests
+                  </h3>
 
                   <div className="flex items-center space-x-2">
                     <Input
@@ -2083,10 +2136,12 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           handleAddInterest();
                         }
                       }}
+                      className="focus-visible:ring-emerald-500"
                     />
                     <Button
                       onClick={handleAddInterest}
                       disabled={!newInterest.trim()}
+                      className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 text-white"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add
@@ -2104,14 +2159,14 @@ const EditProfile: React.FC<EditProfileProps> = ({
                         <Badge
                           key={index}
                           variant="secondary"
-                          className="flex items-center gap-1 px-3 py-1.5"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-100/70 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100"
                         >
                           {interest}
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveInterest(interest)}
-                            className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-destructive"
+                            className="h-4 w-4 p-0 ml-1 text-emerald-700 hover:text-rose-600 dark:text-emerald-300 dark:hover:text-rose-400"
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -2125,10 +2180,12 @@ const EditProfile: React.FC<EditProfileProps> = ({
               <TabsContent value="security" className="space-y-6 mt-0">
                 {/* Change Password */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Change Password</h3>
+                  <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                    Change Password
+                  </h3>
 
                   {passwordError && (
-                    <div className="bg-destructive/10 text-destructive p-3 rounded-md flex items-start space-x-2">
+                    <div className="bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 p-3 rounded-md flex items-start space-x-2">
                       <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                       <p>{passwordError}</p>
                     </div>
@@ -2147,7 +2204,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             setPasswordError(null);
                           }}
                           placeholder="Enter your current password"
-                          className="pr-10"
+                          className="pr-10 focus-visible:ring-emerald-500"
                         />
                         <Button
                           type="button"
@@ -2159,9 +2216,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           }
                         >
                           {showCurrentPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           )}
                         </Button>
                       </div>
@@ -2179,7 +2236,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             setPasswordError(null);
                           }}
                           placeholder="Enter your new password"
-                          className="pr-10"
+                          className="pr-10 focus-visible:ring-emerald-500"
                         />
                         <Button
                           type="button"
@@ -2189,9 +2246,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           onClick={() => setShowNewPassword(!showNewPassword)}
                         >
                           {showNewPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           )}
                         </Button>
                       </div>
@@ -2212,8 +2269,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           "#ddd",
                           "#ef4836",
                           "#f6b44d",
-                          "#2b90ef",
-                          "#25c281",
+                          "#10b981", // emerald-500
+                          "#059669", // emerald-600
                         ]}
                       />
                     </div>
@@ -2232,7 +2289,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             setPasswordError(null);
                           }}
                           placeholder="Confirm your new password"
-                          className="pr-10"
+                          className="pr-10 focus-visible:ring-emerald-500"
                         />
                         <Button
                           type="button"
@@ -2244,9 +2301,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           }
                         >
                           {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           )}
                         </Button>
                       </div>
@@ -2261,7 +2318,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                         !confirmNewPassword ||
                         newPassword !== confirmNewPassword
                       }
-                      className="w-full"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 text-white"
                     >
                       {saving ? (
                         <>
@@ -2278,50 +2335,65 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Security Settings */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Security Settings</h3>
+                  <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                    Security Settings
+                  </h3>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
                           Two-Factor Authentication
                         </h4>
                         <p className="text-sm text-muted-foreground">
                           Add an extra layer of security to your account
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <Lock className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <Lock className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Setup
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Active Sessions</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Active Sessions
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Manage devices where you're currently logged in
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <LogOut className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <LogOut className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Manage
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Password Reset</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Password Reset
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Send a password reset link to your email
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <RefreshCw className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Reset
                       </Button>
                     </div>
@@ -2332,45 +2404,62 @@ const EditProfile: React.FC<EditProfileProps> = ({
               <TabsContent value="account" className="space-y-6 mt-0">
                 {/* Account Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Account Information</h3>
+                  <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                    Account Information
+                  </h3>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Email Address</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Email Address
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           {userData?.email || "email@example.com"}
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <Mail className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <Mail className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Change
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Account Type</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Account Type
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Standard Account
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <Briefcase className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <Briefcase className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Upgrade
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Account Created</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Account Created
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           {userData?.joinedAt
                             ? new Date(userData.joinedAt).toLocaleDateString()
                             : "January 1, 2023"}
                         </p>
                       </div>
-                      <Badge variant="outline">
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400"
+                      >
                         <Calendar className="mr-2 h-4 w-4" />
                         Active
                       </Badge>
@@ -2378,22 +2467,26 @@ const EditProfile: React.FC<EditProfileProps> = ({
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Privacy Settings */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Privacy Settings</h3>
+                  <h3 className="text-lg font-medium text-emerald-800 dark:text-emerald-200">
+                    Privacy Settings
+                  </h3>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Profile Visibility</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Profile Visibility
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Control who can see your profile
                         </p>
                       </div>
                       <Select defaultValue="public">
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[140px] focus:ring-emerald-500 border-emerald-200 dark:border-emerald-800">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -2404,46 +2497,58 @@ const EditProfile: React.FC<EditProfileProps> = ({
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Email Notifications</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Email Notifications
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Manage your email notification preferences
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <Settings className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <Settings className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Configure
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-4 border rounded-lg border-emerald-100 hover:border-emerald-200 dark:border-emerald-900/50 dark:hover:border-emerald-800">
                       <div>
-                        <h4 className="font-medium">Data Export</h4>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+                          Data Export
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Download a copy of your data
                         </p>
                       </div>
-                      <Button variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-emerald-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                      >
+                        <Download className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Export
                       </Button>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 {/* Danger Zone */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-destructive">
+                  <h3 className="text-lg font-medium text-rose-600 dark:text-rose-400">
                     Danger Zone
                   </h3>
 
-                  <div className="p-4 border border-destructive/30 bg-destructive/5 rounded-lg space-y-4">
+                  <div className="p-4 border border-rose-200 bg-rose-50/50 dark:border-rose-900/50 dark:bg-rose-950/20 rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Delete Account</h4>
+                        <h4 className="font-medium text-rose-600 dark:text-rose-400">
+                          Delete Account
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           Permanently delete your account and all your data
                         </p>
@@ -2470,10 +2575,12 @@ const EditProfile: React.FC<EditProfileProps> = ({
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel className="border-rose-200 hover:border-rose-300 hover:bg-rose-50 dark:border-rose-900 dark:hover:border-rose-800 dark:hover:bg-rose-950/30">
+                              Cancel
+                            </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleDeleteAccount}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-800"
                             >
                               {saving ? (
                                 <>
@@ -2506,8 +2613,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDiscardChanges}>
+            <AlertDialogCancel className="border-rose-200 hover:border-rose-300 hover:bg-rose-50 dark:border-rose-900 dark:hover:border-rose-800 dark:hover:bg-rose-950/30">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDiscardChanges}
+              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800 text-white"
+            >
               Discard Changes
             </AlertDialogAction>
           </AlertDialogFooter>

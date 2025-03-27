@@ -21,8 +21,10 @@ import {
   Users,
   MessageSquare,
   Bookmark,
+  Book,
   HelpCircle,
   Heart,
+  Group,
   Compass,
   ChevronRight,
   Plus,
@@ -83,7 +85,7 @@ interface Notification {
   user?: {
     id: string;
     name: string;
-    image: string;
+    profileImage: string;
   };
 }
 
@@ -127,15 +129,15 @@ const EnhancedNavbar: React.FC = () => {
   // Navigation items
   const navItems = [
     { name: "Home", icon: Home, path: "/" },
-    { name: "Explore", icon: Compass, path: "/explore" },
-    { name: "Messages", icon: MessageSquare, path: "/messages", badge: 3 },
+    { name: "Event", icon: Compass, path: "/Events" },
+    { name: "Messages", icon: MessageSquare, path: "/chat", badge: 3 },
     {
-      name: "Notifications",
-      icon: Bell,
-      path: "/notifications",
+      name: "GroupChat",
+      icon: Group,
+      path: "/group",
       badge: unreadCount,
     },
-    { name: "Bookmarks", icon: Bookmark, path: "/bookmarks" },
+    { name: "Library", icon: Book, path: "/library" },
     { name: "Profile", icon: User, path: `/profile/${session?.user?.id}` },
   ];
 
@@ -151,7 +153,7 @@ const EnhancedNavbar: React.FC = () => {
       user: {
         id: "user1",
         name: "Alex Johnson",
-        image: "/placeholder.svg?height=40&width=40",
+        profileImage: "/placeholder.svg?height=40&width=40",
       },
     },
     {
@@ -164,7 +166,7 @@ const EnhancedNavbar: React.FC = () => {
       user: {
         id: "user2",
         name: "Sarah Williams",
-        image: "/placeholder.svg?height=40&width=40",
+        profileImage: "/placeholder.svg?height=40&width=40",
       },
     },
     {
@@ -177,7 +179,7 @@ const EnhancedNavbar: React.FC = () => {
       user: {
         id: "user3",
         name: "Prof. Davis",
-        image: "/placeholder.svg?height=40&width=40",
+        profileImage: "/placeholder.svg?height=40&width=40",
       },
     },
     {
@@ -190,7 +192,7 @@ const EnhancedNavbar: React.FC = () => {
       user: {
         id: "user4",
         name: "Michael Brown",
-        image: "/placeholder.svg?height=40&width=40",
+        profileImage: "/placeholder.svg?height=40&width=40",
       },
     },
     {
@@ -281,7 +283,8 @@ const EnhancedNavbar: React.FC = () => {
           username: session?.user?.email?.split("@")[0] || "username",
           email: session?.user?.email || "user@example.com",
           profileImage:
-            session?.user?.image || "/placeholder.svg?height=40&width=40",
+            session?.user?.profileImage ||
+            "/placeholder.svg?height=40&width=40",
           role: "Student",
           createdAt: new Date().toISOString(),
           followers: 120,

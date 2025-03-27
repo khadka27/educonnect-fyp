@@ -31,6 +31,8 @@ export function BookCard({ book }: BookCardProps) {
             fill
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            priority={false}
+            quality={75}
           />
         ) : (
           <div className="h-full w-full flex items-center justify-center bg-gray-200">

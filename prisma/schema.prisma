@@ -450,6 +450,7 @@ model Article {
   abstract  String?  @db.Text
   content   String   @db.Text
   imageUrl  String?
+  fileUrl   String?
   category  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
