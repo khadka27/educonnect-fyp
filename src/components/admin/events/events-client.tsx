@@ -6,9 +6,9 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useAdmin, adminActions } from "@/context/admin-context";
-import { EventsTable } from "./events-table";
-import { EventsFilters } from "./events-filters";
-import { CreateEventDialog } from "./create-event-dialog";
+import { EventsTable } from "src/components/admin/events/events-table";
+import { EventsFilters } from "src/components/admin/events/events-filters";
+import { CreateEventDialog } from "src/components/admin/events/";
 
 interface Event {
   id: string;

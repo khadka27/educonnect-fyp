@@ -20,8 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
+import { Button } from "src/components/ui/button";
 import { Badge } from "src/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -30,22 +29,36 @@ import {
   MoreHorizontal,
   Edit,
   Trash,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
-import { EditUserDialog } from "./edit-user-dialog";
-import { DeleteUserDialog } from "./delete-user-dialog";
+import { EditPaymentDialog } from "./edit-payment-dialog";
+import { DeletePaymentDialog } from "./delete-payment-dialog";
 import { useAdmin, adminActions } from "@/context/admin-context";
 import axios from "axios";
 
-interface User {
+interface Payment {
   id: string;
-  name: string;
-  email: string;
-  username: string;
-  role: string;
-  isVerified: boolean;
+  transactionId: string;
+  amount: number;
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  method: string;
+  paymentGateway: string;
+  failureReason: string | null;
   createdAt: string;
-  profileImage?: string;
+  updatedAt: string;
+  userId: string;
+  eventId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  event: {
+    id: string;
+    title: string;
+    type: string;
+  };
 }
 
 interface PaginationData {
@@ -55,23 +68,23 @@ interface PaginationData {
   itemsPerPage: number;
 }
 
-interface UsersTableProps {
-  users: User[];
+interface PaymentsTableProps {
+  payments: Payment[];
   pagination: PaginationData;
   loading: boolean;
-  selectedUsers: string[];
-  setSelectedUsers: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedPayments: string[];
+  setSelectedPayments: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export function UsersTable({
-  users,
+export function PaymentsTable({
+  payments,
   pagination,
   loading,
-  selectedUsers,
-  setSelectedUsers,
-}: UsersTableProps) {
-  const [userToEdit, setUserToEdit] = useState<User | null>(null);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  selectedPayments,
+  setSelectedPayments,
+}: PaymentsTableProps) {
+  const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -86,68 +99,60 @@ export function UsersTable({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedUsers(users.map((user) => user.id));
+      setSelectedPayments(payments.map((payment) => payment.id));
     } else {
-      setSelectedUsers([]);
+      setSelectedPayments([]);
     }
   };
 
-  const handleSelectUser = (userId: string, checked: boolean) => {
+  const handleSelectPayment = (paymentId: string, checked: boolean) => {
     if (checked) {
-      setSelectedUsers((prev) => [...prev, userId]);
+      setSelectedPayments((prev) => [...prev, paymentId]);
     } else {
-      setSelectedUsers((prev) => prev.filter((id) => id !== userId));
+      setSelectedPayments((prev) => prev.filter((id) => id !== paymentId));
     }
   };
 
-  const handleUserUpdated = () => {
-    setUserToEdit(null);
-    adminActions.addAlert(dispatch, "User updated successfully", "success");
+  const handlePaymentUpdated = () => {
+    setPaymentToEdit(null);
+    adminActions.addAlert(dispatch, "Payment updated successfully", "success");
     router.refresh();
   };
 
-  const handleUserDeleted = async () => {
-    if (!userToDelete) return;
+  const handlePaymentDeleted = async () => {
+    if (!paymentToDelete) return;
 
     try {
       adminActions.setLoading(dispatch, true);
-      await axios.delete(`/api/admin/users/${userToDelete.id}`);
+      await axios.delete(`/api/admin/payments/${paymentToDelete.id}`);
 
-      setUserToDelete(null);
-      adminActions.addAlert(dispatch, "User deleted successfully", "success");
+      setPaymentToDelete(null);
+      adminActions.addAlert(
+        dispatch,
+        "Payment deleted successfully",
+        "success"
+      );
       router.refresh();
     } catch (error) {
-      console.error("Error deleting user:", error);
-      adminActions.addAlert(dispatch, "Failed to delete user", "error");
+      console.error("Error deleting payment:", error);
+      adminActions.addAlert(dispatch, "Failed to delete payment", "error");
     } finally {
       adminActions.setLoading(dispatch, false);
     }
   };
 
-  // const getInitials = (name: string) => {
-  //   return name
-  //     .split(" ")
-  //     .map((n) => n[0])
-  //     .join("")
-  //     .toUpperCase();
-  // };
-
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return ""; // Return empty string if name is null or undefined
-
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+  const handleViewPayment = (paymentId: string) => {
+    router.push(`/admin/payments/${paymentId}`);
   };
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "ADMIN":
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return "success";
+      case "PENDING":
+        return "warning";
+      case "FAILED":
         return "destructive";
-      case "TEACHER":
-        return "default";
       default:
         return "secondary";
     }
@@ -162,17 +167,20 @@ export function UsersTable({
               <TableHead className="w-12">
                 <Checkbox
                   checked={
-                    selectedUsers.length === users.length && users.length > 0
+                    selectedPayments.length === payments.length &&
+                    payments.length > 0
                   }
                   onCheckedChange={handleSelectAll}
-                  aria-label="Select all users"
+                  aria-label="Select all payments"
                 />
               </TableHead>
+              <TableHead>Transaction ID</TableHead>
               <TableHead>User</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead>Event</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Method</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
@@ -184,22 +192,22 @@ export function UsersTable({
                     <div className="h-4 w-4 animate-pulse rounded bg-muted"></div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 animate-pulse rounded-full bg-muted"></div>
-                      <div className="space-y-1">
-                        <div className="h-4 w-32 animate-pulse rounded bg-muted"></div>
-                        <div className="h-3 w-24 animate-pulse rounded bg-muted"></div>
-                      </div>
-                    </div>
+                    <div className="h-4 w-32 animate-pulse rounded bg-muted"></div>
                   </TableCell>
                   <TableCell>
-                    <div className="h-4 w-24 animate-pulse rounded bg-muted"></div>
+                    <div className="h-4 w-32 animate-pulse rounded bg-muted"></div>
                   </TableCell>
                   <TableCell>
-                    <div className="h-6 w-16 animate-pulse rounded bg-muted"></div>
+                    <div className="h-4 w-32 animate-pulse rounded bg-muted"></div>
                   </TableCell>
                   <TableCell>
-                    <div className="h-6 w-16 animate-pulse rounded bg-muted"></div>
+                    <div className="h-4 w-16 animate-pulse rounded bg-muted"></div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-16 animate-pulse rounded bg-muted"></div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-6 w-20 animate-pulse rounded bg-muted"></div>
                   </TableCell>
                   <TableCell>
                     <div className="h-4 w-24 animate-pulse rounded bg-muted"></div>
@@ -209,53 +217,45 @@ export function UsersTable({
                   </TableCell>
                 </TableRow>
               ))
-            ) : users.length === 0 ? (
+            ) : payments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No users found.
+                <TableCell colSpan={9} className="h-24 text-center">
+                  No payments found.
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
+              payments.map((payment) => (
+                <TableRow key={payment.id}>
                   <TableCell>
                     <Checkbox
-                      checked={selectedUsers.includes(user.id)}
+                      checked={selectedPayments.includes(payment.id)}
                       onCheckedChange={(checked) =>
-                        handleSelectUser(user.id, !!checked)
+                        handleSelectPayment(payment.id, !!checked)
                       }
-                      aria-label={`Select ${user.name}`}
+                      aria-label={`Select payment ${payment.transactionId}`}
                     />
                   </TableCell>
+                  <TableCell className="font-medium">
+                    {payment.transactionId}
+                  </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={user.profileImage} alt={user.name} />
-                        <AvatarFallback>
-                          {getInitials(user.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-1">
-                        <p className="font-medium leading-none">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
+                    <div className="flex flex-col">
+                      <span>{payment.user.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {payment.user.email}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{payment.event.title}</TableCell>
+                  <TableCell>₹{payment.amount.toLocaleString()}</TableCell>
+                  <TableCell>{payment.method}</TableCell>
                   <TableCell>
-                    <Badge variant={getRoleBadgeVariant(user.role)}>
-                      {user.role}
+                    <Badge variant={getStatusBadgeVariant(payment.status)}>
+                      {payment.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.isVerified ? "outline" : "secondary"}>
-                      {user.isVerified ? "Verified" : "Unverified"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(user.createdAt), "MMM d, yyyy")}
+                    {format(new Date(payment.createdAt), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -268,11 +268,21 @@ export function UsersTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setUserToEdit(user)}>
+                        <DropdownMenuItem
+                          onClick={() => handleViewPayment(payment.id)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setPaymentToEdit(payment)}
+                        >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setUserToDelete(user)}>
+                        <DropdownMenuItem
+                          onClick={() => setPaymentToDelete(payment)}
+                        >
                           <Trash className="h-4 w-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -319,21 +329,21 @@ export function UsersTable({
         </div>
       </div>
 
-      {userToEdit && (
-        <EditUserDialog
-          user={userToEdit}
-          open={!!userToEdit}
-          onOpenChange={() => setUserToEdit(null)}
-          onSuccess={handleUserUpdated}
+      {paymentToEdit && (
+        <EditPaymentDialog
+          payment={paymentToEdit}
+          open={!!paymentToEdit}
+          onOpenChange={() => setPaymentToEdit(null)}
+          onSuccess={handlePaymentUpdated}
         />
       )}
 
-      {userToDelete && (
-        <DeleteUserDialog
-          user={userToDelete}
-          open={!!userToDelete}
-          onOpenChange={() => setUserToDelete(null)}
-          onSuccess={handleUserDeleted}
+      {paymentToDelete && (
+        <DeletePaymentDialog
+          payment={paymentToDelete}
+          open={!!paymentToDelete}
+          onOpenChange={() => setPaymentToDelete(null)}
+          onSuccess={handlePaymentDeleted}
         />
       )}
     </div>

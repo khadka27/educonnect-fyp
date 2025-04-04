@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import Link from "next/link";
@@ -17,9 +16,11 @@ import {
   LogOut,
   Menu,
   X,
+  MessageSquare,
+  FileImage,
 } from "lucide-react";
-import { useState } from "react";
-import { useIsMobile }from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdmin, adminActions } from "@/context/admin-context";
 import { signOut } from "next-auth/react";
 
@@ -50,6 +51,16 @@ const sidebarNavItems = [
     icon: Calendar,
   },
   {
+    title: "Chat",
+    href: "/admin/chat",
+    icon: MessageSquare,
+  },
+  {
+    title: "Posts",
+    href: "/admin/posts",
+    icon: FileImage,
+  },
+  {
     title: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
@@ -66,6 +77,18 @@ export default function AdminSidebar() {
   const isMobile = useIsMobile("(max-width: 768px)");
   const { state, dispatch } = useAdmin();
   const [isOpen, setIsOpen] = useState(!isMobile);
+
+  // Close sidebar on mobile when path changes
+  useEffect(() => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  }, [pathname, isMobile]);
+
+  // Update isOpen when screen size changes
+  useEffect(() => {
+    setIsOpen(!isMobile);
+  }, [isMobile]);
 
   const handleLogout = async () => {
     try {
@@ -119,7 +142,8 @@ export default function AdminSidebar() {
                 <span
                   className={cn(
                     "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === item.href
+                    pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`)
                       ? "bg-accent text-accent-foreground"
                       : "transparent"
                   )}

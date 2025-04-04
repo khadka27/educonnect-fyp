@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation"; // Ensure you're using Next.js 14 useNavigation
 import { useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
+import DashboardClient from "src/components/admin/dashboard-client";
 
 export default function AdminDashboard() {
   const { data: session } = useSession();
@@ -19,6 +20,8 @@ export default function AdminDashboard() {
       <h1>Admin Dashboard</h1>
       <button onClick={() => signOut()}>logut</button>
       {/* Admin dashboard content */}
+
+      <DashboardClient />
     </div>
   );
 }

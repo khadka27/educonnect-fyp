@@ -9,21 +9,21 @@ import { Input } from "src/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "src/components/ui/select"
 import { Search, X } from "lucide-react"
 
-// Book categories
-const BOOK_CATEGORIES = [
+// Article categories
+const ARTICLE_CATEGORIES = [
   "ALL",
-  "FICTION",
-  "NON_FICTION",
-  "SCIENCE",
-  "TECHNOLOGY",
-  "HISTORY",
-  "BIOGRAPHY",
-  "SELF_HELP",
   "EDUCATION",
-  "REFERENCE",
+  "TECHNOLOGY",
+  "SCIENCE",
+  "LITERATURE",
+  "HISTORY",
+  "ARTS",
+  "HEALTH",
+  "SPORTS",
+  "OTHER",
 ]
 
-export function BooksFilters() {
+export function ArticlesFilters() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -82,7 +82,7 @@ export function BooksFilters() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search books..."
+            placeholder="Search articles..."
             className="pl-8"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -97,7 +97,7 @@ export function BooksFilters() {
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            {BOOK_CATEGORIES.map((cat) => (
+            {ARTICLE_CATEGORIES.map((cat) => (
               <SelectItem key={cat} value={cat}>
                 {formatCategory(cat)}
               </SelectItem>

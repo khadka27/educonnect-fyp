@@ -4,7 +4,7 @@
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { AdminProvider } from "@/context/AdminContext";
-import AdminLayout from "./layout";
+import AdminLayout from "../layout";
 
 interface AdminRootLayoutProps {
   children: ReactNode;
