@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'url';
-import path from 'path';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -8,8 +7,17 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'res.cloudinary.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'images.unsplash.com',
                 pathname: '**',
             },
+            {
+                protocol: 'https',
+                hostname: 'i.pravatar.cc',
+                pathname: '**',
+            }
         ],
     },
 
