@@ -71,7 +71,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Define routes based on role
 const adminRoutes = ["/admin/dashboard", "/admin/user-details"];
-const userRoutes = ["/Home", "/user-profile", "/event", "/community", "/posts"];
+const userRoutes = [
+  "/Home",
+  "/user-profile",
+  "/Events",
+  "/group",
+  "/posts",
+  "/library",
+  "/chat",
+  "/news",
+];
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
@@ -125,13 +134,17 @@ export const config = {
     "/sign-up",
     "/Home",
     "/user-profile",
-    "/event",
-    "/community",
+    "/Events",
+    "/group",
     "/verify",
     "/admin",
     "/admin/user-details",
     "/admin/dashboard",
     "/posts",
+    "/library",
+    "/chat",
+    "/Home",
+    "/news",
     "/",
   ],
 };
