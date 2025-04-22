@@ -2,11 +2,11 @@ import { PrismaClient } from "@prisma/client"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { ArticleCard } from "src/components/articles/ArticleCard"
+import { ArticleCard } from "@/components/articles/ArticleCard"
 import { Button } from "@/components/ui/button"
-import { Input } from "src/components/ui/input"
+import { Input } from "@/components/ui/input"
 import { FileText, Plus, Search, Filter } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "src/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const prisma = new PrismaClient()
 

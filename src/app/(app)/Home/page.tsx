@@ -191,24 +191,28 @@
 
 // export default HomePage;
 
+"use client";
 
-
-"use client"
-
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import Feeds from "src/components/post/PostList"
-import { ProfileCard } from "src/components/profile-card"
-import TrendingTopics from "src/components/trending-topics"
-import EducationQuotesCarousel from "src/components/education-quotes-carousel"
-import MobileNavigation from "src/components/mobile-navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "src/components/ui/card"
-import { Skeleton } from "src/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs"
-import { Input } from "src/components/ui/input"
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Feeds from "@/components/post/PostList";
+import { ProfileCard } from "@/components/profile-card";
+import TrendingTopics from "@/components/trending-topics";
+import EducationQuotesCarousel from "@/components/education-quotes-carousel";
+import MobileNavigation from "@/components/mobile-navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   Bell,
   BookOpen,
@@ -221,40 +225,40 @@ import {
   Library,
   Newspaper,
   Sparkles,
-} from "lucide-react"
-import Link from "next/link"
-import { UpcomingEvents } from "src/components/upcoming-events"
+} from "lucide-react";
+import Link from "next/link";
+import { UpcomingEvents } from "@/components/upcoming-events";
 
 const HomePage = () => {
   // Hooks
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("feed")
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("feed");
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Debug output
   useEffect(() => {
-    console.log("Session data:", session)
-    console.log("User ID being passed to TimelineList:", session?.user?.id)
-  }, [session])
+    console.log("Session data:", session);
+    console.log("User ID being passed to TimelineList:", session?.user?.id);
+  }, [session]);
 
   // Handle scroll effects
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
+      setIsScrolled(window.scrollY > 50);
+    };
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Redirect if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/sign-in")
+      router.push("/sign-in");
     }
-  }, [status, router])
+  }, [status, router]);
 
   // Loading state
   if (status === "loading") {
@@ -279,11 +283,11 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!session && status === "unauthenticated") {
-    return null // Prevent flash of protected content
+    return null; // Prevent flash of protected content
   }
 
   // Main render for authenticated users
@@ -376,9 +380,17 @@ const HomePage = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-xl font-semibold flex items-center text-emerald-800 dark:text-emerald-200">
                         <BookOpen className="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        Welcome, {session?.user?.name || session?.user?.username || "User"}!
+                        Welcome,{" "}
+                        {session?.user?.name ||
+                          session?.user?.username ||
+                          "User"}
+                        !
                       </CardTitle>
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="relative">
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="relative"
+                      >
                         <Bell className="h-5 w-5 text-emerald-600 dark:text-emerald-400 cursor-pointer" />
                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
@@ -399,7 +411,11 @@ const HomePage = () => {
                     </div>
                   </CardContent>
                   <CardFooter className="pt-0 pb-4 px-4">
-                    <Tabs defaultValue="feed" className="w-full" onValueChange={setActiveTab}>
+                    <Tabs
+                      defaultValue="feed"
+                      className="w-full"
+                      onValueChange={setActiveTab}
+                    >
                       <TabsList className="grid grid-cols-3 w-full bg-emerald-100/70 dark:bg-emerald-900/30">
                         <TabsTrigger
                           value="feed"
@@ -490,7 +506,7 @@ const HomePage = () => {
         <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

@@ -1,8 +1,8 @@
 "use client";
 
-import GroupChat from "src/components/chat/GroupChat";
+import GroupChat from "@/components/chat/GroupChat";
 import { Suspense } from "react";
-import { Skeleton } from "src/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GroupChatPage() {
   return (

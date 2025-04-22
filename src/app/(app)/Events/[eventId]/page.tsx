@@ -4,18 +4,18 @@
 // import { useRouter, useParams } from "next/navigation";
 // import { useSession } from "next-auth/react";
 // import Image from "next/image";
-// import { Button } from "src/components/ui/button";
+// import { Button } from "@/components/ui/button";
 // import {
 //   Card,
 //   CardContent,
 //   CardFooter,
 //   CardHeader,
 //   CardTitle,
-// } from "src/components/ui/card";
-// import { Skeleton } from "src/components/ui/skeleton";
-// import { useToast } from "src/hooks/use-toast";
+// } from "@/components/ui/card";
+// import { Skeleton } from "@/components/ui/skeleton";
+// import { useToast } from "@/hooks/use-toast";
 // import { Calendar, MapPin, Mail, Phone, Tag, ArrowLeft } from "lucide-react";
-// import RegistrationForm from "src/components/event/registration-form";
+// import RegistrationForm from "@/components/event/registration-form";
 
 // interface Event {
 //   id: string;
@@ -140,7 +140,7 @@
 //         {event.bannerUrl && (
 //           <div className="relative h-64 w-full">
 //             <Image
-//               src={event.bannerUrl}
+//               @={event.bannerUrl}
 //               alt={event.title}
 //               layout="fill"
 //               objectFit="cover"
@@ -229,24 +229,24 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Button } from "src/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "src/components/ui/card";
-import { Skeleton } from "src/components/ui/skeleton";
-import { Badge } from "src/components/ui/badge";
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "src/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
-import { useToast } from "src/hooks/use-toast";
+} from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 import {
   Calendar,
   MapPin,
@@ -265,7 +265,7 @@ import {
   AlertTriangle,
   Check,
 } from "lucide-react";
-import RegistrationForm from "src/components/event/registration-form";
+import RegistrationForm from "@/components/event/registration-form";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 

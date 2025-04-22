@@ -3,15 +3,15 @@
 import type React from "react";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "src/components/ui/toaster";
+import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/app/context/AuthProvider";
 import { ThemeProvider } from "next-themes";
 import queryClient from "@/lib/queryClient";
 import { SessionProvider } from "next-auth/react";
-import { ChatProvider } from "src/context/ChatContext";
-import { SidebarProvider } from "src/context/SidebarContext";
+import { ChatProvider } from "@/context/ChatContext";
+import { SidebarProvider } from "@/context/SidebarContext";
 // import Sidebar from "src/components/bar/Sidebar12";
-import { TooltipProvider } from "src/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface ProvidersProps {
   children: React.ReactNode;

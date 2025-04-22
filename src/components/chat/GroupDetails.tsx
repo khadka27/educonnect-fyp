@@ -36,7 +36,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "../../../components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 
 // Icons

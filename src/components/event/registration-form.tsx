@@ -32,7 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "src/components/ui/card
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Badge } from "src/components/ui/badge";
 import { Separator } from "src/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "../../../components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 

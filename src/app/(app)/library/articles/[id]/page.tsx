@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Badge } from "src/components/ui/badge";
-import { Card, CardContent } from "src/components/ui/card";
-import { Separator } from "src/components/ui/separator";
-import PdfViewer from "src/components/pdf-viewer";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import PdfViewer from "@/components/pdf-viewer";
 
 // Generate metadata for SEO
 export async function generateMetadata({
