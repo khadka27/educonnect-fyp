@@ -1,11 +1,7 @@
-import SignInForm from 'src/components/form/SignInForm';
+import {SignInForm} from "src/components/form/SignInForm";
 
 const page = () => {
-  return (
-    <div className='w-full'>
-      <SignInForm />
-    </div>
-  );
+  return <SignInForm />;
 };
 
 export default page;

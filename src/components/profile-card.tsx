@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "src/components/ui/card";
-import { Skeleton } from "src/components/ui/skeleton";
-import { Badge } from "src/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   User,
   Settings,
@@ -19,6 +21,7 @@ import {
   Clock,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface ProfileCardProps {
   className?: string;
@@ -51,6 +54,7 @@ export function ProfileCard({ className }: ProfileCardProps) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -87,12 +91,30 @@ export function ProfileCard({ className }: ProfileCardProps) {
   if (status === "loading" || (status === "authenticated" && loading)) {
     return (
       <Card
-        className={`overflow-hidden bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20 ${className}`}
+        className={cn(
+          "overflow-hidden",
+          theme === "dark"
+            ? "bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20"
+            : "bg-white border-emerald-100",
+          className
+        )}
       >
-        <div className="h-24 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800" />
+        <div
+          className={cn(
+            "h-24",
+            theme === "dark"
+              ? "bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800"
+              : "bg-gradient-to-r from-emerald-400 to-teal-400"
+          )}
+        />
         <CardContent className="pt-0 pb-4 px-4">
           <div className="flex flex-col items-center -mt-12">
-            <Skeleton className="h-24 w-24 rounded-full border-4 border-gray-900 dark:border-gray-900" />
+            <Skeleton
+              className={cn(
+                "h-24 w-24 rounded-full border-4",
+                theme === "dark" ? "border-gray-900" : "border-white"
+              )}
+            />
             <Skeleton className="h-6 w-32 mt-4" />
             <Skeleton className="h-4 w-24 mt-2" />
             <Skeleton className="h-4 w-48 mt-4" />
@@ -110,23 +132,74 @@ export function ProfileCard({ className }: ProfileCardProps) {
   if (status === "unauthenticated" || !session) {
     return (
       <Card
-        className={`overflow-hidden bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20 ${className}`}
+        className={cn(
+          "overflow-hidden",
+          theme === "dark"
+            ? "bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20"
+            : "bg-white border-emerald-100",
+          className
+        )}
       >
-        <div className="h-24 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800" />
+        <div
+          className={cn(
+            "h-24",
+            theme === "dark"
+              ? "bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800"
+              : "bg-gradient-to-r from-emerald-400 to-teal-400"
+          )}
+        />
         <CardContent className="pt-0 pb-4 px-4">
           <div className="flex flex-col items-center -mt-12">
-            <div className="h-24 w-24 rounded-full bg-emerald-200 dark:bg-emerald-800 border-4 border-gray-900 dark:border-gray-900 flex items-center justify-center">
-              <User className="h-12 w-12 text-emerald-600 dark:text-emerald-400" />
+            <div
+              className={cn(
+                "h-24 w-24 rounded-full border-4 flex items-center justify-center",
+                theme === "dark"
+                  ? "bg-emerald-200 dark:bg-emerald-800 border-gray-900 dark:border-gray-900"
+                  : "bg-emerald-100 border-white"
+              )}
+            >
+              <User
+                className={cn(
+                  "h-12 w-12",
+                  theme === "dark"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-emerald-500"
+                )}
+              />
             </div>
-            <h2 className="text-xl font-bold text-white mt-4">Welcome</h2>
-            <p className="text-emerald-400 text-sm">@guest</p>
-            <p className="text-gray-400 text-sm text-center mt-4">
+            <h2
+              className={cn(
+                "text-xl font-bold mt-4",
+                theme === "dark" ? "text-white" : "text-gray-800"
+              )}
+            >
+              Welcome
+            </h2>
+            <p
+              className={cn(
+                "text-sm",
+                theme === "dark" ? "text-emerald-400" : "text-emerald-600"
+              )}
+            >
+              @guest
+            </p>
+            <p
+              className={cn(
+                "text-sm text-center mt-4",
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
+              )}
+            >
               Sign in to access your profile and connect with others
             </p>
             <div className="w-full mt-6">
               <Button
                 asChild
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                className={cn(
+                  "w-full text-white",
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                    : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                )}
               >
                 <Link href="/api/auth/signin">Sign In</Link>
               </Button>
@@ -141,16 +214,57 @@ export function ProfileCard({ className }: ProfileCardProps) {
   if (error) {
     return (
       <Card
-        className={`overflow-hidden bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20 ${className}`}
+        className={cn(
+          "overflow-hidden",
+          theme === "dark"
+            ? "bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20"
+            : "bg-white border-emerald-100",
+          className
+        )}
       >
-        <div className="h-24 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800" />
+        <div
+          className={cn(
+            "h-24",
+            theme === "dark"
+              ? "bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800"
+              : "bg-gradient-to-r from-emerald-400 to-teal-400"
+          )}
+        />
         <CardContent className="pt-0 pb-4 px-4">
           <div className="flex flex-col items-center -mt-12">
-            <div className="h-24 w-24 rounded-full bg-rose-200 dark:bg-rose-800 border-4 border-gray-900 dark:border-gray-900 flex items-center justify-center">
-              <User className="h-12 w-12 text-rose-600 dark:text-rose-400" />
+            <div
+              className={cn(
+                "h-24 w-24 rounded-full border-4 flex items-center justify-center",
+                theme === "dark"
+                  ? "bg-rose-200 dark:bg-rose-800 border-gray-900 dark:border-gray-900"
+                  : "bg-rose-100 border-white"
+              )}
+            >
+              <User
+                className={cn(
+                  "h-12 w-12",
+                  theme === "dark"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-rose-500"
+                )}
+              />
             </div>
-            <h2 className="text-xl font-bold text-white mt-4">Error</h2>
-            <p className="text-rose-400 text-sm">Could not load profile</p>
+            <h2
+              className={cn(
+                "text-xl font-bold mt-4",
+                theme === "dark" ? "text-white" : "text-gray-800"
+              )}
+            >
+              Error
+            </h2>
+            <p
+              className={cn(
+                "text-sm",
+                theme === "dark" ? "text-rose-400" : "text-rose-600"
+              )}
+            >
+              Could not load profile
+            </p>
             <div className="w-full mt-6">
               <Button
                 onClick={() => window.location.reload()}
@@ -175,6 +289,7 @@ export function ProfileCard({ className }: ProfileCardProps) {
     role: session.user.role || "USER",
     createdAt: new Date().toISOString(),
     isVerified: false,
+    bio: null, // Added bio property
     _count: {
       posts: 0,
       comments: 0,
@@ -214,21 +329,40 @@ export function ProfileCard({ className }: ProfileCardProps) {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "ADMIN":
-        return "bg-purple-800/60 text-purple-300 border-purple-700";
+        return theme === "dark"
+          ? "bg-purple-800/60 text-purple-300 border-purple-700"
+          : "bg-purple-100 text-purple-700 border-purple-200";
       case "TEACHER":
-        return "bg-amber-800/60 text-amber-300 border-amber-700";
+        return theme === "dark"
+          ? "bg-amber-800/60 text-amber-300 border-amber-700"
+          : "bg-amber-100 text-amber-700 border-amber-200";
       case "USER":
       default:
-        return "bg-emerald-800/60 text-emerald-300 border-emerald-700";
+        return theme === "dark"
+          ? "bg-emerald-800/60 text-emerald-300 border-emerald-700"
+          : "bg-emerald-100 text-emerald-700 border-emerald-200";
     }
   };
 
   // Authenticated state
   return (
     <Card
-      className={`overflow-hidden bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20 ${className}`}
+      className={cn(
+        "overflow-hidden",
+        theme === "dark"
+          ? "bg-gray-900/90 dark:bg-gray-900 border-emerald-900/20"
+          : "bg-white border-emerald-100",
+        className
+      )}
     >
-      <div className="h-24 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800 relative">
+      <div
+        className={cn(
+          "h-24 relative",
+          theme === "dark"
+            ? "bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-800 dark:to-teal-800"
+            : "bg-gradient-to-r from-emerald-400 to-teal-400"
+        )}
+      >
         {/* Decorative elements */}
         <div className="absolute top-2 left-4 w-8 h-8 rounded-full bg-white/20" />
         <div className="absolute top-6 left-12 w-4 h-4 rounded-full bg-white/10" />
@@ -238,12 +372,18 @@ export function ProfileCard({ className }: ProfileCardProps) {
       </div>
       <CardContent className="pt-0 pb-4 px-4">
         <div className="flex flex-col items-center -mt-12">
-          <div
+          <motion.div
             className="relative"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            whileHover={{ scale: 1.05 }}
           >
-            <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-gray-900 dark:border-gray-900">
+            <div
+              className={cn(
+                "h-24 w-24 rounded-full overflow-hidden border-4",
+                theme === "dark" ? "border-gray-900" : "border-white"
+              )}
+            >
               {user.profileImage ? (
                 <Image
                   src={user.profileImage || "/placeholder.svg"}
@@ -253,25 +393,56 @@ export function ProfileCard({ className }: ProfileCardProps) {
                   className="object-cover w-full h-full"
                 />
               ) : (
-                <div className="h-full w-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center">
-                  <User className="h-12 w-12 text-emerald-600 dark:text-emerald-400" />
+                <div
+                  className={cn(
+                    "h-full w-full flex items-center justify-center",
+                    theme === "dark"
+                      ? "bg-emerald-200 dark:bg-emerald-800"
+                      : "bg-emerald-100"
+                  )}
+                >
+                  <User
+                    className={cn(
+                      "h-12 w-12",
+                      theme === "dark"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-emerald-500"
+                    )}
+                  />
                 </div>
               )}
             </div>
             {isHovered && (
               <Link
                 href="/profile/edit"
-                className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full border-4 border-gray-900 dark:border-gray-900"
+                className={cn(
+                  "absolute inset-0 flex items-center justify-center rounded-full border-4",
+                  theme === "dark"
+                    ? "bg-black/60 border-gray-900"
+                    : "bg-black/40 border-white"
+                )}
               >
                 <Edit className="h-6 w-6 text-white" />
               </Link>
             )}
-          </div>
+          </motion.div>
 
-          <h2 className="text-xl font-bold text-white mt-4">
+          <h2
+            className={cn(
+              "text-xl font-bold mt-4",
+              theme === "dark" ? "text-white" : "text-gray-800"
+            )}
+          >
             {user.name || "User"}
           </h2>
-          <p className="text-emerald-400 text-sm">@{username}</p>
+          <p
+            className={cn(
+              "text-sm",
+              theme === "dark" ? "text-emerald-400" : "text-emerald-600"
+            )}
+          >
+            @{username}
+          </p>
 
           {/* User role badge */}
           <div className="flex items-center mt-2 gap-2">
@@ -284,14 +455,25 @@ export function ProfileCard({ className }: ProfileCardProps) {
             </Badge>
 
             {user.isVerified && (
-              <Badge className="bg-blue-800/60 text-blue-300 border-blue-700">
+              <Badge
+                className={cn(
+                  theme === "dark"
+                    ? "bg-blue-800/60 text-blue-300 border-blue-700"
+                    : "bg-blue-100 text-blue-700 border-blue-200"
+                )}
+              >
                 Verified
               </Badge>
             )}
           </div>
 
           {/* Bio or tagline */}
-          <p className="text-gray-400 text-sm text-center mt-4">
+          <p
+            className={cn(
+              "text-sm text-center mt-4",
+              theme === "dark" ? "text-gray-400" : "text-gray-600"
+            )}
+          >
             {user.bio ||
               (user.address
                 ? `Based in ${user.address}`
@@ -300,33 +482,96 @@ export function ProfileCard({ className }: ProfileCardProps) {
 
           {/* User stats */}
           <div className="w-full mt-4 grid grid-cols-3 gap-2">
-            <div className="bg-gray-800/60 rounded-lg p-2 text-center">
-              <div className="flex items-center justify-center text-emerald-400 mb-1">
+            <div
+              className={cn(
+                "rounded-lg p-2 text-center",
+                theme === "dark" ? "bg-gray-800/60" : "bg-emerald-50"
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-center mb-1",
+                  theme === "dark" ? "text-emerald-400" : "text-emerald-600"
+                )}
+              >
                 <FileText className="h-3 w-3 mr-1" />
                 <span className="text-xs">Posts</span>
               </div>
-              <p className="text-white font-bold">{postsCount}</p>
+              <p
+                className={cn(
+                  "font-bold",
+                  theme === "dark" ? "text-white" : "text-gray-800"
+                )}
+              >
+                {postsCount}
+              </p>
             </div>
-            <div className="bg-gray-800/60 rounded-lg p-2 text-center">
-              <div className="flex items-center justify-center text-emerald-400 mb-1">
+            <div
+              className={cn(
+                "rounded-lg p-2 text-center",
+                theme === "dark" ? "bg-gray-800/60" : "bg-emerald-50"
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-center mb-1",
+                  theme === "dark" ? "text-emerald-400" : "text-emerald-600"
+                )}
+              >
                 <MessageSquare className="h-3 w-3 mr-1" />
                 <span className="text-xs">Comments</span>
               </div>
-              <p className="text-white font-bold">{commentsCount}</p>
+              <p
+                className={cn(
+                  "font-bold",
+                  theme === "dark" ? "text-white" : "text-gray-800"
+                )}
+              >
+                {commentsCount}
+              </p>
             </div>
-            <div className="bg-gray-800/60 rounded-lg p-2 text-center">
-              <div className="flex items-center justify-center text-emerald-400 mb-1">
+            <div
+              className={cn(
+                "rounded-lg p-2 text-center",
+                theme === "dark" ? "bg-gray-800/60" : "bg-emerald-50"
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-center mb-1",
+                  theme === "dark" ? "text-emerald-400" : "text-emerald-600"
+                )}
+              >
                 <BookOpen className="h-3 w-3 mr-1" />
                 <span className="text-xs">Content</span>
               </div>
-              <p className="text-white font-bold">{contentCount}</p>
+              <p
+                className={cn(
+                  "font-bold",
+                  theme === "dark" ? "text-white" : "text-gray-800"
+                )}
+              >
+                {contentCount}
+              </p>
             </div>
           </div>
 
           {/* Joined date */}
           <div className="w-full mt-2">
-            <div className="bg-gray-800/40 rounded-lg p-2 text-center">
-              <div className="flex items-center justify-center text-emerald-400/80">
+            <div
+              className={cn(
+                "rounded-lg p-2 text-center",
+                theme === "dark" ? "bg-gray-800/40" : "bg-emerald-50/60"
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-center",
+                  theme === "dark"
+                    ? "text-emerald-400/80"
+                    : "text-emerald-600/80"
+                )}
+              >
                 <Clock className="h-3 w-3 mr-1" />
                 <span className="text-xs">Joined {joinedDate}</span>
               </div>
@@ -338,7 +583,12 @@ export function ProfileCard({ className }: ProfileCardProps) {
             <Button
               asChild
               variant="outline"
-              className="flex-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
+              className={cn(
+                "flex-1",
+                theme === "dark"
+                  ? "border-emerald-800 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
+                  : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+              )}
             >
               <Link href={`/profile/${user.id}`}>My Profile</Link>
             </Button>
@@ -346,7 +596,11 @@ export function ProfileCard({ className }: ProfileCardProps) {
               asChild
               variant="outline"
               size="icon"
-              className="border-emerald-800 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
+              className={cn(
+                theme === "dark"
+                  ? "border-emerald-800 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
+                  : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+              )}
             >
               <Link href="/settings">
                 <Settings className="h-4 w-4" />
@@ -356,7 +610,11 @@ export function ProfileCard({ className }: ProfileCardProps) {
               asChild
               variant="outline"
               size="icon"
-              className="border-emerald-800 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
+              className={cn(
+                theme === "dark"
+                  ? "border-emerald-800 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
+                  : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+              )}
             >
               <Link href="/api/auth/signout">
                 <LogOut className="h-4 w-4" />

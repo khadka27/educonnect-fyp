@@ -403,7 +403,7 @@ interface Event {
       title: "Thank You!",
       description:
         "You've successfully registered for the event. Check your email for the ticket.",
-      variant: "success",
+      variant: "default",
     });
   };
 

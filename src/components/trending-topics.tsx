@@ -18,12 +18,13 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
-} from "src/components/ui/card";
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "src/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 interface TrendingTopic {
   id: string;
@@ -44,21 +45,16 @@ export default function TrendingTopics() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   const fetchTrendingTopics = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Fetch trending topics from our API endpoint
-      const response = await fetch("/api/trending-topics");
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch trending topics: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setTrendingTopics(data);
+      // Simulate API call for demo purposes
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setTrendingTopics(sampleTrendingTopics);
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Error fetching trending topics:", err);
@@ -73,11 +69,9 @@ export default function TrendingTopics() {
         variant: "destructive",
       });
 
-      // Fall back to sample data in production
-      if (process.env.NODE_ENV === "production") {
-        setTrendingTopics(sampleTrendingTopics);
-        setLastUpdated(new Date());
-      }
+      // Fall back to sample data
+      setTrendingTopics(sampleTrendingTopics);
+      setLastUpdated(new Date());
     } finally {
       setIsLoading(false);
     }
@@ -128,41 +122,74 @@ export default function TrendingTopics() {
     toast({
       title: "Refreshing trends",
       description: "Getting the latest trending topics...",
+      className:
+        "bg-green-50 border-green-200 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-100",
     });
   };
 
   // Get trend color
   const getTrendColor = (trend: string, percentageChange = 0) => {
     if (trend === "up") {
-      if (percentageChange >= 40) return "text-emerald-400";
-      if (percentageChange >= 20) return "text-emerald-500";
-      return "text-emerald-600";
+      if (percentageChange >= 40)
+        return "text-emerald-600 dark:text-emerald-400";
+      if (percentageChange >= 20)
+        return "text-emerald-600 dark:text-emerald-500";
+      return "text-emerald-700 dark:text-emerald-600";
     }
-    if (trend === "down") return "text-rose-500";
-    return "text-amber-500";
+    if (trend === "down") return "text-rose-600 dark:text-rose-500";
+    return "text-amber-600 dark:text-amber-500";
   };
 
   // Get trend badge color
   const getTrendBadgeColor = (trend: string) => {
     if (trend === "up")
-      return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30";
     if (trend === "down")
-      return "bg-rose-500/20 text-rose-400 border-rose-500/30";
-    return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      return "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-500/30";
+    return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30";
   };
 
   return (
-    <Card className="overflow-hidden border-gray-800 bg-gray-900/95 shadow-xl">
-      <CardHeader className="pb-2 border-b border-gray-800">
+    <Card
+      className={cn(
+        "overflow-hidden shadow-xl",
+        theme === "dark"
+          ? "border-gray-800 bg-gray-900/95"
+          : "border-emerald-100 bg-white"
+      )}
+    >
+      <CardHeader
+        className={cn(
+          "pb-2",
+          theme === "dark"
+            ? "border-b border-gray-800"
+            : "border-b border-emerald-100"
+        )}
+      >
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold flex items-center text-emerald-400">
-            <TrendingUp className="h-5 w-5 mr-2 text-emerald-500" />
+          <CardTitle
+            className={cn(
+              "text-xl font-bold flex items-center",
+              theme === "dark" ? "text-emerald-400" : "text-emerald-700"
+            )}
+          >
+            <TrendingUp
+              className={cn(
+                "h-5 w-5 mr-2",
+                theme === "dark" ? "text-emerald-500" : "text-emerald-600"
+              )}
+            />
             Trending Now
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              className="px-3 py-1 text-xs font-normal border-gray-700 bg-gray-800/50 text-emerald-400"
+              className={cn(
+                "px-3 py-1 text-xs font-normal",
+                theme === "dark"
+                  ? "border-gray-700 bg-gray-800/50 text-emerald-400"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              )}
             >
               <Clock className="h-3 w-3 mr-1.5" />
               Updated {getLastUpdatedText()}
@@ -170,7 +197,12 @@ export default function TrendingTopics() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-950/30"
+              className={cn(
+                "h-8 w-8",
+                theme === "dark"
+                  ? "text-emerald-500 hover:text-emerald-400 hover:bg-emerald-950/30"
+                  : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+              )}
               onClick={handleRefresh}
               disabled={isLoading}
             >
@@ -184,13 +216,23 @@ export default function TrendingTopics() {
 
       <Tabs defaultValue="all" className="w-full">
         <div className="px-4 pt-3">
-          <TabsList className="w-full h-auto p-1 bg-gray-800/80 rounded-lg mb-3">
+          <TabsList
+            className={cn(
+              "w-full h-auto p-1 rounded-lg mb-3",
+              theme === "dark" ? "bg-gray-800/80" : "bg-emerald-50"
+            )}
+          >
             {categories.map((category) => (
               <TabsTrigger
                 key={category}
                 value={category}
                 onClick={() => setSelectedCategory(category)}
-                className="text-sm capitalize py-1.5 flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-700"
+                className={cn(
+                  "text-sm capitalize py-1.5 flex-1",
+                  theme === "dark"
+                    ? "data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                    : "data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                )}
               >
                 {category}
               </TabsTrigger>
@@ -204,21 +246,53 @@ export default function TrendingTopics() {
               <div className="space-y-3 p-4">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div key={i} className="flex items-start space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-800 animate-pulse"></div>
+                    <div
+                      className={cn(
+                        "h-10 w-10 rounded-full animate-pulse",
+                        theme === "dark" ? "bg-gray-800" : "bg-emerald-100"
+                      )}
+                    ></div>
                     <div className="space-y-2 flex-1">
-                      <div className="h-4 bg-gray-800 rounded animate-pulse w-1/4"></div>
-                      <div className="h-3 bg-gray-800 rounded animate-pulse w-3/4"></div>
+                      <div
+                        className={cn(
+                          "h-4 rounded animate-pulse w-1/4",
+                          theme === "dark" ? "bg-gray-800" : "bg-emerald-100"
+                        )}
+                      ></div>
+                      <div
+                        className={cn(
+                          "h-3 rounded animate-pulse w-3/4",
+                          theme === "dark" ? "bg-gray-800" : "bg-emerald-100"
+                        )}
+                      ></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : error ? (
               <div className="p-8 text-center">
-                <AlertCircle className="h-10 w-10 text-rose-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-rose-400 mb-2">
+                <AlertCircle
+                  className={cn(
+                    "h-10 w-10 mx-auto mb-4",
+                    theme === "dark" ? "text-rose-500" : "text-rose-600"
+                  )}
+                />
+                <h3
+                  className={cn(
+                    "text-lg font-medium mb-2",
+                    theme === "dark" ? "text-rose-400" : "text-rose-600"
+                  )}
+                >
                   Unable to load trending topics
                 </h3>
-                <p className="text-sm text-gray-400 mb-4">{error}</p>
+                <p
+                  className={cn(
+                    "text-sm mb-4",
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  )}
+                >
+                  {error}
+                </p>
                 <Button
                   onClick={handleRefresh}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -229,18 +303,38 @@ export default function TrendingTopics() {
               </div>
             ) : filteredTopics.length === 0 ? (
               <div className="p-8 text-center">
-                <Hash className="h-10 w-10 text-emerald-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-emerald-400 mb-2">
+                <Hash
+                  className={cn(
+                    "h-10 w-10 mx-auto mb-4",
+                    theme === "dark" ? "text-emerald-500" : "text-emerald-600"
+                  )}
+                />
+                <h3
+                  className={cn(
+                    "text-lg font-medium mb-2",
+                    theme === "dark" ? "text-emerald-400" : "text-emerald-600"
+                  )}
+                >
                   No trending topics found
                 </h3>
-                <p className="text-sm text-gray-400">
+                <p
+                  className={cn(
+                    "text-sm",
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  )}
+                >
                   {selectedCategory === "all"
                     ? "There are no trending topics at the moment."
                     : `There are no trending topics in the "${selectedCategory}" category.`}
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-800">
+              <ul
+                className={cn(
+                  "divide-y",
+                  theme === "dark" ? "divide-gray-800" : "divide-emerald-100"
+                )}
+              >
                 {filteredTopics.map((topic, index) => (
                   <motion.li
                     key={topic.id}
@@ -251,7 +345,12 @@ export default function TrendingTopics() {
                   >
                     <Button
                       variant="ghost"
-                      className="w-full justify-start p-4 rounded-none hover:bg-gray-800/50 group"
+                      className={cn(
+                        "w-full justify-start p-4 rounded-none group",
+                        theme === "dark"
+                          ? "hover:bg-gray-800/50"
+                          : "hover:bg-emerald-50"
+                      )}
                       asChild={!!topic.url}
                     >
                       <a
@@ -262,16 +361,23 @@ export default function TrendingTopics() {
                       >
                         <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 mr-3">
                           <Zap
-                            className={`h-5 w-5 ${getTrendColor(
+                            className={getTrendColor(
                               topic.trend,
                               topic.percentageChange
-                            )}`}
+                            )}
                           />
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center">
-                            <p className="text-sm font-medium text-emerald-400">
+                            <p
+                              className={cn(
+                                "text-sm font-medium",
+                                theme === "dark"
+                                  ? "text-emerald-400"
+                                  : "text-emerald-600"
+                              )}
+                            >
                               #{topic.hashtag}
                             </p>
                             <Badge
@@ -286,18 +392,39 @@ export default function TrendingTopics() {
                             </Badge>
                           </div>
 
-                          <h4 className="mt-1 text-base font-medium text-gray-200 truncate">
+                          <h4
+                            className={cn(
+                              "mt-1 text-base font-medium truncate",
+                              theme === "dark"
+                                ? "text-gray-200"
+                                : "text-gray-800"
+                            )}
+                          >
                             {topic.title}
                           </h4>
 
-                          <div className="mt-1 flex items-center text-xs text-gray-400">
+                          <div
+                            className={cn(
+                              "mt-1 flex items-center text-xs",
+                              theme === "dark"
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                            )}
+                          >
                             <span>{topic.posts.toLocaleString()} posts</span>
                             <span className="mx-1.5">•</span>
                             <span>{topic.timeframe}</span>
                           </div>
                         </div>
 
-                        <ChevronRight className="h-4 w-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ChevronRight
+                          className={cn(
+                            "h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity",
+                            theme === "dark"
+                              ? "text-emerald-500"
+                              : "text-emerald-600"
+                          )}
+                        />
                       </a>
                     </Button>
                   </motion.li>
@@ -308,11 +435,23 @@ export default function TrendingTopics() {
         </TabsContent>
       </Tabs>
 
-      <CardFooter className="p-4 border-t border-gray-800 bg-gray-800/30">
+      <CardFooter
+        className={cn(
+          "p-4",
+          theme === "dark"
+            ? "border-t border-gray-800 bg-gray-800/30"
+            : "border-t border-emerald-100 bg-emerald-50/30"
+        )}
+      >
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30"
+          className={cn(
+            "w-full text-sm",
+            theme === "dark"
+              ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30"
+              : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/50"
+          )}
         >
           View all trending topics
           <ExternalLink className="ml-2 h-3 w-3" />
@@ -373,75 +512,5 @@ const sampleTrendingTopics: TrendingTopic[] = [
     trend: "up",
     percentageChange: 18,
     timeframe: "This week",
-  },
-  {
-    id: "6",
-    hashtag: "EmailSender",
-    title: "The recipient test: a simple test for email deliverability",
-    category: "technology",
-    posts: 4176,
-    trend: "up",
-    percentageChange: 34,
-    timeframe: "Yesterday",
-  },
-  {
-    id: "7",
-    hashtag: "Thechroot",
-    title: "Hotmail's Sabeer Bhatia Slams Indian Tech Education",
-    category: "education",
-    posts: 3742,
-    trend: "up",
-    percentageChange: 23,
-    timeframe: "Yesterday",
-  },
-  {
-    id: "8",
-    hashtag: "Bootcamp",
-    title: "The chroot Technique – a Swiss Army Knife for Developers",
-    category: "technology",
-    posts: 2975,
-    trend: "up",
-    percentageChange: 24,
-    timeframe: "Today",
-  },
-  {
-    id: "9",
-    hashtag: "GlobalToy",
-    title: "How University Students Use Class Time When Lectures",
-    category: "education",
-    posts: 1892,
-    trend: "up",
-    percentageChange: 14,
-    timeframe: "Today",
-  },
-  {
-    id: "10",
-    hashtag: "AIStartups",
-    title: "Global Toy Market Set to Soar to $230 Billion",
-    category: "technology",
-    posts: 1580,
-    trend: "stable",
-    percentageChange: 4,
-    timeframe: "Yesterday",
-  },
-  {
-    id: "11",
-    hashtag: "HerFinances",
-    title: "AI Startups: SignalFire Raises $1 Billion",
-    category: "technology",
-    posts: 3900,
-    trend: "stable",
-    percentageChange: 8,
-    timeframe: "Yesterday",
-  },
-  {
-    id: "12",
-    hashtag: "FinTech",
-    title: "Her Finances Launches AI-Driven Financial Advisor",
-    category: "technology",
-    posts: 1580,
-    trend: "stable",
-    percentageChange: 8,
-    timeframe: "Yesterday",
   },
 ];

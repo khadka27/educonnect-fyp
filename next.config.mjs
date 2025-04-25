@@ -15,6 +15,11 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
+                hostname: 'www.google.com',
+                pathname: '**',
+            },
+            {
+                protocol: 'https',
                 hostname: 'i.pravatar.cc',
                 pathname: '**',
             }
