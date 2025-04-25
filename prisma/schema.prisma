@@ -1,208 +1,3 @@
-// generator client {
-//   provider = "prisma-client-js"
-// }
-
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-// }
-
-// enum Role {
-//   USER
-//   ADMIN
-//   TEACHER
-// }
-
-// model User {
-//   id               String        @id @default(cuid())
-//   name             String?
-//   username         String?       @unique
-//   email            String?       @unique
-//   password         String?
-//   bio              String?
-//   address          String?
-//   coverImage       String?
-//   profileImage     String?
-//   verifyCode       String?
-//   verifyCodeExpiry DateTime?
-//   isVerified       Boolean       @default(false)
-//   role             Role          @default(USER)
-//   createdAt        DateTime      @default(now())
-//   updatedAt        DateTime      @updatedAt
-//   // messages         Message[]   @relation
-//   posts            Post[] // Removed @relation(onDelete: Cascade)
-//   reactions        Reaction[]    @relation
-//   shares           Share[]       @relation
-//   savedPosts       SavedPost[]   @relation
-//   comments         Comment[]     @relation
-//   //-----------------------------------------chat schema-----------------------------------------
-//   messages         Message[]     @relation("SentMessages")
-//   receivedMessages Message[]     @relation("ReceivedMessages")
-//   groupMemberships GroupMember[] @relation
-//   groupAdmin       Group[]       @relation("GroupAdmin")
-
-//   events Event[] @relation("UserEvents")
-// }
-
-// model Post {
-//   id        String      @id @default(cuid())
-//   content   String
-//   postUrl   String?
-//   createdAt DateTime    @default(now())
-//   userId    String
-//   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   reactions Reaction[]  @relation
-//   shares    Share[]     @relation
-//   savedBy   SavedPost[] @relation
-//   comments  Comment[]   @relation
-// }
-
-// model Reaction {
-//   id        String   @id @default(cuid())
-//   type      String // Changed to String to handle different reaction types like 'like'
-//   createdAt DateTime @default(now())
-//   postId    String
-//   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-//   userId    String
-//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@unique([postId, userId, type]) // Ensure that a user can only have one reaction per post type
-// }
-
-// model Share {
-//   id        String   @id @default(cuid())
-//   createdAt DateTime @default(now())
-//   userId    String
-//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   postId    String
-//   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-// }
-
-// model SavedPost {
-//   id        String   @id @default(cuid())
-//   createdAt DateTime @default(now())
-//   userId    String
-//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   postId    String
-//   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-//   @@unique([userId, postId]) // Ensure that a user can only save a post once
-// }
-
-// // model Message {
-// //   id        String   @id @default(cuid())
-// //   content   String
-// //   createdAt DateTime @default(now())
-// //   userId    String
-// //   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-// // }
-
-// model Comment {
-//   id        String   @id @default(cuid())
-//   content   String
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   userId    String
-//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   postId    String
-//   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-// }
-
-// //-----------------------------------------chat schema-----------------------------------------
-
-// // model Message {
-// //   id            String   @id @default(cuid())
-// //   content       String
-// //   createdAt     DateTime @default(now())
-// //   isRead        Boolean  @default(false)
-// //   isGroupMessage Boolean @default(false)
-
-// //   senderId      String
-// //   sender        User     @relation("SentMessages", fields: [senderId], references: [id])
-
-// //   receiverId    String?
-// //   receiver      User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
-
-// //   groupId       String?
-// //   group         Group?   @relation(fields: [groupId], references: [id])
-
-// //   @@index([senderId])
-// //   @@index([receiverId])
-// //   @@index([groupId])
-// // }
-
-// model Message {
-//   id             String   @id @default(cuid())
-//   content        String
-//   createdAt      DateTime @default(now())
-//   isRead         Boolean  @default(false)
-//   isGroupMessage Boolean  @default(false)
-
-//   fileUrl   String? // For file, image, video URL
-//   fileType  String? // To store type of the file (e.g., 'image', 'video', 'file')
-//   expiresAt DateTime @default(dbgenerated("now() + interval '1 day'")) // Auto-delete after 24 hours
-
-//   senderId String
-//   sender   User   @relation("SentMessages", fields: [senderId], references: [id])
-
-//   receiverId String?
-//   receiver   User?   @relation("ReceivedMessages", fields: [receiverId], references: [id])
-
-//   groupId String?
-//   group   Group?  @relation(fields: [groupId], references: [id])
-
-//   @@index([senderId])
-//   @@index([receiverId])
-//   @@index([groupId])
-//   @@index([expiresAt])
-// }
-
-// model Group {
-//   id        String        @id @default(cuid())
-//   name      String
-//   adminId   String
-//   admin     User          @relation("GroupAdmin", fields: [adminId], references: [id])
-//   members   GroupMember[]
-//   createdAt DateTime      @default(now())
-//   updatedAt DateTime      @updatedAt
-
-//   messages Message[]
-// }
-
-// model GroupMember {
-//   userId  String
-//   user    User   @relation(fields: [userId], references: [id])
-//   groupId String
-//   group   Group  @relation(fields: [groupId], references: [id])
-
-//   @@id([userId, groupId])
-// }
-
-// //-----------------------------------events schema-----------------------------------
-
-// model Event {
-//   id          String         @id @default(cuid())
-//   title       String
-//   description String?
-//   date        DateTime
-//   location    String
-//   type        String      // 'free' or 'premium'
-//   bannerUrl   String?
-//   contactEmail String
-//   contactPhone String
-//   registrations Registration[]
-// }
-
-// model Registration {
-//   id        String      @id @default(cuid())
-//   name      String
-//   email     String
-//   phone     String
-//   eventId   String
-//   event     Event    @relation(fields: [eventId], references: [id])
-//   eventType String   // free or premium
-//   createdAt DateTime @default(now())
-// }
 generator client {
   provider = "prisma-client-js"
 }
@@ -240,10 +35,10 @@ enum EventType {
 }
 
 model User {
-  id               String        @id @default(cuid())
+  id               String         @id @default(cuid())
   name             String?
-  username         String?       @unique
-  email            String?       @unique
+  username         String?        @unique
+  email            String?        @unique
   password         String
   bio              String?
   address          String?
@@ -251,22 +46,23 @@ model User {
   profileImage     String?
   verifyCode       String?
   verifyCodeExpiry DateTime?
-  isVerified       Boolean       @default(false)
-  role             Role          @default(USER)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  isVerified       Boolean        @default(false)
+  role             Role           @default(USER)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   posts            Post[]
   reactions        Reaction[]
   savedPosts       SavedPost[]
   comments         Comment[]
-  messages         Message[]     @relation("SentMessages")
-  receivedMessages Message[]     @relation("ReceivedMessages")
+  messages         Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
   groupMemberships GroupMember[]
-  groupAdmin       Group[]       @relation("GroupAdmin")
-  events           Event[]       @relation("UserEvents")
+  groupAdmin       Group[]        @relation("GroupAdmin")
+  events           Event[]        @relation("UserEvents")
   payments         Payment[]
   books            Book[]
   articles         Article[]
+  Notification     Notification[]
 }
 
 model Event {
@@ -456,4 +252,13 @@ model Article {
   updatedAt DateTime @updatedAt
   createdBy User     @relation(fields: [userId], references: [id])
   userId    String
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String // The user who will receive the notification
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String // Notification message
+  isRead    Boolean  @default(false) // Whether the notification has been read
+  createdAt DateTime @default(now())
 }

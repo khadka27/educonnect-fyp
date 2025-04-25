@@ -74,6 +74,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
+import { io } from "socket.io-client";
 
 interface Notification {
   id: string;
@@ -138,7 +139,7 @@ const EnhancedNavbar: React.FC = () => {
       badge: unreadCount,
     },
     { name: "Library", icon: Book, path: "/library" },
-    { name: "Profile", icon: User, path: `/profile/${session?.user?.id}` },
+    { name: "Profile", icon: User, path: `/user-profile/${session?.user?.id}` },
   ];
 
   // Mock notifications data
@@ -267,6 +268,23 @@ const EnhancedNavbar: React.FC = () => {
     setUnreadCount(count);
   }, [notifications]);
 
+  useEffect(() => {
+    const socket = io();
+
+    // Join the user's room (replace with actual user ID from session)
+    const userId = session?.user?.id || "user-id-placeholder"; // Replace with actual user ID
+    socket.emit("joinRoom", userId);
+
+    // Listen for new notifications
+    socket.on("newNotification", (notification: Notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [session]);
+
   // Fetch user data
   const fetchUserData = async () => {
     setIsLoading(true);
@@ -325,38 +343,23 @@ const EnhancedNavbar: React.FC = () => {
     }
   };
 
-  // Handle search
+  // Replace the mock search functionality with a real search implementation
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
     try {
-      // In a real app, you would search via your API
-      // const response = await axios.get(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-      // setSearchResults(response.data);
+      // Call the real API to perform the search
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(searchQuery)}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch search results");
+      }
 
-      // For demo purposes, we'll use mock data
-      setTimeout(() => {
-        setSearchResults([
-          {
-            id: 1,
-            type: "user",
-            name: "John Smith",
-            username: "@johnsmith",
-            image: "/placeholder.svg?height=40&width=40",
-          },
-          {
-            id: 2,
-            type: "post",
-            title: "Introduction to Machine Learning",
-            author: "Sarah Williams",
-            image: "/placeholder.svg?height=40&width=40",
-          },
-          { id: 3, type: "topic", name: "Computer Science", posts: 1240 },
-        ]);
-        setIsSearching(false);
-      }, 800);
+      const data = await response.json();
+      setSearchResults(data.results || []);
     } catch (error) {
       console.error("Search failed:", error);
       toast({
@@ -364,6 +367,7 @@ const EnhancedNavbar: React.FC = () => {
         description: "Failed to perform search. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsSearching(false);
     }
   };
@@ -371,19 +375,14 @@ const EnhancedNavbar: React.FC = () => {
   // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      // In a real app, you would call your API
-      // await axios.post('/api/notifications/mark-all-read');
-
-      // Update local state
+      await fetch("/api/notifications", { method: "PATCH" });
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) => ({
           ...notification,
           read: true,
         }))
       );
-
       setUnreadCount(0);
-
       toast({
         title: "Success",
         description: "All notifications marked as read",
@@ -868,8 +867,8 @@ const EnhancedNavbar: React.FC = () => {
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 text-white text-xs items-center justify-center">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 dark:bg-red-400"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-700 dark:bg-red-500 text-white text-xs items-center justify-center">
                           {unreadCount}
                         </span>
                       </span>
@@ -930,7 +929,7 @@ const EnhancedNavbar: React.FC = () => {
                               {notification.user ? (
                                 <Avatar className="h-8 w-8 mr-3">
                                   <AvatarImage
-                                    src={notification.user.image}
+                                    src={notification.user.profileImage}
                                     alt={notification.user.name}
                                   />
                                   <AvatarFallback>
