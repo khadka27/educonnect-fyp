@@ -430,7 +430,7 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
       className={`w-full px-4 sm:px-6 md:px-8 lg:px-[15%] py-8 min-h-screen ${
         theme === "light"
           ? "bg-gradient-to-br from-green-50 to-blue-50"
-          : "bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+          : " dark:from-emerald-950 dark:to-teal-900"
       }`}
     >
       {/* Header with filters */}

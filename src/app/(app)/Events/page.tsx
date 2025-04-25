@@ -132,68 +132,54 @@ export default function EventsPage() {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
-  // Fetch events
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch("/api/events");
-        if (!response.ok) throw new Error("Failed to fetch events");
-        const data = await response.json();
-        if (!Array.isArray(data)) throw new Error("Invalid data format");
+  // Update the fetchEvents function to dynamically fetch data without reloading the page
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Construct query parameters for search and filters
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.append("search", searchQuery);
+      if (selectedType !== "all") params.append("type", selectedType);
+      if (selectedCategory !== "All Categories")
+        params.append("category", selectedCategory);
+      if (selectedLocation !== "All Locations")
+        params.append("location", selectedLocation);
+      if (selectedDateRange.from)
+        params.append("from", selectedDateRange.from.toISOString());
+      if (selectedDateRange.to)
+        params.append("to", selectedDateRange.to.toISOString());
+      params.append("sortBy", sortBy);
 
-        // Add sample categories and attendees if they don't exist
-        const enhancedData = data.map((event: Event) => ({
-          ...event,
-          category:
-            event.category ||
-            categories[Math.floor(Math.random() * categories.length)],
-          attendees: event.attendees || Math.floor(Math.random() * 100) + 10,
-        }));
+      // Fetch events from the API with query parameters
+      const response = await fetch(`/api/events?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch events");
+      const data = await response.json();
+      if (!Array.isArray(data)) throw new Error("Invalid data format");
 
-        setEvents(enhancedData);
-
-        // Select featured events (premium ones or random if no premium)
-        const premium = enhancedData.filter(
-          (event) => event.type === "premium"
-        );
-        const featured =
-          premium.length >= 5
-            ? premium.slice(0, 5)
-            : [
-                ...premium,
-                ...enhancedData.filter((event) => event.type === "free"),
-              ]
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 5);
-
-        setFeaturedEvents(featured);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        setError(
-          error instanceof Error ? error.message : "An unknown error occurred"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvents();
-
-    // Load liked events from localStorage
-    const savedLikedEvents = localStorage.getItem("likedEvents");
-    if (savedLikedEvents) {
-      setLikedEvents(new Set(JSON.parse(savedLikedEvents)));
+      setEvents(data);
+      setFilteredEvents(data);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsLoading(false);
     }
+  }, [
+    searchQuery,
+    selectedType,
+    selectedCategory,
+    selectedLocation,
+    selectedDateRange,
+    sortBy,
+  ]);
 
-    // Add scroll event listener for "back to top" button
-    const handleScroll = () => {
-      setShowScrollToTop(window.scrollY > 500);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Trigger fetchEvents dynamically when searchQuery or filters change
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   // Apply filters
   const applyFilters = useCallback(() => {
@@ -458,7 +444,7 @@ export default function EventsPage() {
             slidesPerView={1}
             navigation
             pagination={{ clickable: true }}
-            autoplay={{ delay: 5000 }}
+            autoplay={{ delay: 3000 }} // Set autoplay delay to 3 seconds
             effect="fade"
             className="rounded-xl overflow-hidden shadow-lg"
           >

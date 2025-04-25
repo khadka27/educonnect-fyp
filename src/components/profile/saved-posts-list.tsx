@@ -1,23 +1,38 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { useTheme } from "next-themes"
-import { motion } from "framer-motion"
-import { format } from "date-fns"
-import Image from "next/image"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { motion } from "framer-motion";
+import { format } from "date-fns";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 // UI Components
-import { Button } from "src/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "src/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar"
-import { Skeleton } from "src/components/ui/skeleton"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "src/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "src/components/ui/tooltip"
-import { useToast } from "@/hooks/use-toast"
+import { Button } from "src/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "src/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
+import { Skeleton } from "src/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "src/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "src/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 // Icons
 import {
@@ -35,95 +50,74 @@ import {
   ExternalLink,
   Download,
   Flag,
-} from "lucide-react"
+} from "lucide-react";
+import axios from "axios";
 
 interface SavedPostsListProps {
-  userId: string
+  userId: string;
 }
 
 interface Post {
-  id: string
-  content: string
-  createdAt: string
-  media?: string
-  mediaType?: string
+  id: string;
+  content: string;
+  createdAt: string;
+  media?: string;
+  mediaType?: string;
   author: {
-    id: string
-    name: string
-    username: string
-    profileImage?: string
-  }
-  likes: number
-  comments: number
-  isLiked: boolean
-  isSaved: boolean
-  privacy: "public" | "friends" | "private"
+    id: string;
+    name: string;
+    username: string;
+    profileImage?: string;
+  };
+  likes: number;
+  comments: number;
+  isLiked: boolean;
+  isSaved: boolean;
+  privacy: "public" | "friends" | "private";
 }
 
 const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
   // State
-  const [savedPosts, setSavedPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [expandedPost, setExpandedPost] = useState<string | null>(null)
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const [viewingMedia, setViewingMedia] = useState<{
-    url: string
-    type: string
-  } | null>(null)
+    url: string;
+    type: string;
+  } | null>(null);
 
   // Hooks
-  const { data: session } = useSession()
-  const { theme } = useTheme()
-  const { toast } = useToast()
+  const { data: session } = useSession();
+  const { theme } = useTheme();
+  const { toast } = useToast();
 
-  const isOwnProfile = session?.user?.id === userId
-
-  // Effects
-
-  // Fetch saved posts
-  useEffect(() => {
-    fetchSavedPosts()
-  }, [userId])
+  const isOwnProfile = session?.user?.id === userId;
 
   // Functions
 
+  // Fetch saved posts from the backend
   const fetchSavedPosts = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      // This would be a real API call in production
-      // For now, we'll use mock data
-      setTimeout(() => {
-        const mockPosts: Post[] = Array.from({ length: 5 }).map((_, index) => ({
-          id: `saved-${index}`,
-          content:
-            index % 2 === 0
-              ? "This is a saved post with some interesting content that I wanted to keep for later reference. #education #learning"
-              : "Check out this amazing resource I found! It's really helpful for studying and improving your skills.",
-          createdAt: new Date(Date.now() - index * 86400000).toISOString(),
-          media: index % 3 === 0 ? "/placeholder.svg?height=400&width=600" : undefined,
-          mediaType: index % 3 === 0 ? "image" : undefined,
-          author: {
-            id: `author-${index}`,
-            name: `User ${index}`,
-            username: `user${index}`,
-            profileImage: `/placeholder.svg?height=100&width=100&text=U${index}`,
-          },
-          likes: Math.floor(Math.random() * 100),
-          comments: Math.floor(Math.random() * 20),
-          isLiked: Math.random() > 0.5,
-          isSaved: true,
-          privacy: index % 3 === 0 ? "public" : index % 3 === 1 ? "friends" : "private",
-        }))
-
-        setSavedPosts(mockPosts)
-        setLoading(false)
-      }, 1000)
+      const response = await axios.get(`/api/user/${userId}/saved-posts`);
+      setSavedPosts(response.data.posts || []);
+      setLoading(false);
     } catch (error) {
-      console.error("Error fetching saved posts:", error)
-      setError("Failed to load saved posts. Please try again later.")
-      setLoading(false)
+      console.error("Error fetching saved posts:", error);
+      setError("Failed to load saved posts. Please try again later.");
+      setLoading(false);
     }
-  }
+  };
+
+  // Effects
+  useEffect(() => {
+    if (userId) {
+      fetchSavedPosts();
+    }
+  }, [userId]);
+
+  // Functions
 
   const handleLikePost = async (postId: string) => {
     try {
@@ -136,19 +130,19 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                 isLiked: !post.isLiked,
                 likes: post.isLiked ? post.likes - 1 : post.likes + 1,
               }
-            : post,
-        ),
-      )
+            : post
+        )
+      );
 
       // This would be a real API call in production
       // await axios.post(`/api/posts/${postId}/like`);
     } catch (error) {
-      console.error("Error liking post:", error)
+      console.error("Error liking post:", error);
       toast({
         title: "Error",
         description: "Failed to like post. Please try again.",
         variant: "destructive",
-      })
+      });
 
       // Revert optimistic update
       setSavedPosts((prevPosts) =>
@@ -159,57 +153,59 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                 isLiked: !post.isLiked,
                 likes: post.isLiked ? post.likes - 1 : post.likes + 1,
               }
-            : post,
-        ),
-      )
+            : post
+        )
+      );
     }
-  }
+  };
 
   const handleUnsavePost = async (postId: string) => {
     try {
       // Optimistic update
-      setSavedPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId))
+      setSavedPosts((prevPosts) =>
+        prevPosts.filter((post) => post.id !== postId)
+      );
 
       toast({
         title: "Post unsaved",
         description: "The post has been removed from your saved items.",
-      })
+      });
 
       // This would be a real API call in production
       // await axios.delete(`/api/posts/${postId}/save`);
     } catch (error) {
-      console.error("Error unsaving post:", error)
+      console.error("Error unsaving post:", error);
       toast({
         title: "Error",
         description: "Failed to unsave post. Please try again.",
         variant: "destructive",
-      })
+      });
 
       // Revert optimistic update
-      fetchSavedPosts()
+      fetchSavedPosts();
     }
-  }
+  };
 
   const handleSharePost = (postId: string) => {
     // In a real app, this would generate a shareable link
-    const shareUrl = `${window.location.origin}/posts/${postId}`
+    const shareUrl = `${window.location.origin}/posts/${postId}`;
 
-    navigator.clipboard.writeText(shareUrl)
+    navigator.clipboard.writeText(shareUrl);
 
     toast({
       title: "Link copied",
       description: "Post link copied to clipboard",
-    })
-  }
+    });
+  };
 
   const formatPostDate = (dateString: string) => {
     try {
-      const date = new Date(dateString)
-      return format(date, "MMM d, yyyy 'at' h:mm a")
+      const date = new Date(dateString);
+      return format(date, "MMM d, yyyy 'at' h:mm a");
     } catch (error) {
-      return "Recently"
+      return "Recently";
     }
-  }
+  };
 
   // Loading state
   if (loading) {
@@ -244,7 +240,7 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   // Error state
@@ -256,7 +252,7 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
         <p className="text-muted-foreground mb-4">{error}</p>
         <Button onClick={fetchSavedPosts}>Try Again</Button>
       </div>
-    )
+    );
   }
 
   // Empty state
@@ -272,9 +268,11 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
             ? "When you save posts, they'll appear here for easy access later."
             : "This user hasn't saved any posts yet."}
         </p>
-        {isOwnProfile && <Button onClick={() => window.history.back()}>Browse Posts</Button>}
+        {isOwnProfile && (
+          <Button onClick={() => window.history.back()}>Browse Posts</Button>
+        )}
       </div>
-    )
+    );
   }
 
   return (
@@ -291,14 +289,14 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <Avatar>
-                    <AvatarImage src={post.author.profileImage} />
+                    <AvatarImage src={post.author?.profileImage} />
                     <AvatarFallback>
                       <User className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
 
                   <div>
-                    <div className="font-medium">{post.author.name}</div>
+                    <div className="font-medium">{post.author?.name}</div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <span>{formatPostDate(post.createdAt)}</span>
                       <span className="mx-1">•</span>
@@ -306,9 +304,15 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span>
-                              {post.privacy === "public" && <Globe className="h-3 w-3" />}
-                              {post.privacy === "friends" && <Users className="h-3 w-3" />}
-                              {post.privacy === "private" && <Lock className="h-3 w-3" />}
+                              {post.privacy === "public" && (
+                                <Globe className="h-3 w-3" />
+                              )}
+                              {post.privacy === "friends" && (
+                                <Users className="h-3 w-3" />
+                              )}
+                              {post.privacy === "private" && (
+                                <Lock className="h-3 w-3" />
+                              )}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -324,7 +328,11 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                    >
                       <MoreHorizontal className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -337,7 +345,9 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                       <Share2 className="h-4 w-4 mr-2" />
                       Share Post
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.open(`/posts/${post.id}`, "_blank")}>
+                    <DropdownMenuItem
+                      onClick={() => window.open(`/posts/${post.id}`, "_blank")}
+                    >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Open in New Tab
                     </DropdownMenuItem>
@@ -345,8 +355,9 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                       onClick={() => {
                         toast({
                           title: "Post reported",
-                          description: "Thank you for your report. We'll review this content.",
-                        })
+                          description:
+                            "Thank you for your report. We'll review this content.",
+                        });
                       }}
                     >
                       <Flag className="h-4 w-4 mr-2" />
@@ -361,7 +372,9 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
               <div
                 className={cn(
                   "whitespace-pre-wrap",
-                  post.content.length > 300 && expandedPost !== post.id ? "line-clamp-4" : "",
+                  post.content.length > 300 && expandedPost !== post.id
+                    ? "line-clamp-4"
+                    : ""
                 )}
               >
                 {post.content}
@@ -371,7 +384,9 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                 <Button
                   variant="link"
                   className="p-0 h-auto mt-1"
-                  onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+                  onClick={() =>
+                    setExpandedPost(expandedPost === post.id ? null : post.id)
+                  }
                 >
                   {expandedPost === post.id ? "Show less" : "Show more"}
                 </Button>
@@ -388,7 +403,11 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                   }
                 >
                   {post.mediaType === "video" ? (
-                    <video src={post.media} controls className="w-full max-h-[400px] object-contain bg-muted/30" />
+                    <video
+                      src={post.media}
+                      controls
+                      className="w-full max-h-[400px] object-contain bg-muted/30"
+                    />
                   ) : (
                     <div className="relative">
                       <Image
@@ -413,14 +432,25 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                   <Button
                     variant={post.isLiked ? "default" : "outline"}
                     size="sm"
-                    className={post.isLiked ? "bg-primary/90 hover:bg-primary" : ""}
+                    className={
+                      post.isLiked ? "bg-primary/90 hover:bg-primary" : ""
+                    }
                     onClick={() => handleLikePost(post.id)}
                   >
-                    <Heart className={cn("h-4 w-4 mr-2", post.isLiked ? "fill-primary-foreground" : "")} />
+                    <Heart
+                      className={cn(
+                        "h-4 w-4 mr-2",
+                        post.isLiked ? "fill-primary-foreground" : ""
+                      )}
+                    />
                     {post.likes}
                   </Button>
 
-                  <Button variant="outline" size="sm" onClick={() => window.open(`/posts/${post.id}`, "_blank")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/posts/${post.id}`, "_blank")}
+                  >
                     <MessageCircle className="h-4 w-4 mr-2" />
                     {post.comments}
                   </Button>
@@ -459,8 +489,8 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
               size="icon"
               className="absolute top-2 right-2 z-10 bg-background/80 hover:bg-background rounded-full"
               onClick={(e) => {
-                e.stopPropagation()
-                setViewingMedia(null)
+                e.stopPropagation();
+                setViewingMedia(null);
               }}
             >
               <X className="h-4 w-4" />
@@ -491,8 +521,8 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                 size="sm"
                 className="bg-background/80 hover:bg-background"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  window.open(viewingMedia.url, "_blank")
+                  e.stopPropagation();
+                  window.open(viewingMedia.url, "_blank");
                 }}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
@@ -504,13 +534,13 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
                 size="sm"
                 className="bg-background/80 hover:bg-background"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  const a = document.createElement("a")
-                  a.href = viewingMedia.url
-                  a.download = "download"
-                  document.body.appendChild(a)
-                  a.click()
-                  document.body.removeChild(a)
+                  e.stopPropagation();
+                  const a = document.createElement("a");
+                  a.href = viewingMedia.url;
+                  a.download = "download";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
                 }}
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -521,8 +551,7 @@ const SavedPostsList: React.FC<SavedPostsListProps> = ({ userId }) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default SavedPostsList
-
+export default SavedPostsList;
