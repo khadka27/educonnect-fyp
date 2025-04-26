@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -287,7 +288,7 @@ export function SignInForm() {
           <Separator className="my-6" />
 
           <p className="text-sm text-gray-600 text-center">
-            Don't have an account yet?{" "}
+            Don&apos;t have an account yet?{" "}
             <Link href="/sign-up" className="text-green-600 hover:underline">
               Sign up
             </Link>

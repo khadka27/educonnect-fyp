@@ -420,7 +420,7 @@ export default function SignUpForm() {
                             </FormControl>
                             <p className="text-muted text-gray-500 text-xs flex items-center mt-1">
                               <Info className="h-3 w-3 mr-1" />
-                              We'll send you a verification code
+                              We&apos;ll send you a verification code
                             </p>
                             {form.formState.errors.email && (
                               <FormMessage className="text-red-500 text-xs" />
@@ -505,13 +505,7 @@ export default function SignUpForm() {
                                   "Good",
                                   "Strong",
                                 ]}
-                                scoreColors={[
-                                  "#e74c3c",
-                                  "#e74c3c",
-                                  "#f39c12",
-                                  "#3498db",
-                                  "#27ae60",
-                                ]}
+                                className="password-strength-bar"
                                 minLength={8}
                               />
                             </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
@@ -25,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
 import Link from "next/link";
-import io, { Socket } from "socket.io-client"; // Import Socket.IO client with type
+import io, { type Socket } from "socket.io-client"; // Import Socket.IO client and type
 import { useSession } from "next-auth/react";
 
 interface User {
@@ -56,7 +57,7 @@ const RightSidebar: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const { data: session } = useSession();
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<typeof io.Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement[]>([]);
 
   // Initialize socket connection
@@ -579,7 +580,7 @@ const RightSidebar: React.FC = () => {
                     </DropdownMenu>
                     <Button
                       size="icon"
-                      variant="primary"
+                      variant="default"
                       onClick={() => handleSendMessage(box.user.id)}
                       disabled={!box.message.trim()}
                     >
