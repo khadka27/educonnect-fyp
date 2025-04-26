@@ -143,10 +143,21 @@ export async function GET(
         },
       });
 
-      return NextResponse.json({ isSaved: !!savedPost }, { status: 200 });
+      // Get the total save count for the post
+      const saveCount = await prisma.savedPost.count({
+        where: { postId },
+      });
+
+      return NextResponse.json(
+        {
+          isSaved: !!savedPost,
+          saveCount,
+        },
+        { status: 200 }
+      );
     }
 
-    // Get total save count for the post
+    // If no userId is provided, just get the total save count
     const saveCount = await prisma.savedPost.count({
       where: { postId },
     });

@@ -107,6 +107,7 @@ export async function GET(
       return new Response("Missing postId", { status: 400 });
     }
 
+    // Get the specific user's like status for this post
     const reaction = await prisma.reaction.findFirst({
       where: {
         postId,
@@ -115,9 +116,21 @@ export async function GET(
       },
     });
 
-    return new Response(JSON.stringify({ isLiked: !!reaction }), {
-      status: 200,
+    // Get the total like count for the post
+    const likeCount = await prisma.reaction.count({
+      where: {
+        postId,
+        type: "like",
+      },
     });
+
+    return new Response(
+      JSON.stringify({
+        isLiked: !!reaction,
+        likeCount,
+      }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching like status:", error);
     return new Response("Error fetching like status", { status: 500 });

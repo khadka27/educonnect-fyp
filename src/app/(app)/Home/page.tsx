@@ -14,6 +14,7 @@ import TrendingTopics from "@/components/trending-topics";
 import EducationQuotesCarousel from "@/components/education-quotes-carousel";
 import MobileNavigation from "@/components/mobile-navigation";
 import { UpcomingEvents } from "@/components/upcoming-events";
+import RightSidebar from "@/components/bar/right-side-bar";
 
 import {
   Card,
@@ -408,6 +409,7 @@ export default function HomePage() {
             {/* Upcoming Events - on desktop */}
             <div className="hidden lg:block sticky lg:top-6">
               <UpcomingEvents />
+              <RightSidebar />
             </div>
           </div>
         </div>

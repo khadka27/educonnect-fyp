@@ -48,6 +48,7 @@ model User {
   verifyCodeExpiry DateTime?
   isVerified       Boolean        @default(false)
   role             Role           @default(USER)
+  lastSeen         DateTime? // Added for tracking user's last activity
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   posts            Post[]
@@ -171,6 +172,7 @@ model Message {
   content        String? // Made optional for messages that only include files
   createdAt      DateTime @default(now())
   isRead         Boolean  @default(false)
+  isDelivered    Boolean  @default(false) // Added for tracking message delivery status
   isGroupMessage Boolean  @default(false)
   fileUrl        String?
   fileType       String?

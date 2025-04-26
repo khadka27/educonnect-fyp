@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       include: {
         user: {
-          select: { username: true, profileImage: true }, // Include user details
+          select: { username: true, profileImage: true },
         },
         comments: {
           select: {
@@ -86,58 +86,68 @@ export async function GET(request: Request) {
               },
             },
           },
-          take: 5, // Limit number of comments per post
+          take: 5,
+          orderBy: { createdAt: "desc" },
         },
-        // Count all likes, saves, and comments
         _count: {
           select: {
-            reactions: { where: { type: "like" } }, // Count likes
-            savedBy: true, // Count saves
-            comments: true, // Count comments
+            reactions: { where: { type: "like" } },
+            savedBy: true,
+            comments: true,
           },
         },
-        // Include saved posts if user is logged in
-        ...(userId && {
-          savedBy: {
-            where: { userId },
-            select: { id: true },
-          },
-          // Include reactions (likes) if user is logged in
-          reactions: {
-            where: {
-              userId,
-              type: "like",
-            },
-            select: { id: true },
-          },
-        }),
+        ...(userId
+          ? {
+              savedBy: {
+                where: { userId },
+                select: { id: true },
+              },
+              reactions: {
+                where: {
+                  userId,
+                  type: "like",
+                },
+                select: { id: true },
+              },
+            }
+          : {}),
       },
     });
 
     const totalPosts = await prisma.post.count();
     const hasMore = page * limit < totalPosts;
 
-    const postsWithUserData = posts.map((post) => ({
-      ...post,
-      isSaved: post.savedBy?.length > 0, // Check if post is saved by the current user
-      isLiked: post.reactions?.length > 0, // Check if post is liked by the current user
-      likesCount: post._count.reactions, // Total count of likes
-      commentsCount: post._count.comments, // Total count of comments
-      savesCount: post._count.savedBy, // Total count of saves
-      // Remove these properties as they're now represented by isLiked, isSaved and the counts
-      ...(userId && {
-        savedBy: undefined,
-        reactions: undefined,
+    const postsWithUserData = posts.map((post) => {
+      const processedPost = {
+        ...post,
+        likesCount: post._count.reactions,
+        commentsCount: post._count.comments,
+        savesCount: post._count.savedBy,
+      };
+
+      if (userId) {
+        return {
+          ...processedPost,
+          isSaved: post.savedBy?.length > 0,
+          isLiked: post.reactions?.length > 0,
+          savedBy: undefined,
+          reactions: undefined,
+          _count: undefined,
+        };
+      }
+
+      return {
+        ...processedPost,
         _count: undefined,
-      }),
-    }));
+      };
+    });
 
     return NextResponse.json({
       posts: postsWithUserData,
       hasMore,
     });
   } catch (error) {
-    console.error("Error fetching posts:", (error as Error).message);
+    console.error("Error fetching posts:", error);
     return NextResponse.json(
       { error: "Failed to fetch posts" },
       { status: 500 }

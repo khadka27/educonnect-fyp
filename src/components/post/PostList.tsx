@@ -150,6 +150,10 @@ const PostList: React.FC = () => {
     [toast]
   );
 
+  useEffect(() => {
+    fetchPosts(1, true);
+  }, [fetchPosts]);
+
   // Filter posts based on active filter and search query
   useEffect(() => {
     let result = [...posts];
@@ -227,11 +231,24 @@ const PostList: React.FC = () => {
     posts.forEach((post) => {
       likes[post.id] = post.isLiked;
     });
-    setPostLikes((prev) => ({ ...prev, ...likes }));
+    setPostLikes(likes); // Replace the previous state completely instead of merging
   }, [posts]);
 
   const handleLike = async (postId: string, userId: string) => {
+    if (!userId) {
+      toast({
+        title: "Authentication required",
+        description: "You need to be logged in to like posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // First, get current post state
+      const currentPost = posts.find((post) => post.id === postId);
+      if (!currentPost) return;
+
       // Optimistically update the like status
       setPostLikes((prev) => ({ ...prev, [postId]: !prev[postId] }));
 
@@ -322,6 +339,15 @@ const PostList: React.FC = () => {
   };
 
   const handleSave = async (postId: string, isSaved: boolean) => {
+    if (!userId) {
+      toast({
+        title: "Authentication required",
+        description: "You need to be logged in to save posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Optimistically update the save status and count
       setPosts((prevPosts) =>

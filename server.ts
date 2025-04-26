@@ -33,20 +33,62 @@ app.prepare().then(() => {
     },
   });
 
+  // Track online users
+  const onlineUsers = new Map(); // userId -> socketId
+  const userSockets = new Map(); // socketId -> userId
+
   io.on("connection", (socket) => {
     console.log("New client connected:", socket.id);
 
     /** ────────────────────────────
-     *  📌 USER ROOM JOINING
+     *  📌 USER ROOM JOINING & ONLINE STATUS
      *  ─────────────────────────── */
     socket.on("joinRoom", (userId) => {
       socket.join(userId);
       console.log(`User ${userId} joined room`);
+
+      // Track online status
+      onlineUsers.set(userId, socket.id);
+      userSockets.set(socket.id, userId);
+
+      // Broadcast user online status to all connected clients
+      io.emit("userStatusChange", { userId, status: "online" });
     });
 
     socket.on("joinGroup", (groupId) => {
       socket.join(`group-${groupId}`);
       console.log(`User joined group room: group-${groupId}`);
+    });
+
+    /** ────────────────────────────
+     *  📌 TYPING INDICATORS
+     *  ─────────────────────────── */
+    socket.on("userTyping", ({ userId, receiverId, isTyping }) => {
+      // Emit typing status to the recipient only
+      io.to(receiverId).emit("userTyping", { userId, isTyping });
+    });
+
+    /** ────────────────────────────
+     *  📌 MESSAGE DELIVERY STATUS
+     *  ─────────────────────────── */
+    socket.on("deliverMessage", ({ messageId, senderId }) => {
+      // Update message as delivered in database
+      try {
+        prisma.message
+          .update({
+            where: { id: messageId },
+            data: { isDelivered: true },
+          })
+          .then(() => {
+            // Notify sender that message was delivered
+            io.to(senderId).emit("messageDelivered", {
+              messageId,
+              receiverId: userSockets.get(socket.id),
+            });
+          });
+      } catch (err) {
+        console.error("Error marking message as delivered:", err);
+      }
     });
 
     /** ────────────────────────────
@@ -72,7 +114,14 @@ app.prepare().then(() => {
     socket.on("fetchUsers", async () => {
       try {
         const users = await prisma.user.findMany();
-        socket.emit("userList", users);
+
+        // Add online status to each user
+        const enhancedUsers = users.map((user) => ({
+          ...user,
+          isOnline: onlineUsers.has(user.id),
+        }));
+
+        socket.emit("userList", enhancedUsers);
       } catch (err) {
         console.error("Error fetching users:", err);
       }
@@ -267,6 +316,7 @@ app.prepare().then(() => {
             content,
             senderId,
             receiverId,
+            isDelivered: onlineUsers.has(receiverId), // Mark as delivered if recipient is online
           },
         });
 
@@ -297,11 +347,18 @@ app.prepare().then(() => {
               senderId,
               receiverId,
               groupId,
+              isDelivered: receiverId ? onlineUsers.has(receiverId) : false,
             },
           });
 
-          io.to(senderId).emit("newMessage", message);
-          io.to(receiverId).emit("newMessage", message);
+          if (receiverId) {
+            io.to(senderId).emit("newMessage", message);
+            io.to(receiverId).emit("newMessage", message);
+          }
+
+          if (groupId) {
+            io.to(`group-${groupId}`).emit("newGroupMessage", message);
+          }
 
           console.log("File message sent:", message);
         } catch (err) {
@@ -411,6 +468,7 @@ app.prepare().then(() => {
               senderId,
               receiverId,
               groupId,
+              isDelivered: receiverId ? onlineUsers.has(receiverId) : false,
             },
           });
 
@@ -447,6 +505,29 @@ app.prepare().then(() => {
      *  ─────────────────────────── */
     socket.on("disconnect", () => {
       console.log("Client disconnected:", socket.id);
+
+      // If we know which user this socket belonged to
+      const userId = userSockets.get(socket.id);
+      if (userId) {
+        // Remove user from online tracking
+        onlineUsers.delete(userId);
+        userSockets.delete(socket.id);
+
+        // Update last seen time in database
+        try {
+          prisma.user
+            .update({
+              where: { id: userId },
+              data: { lastSeen: new Date() },
+            })
+            .then(() => {
+              // Broadcast user offline status
+              io.emit("userStatusChange", { userId, status: "offline" });
+            });
+        } catch (err) {
+          console.error("Error updating last seen:", err);
+        }
+      }
     });
   });
 
@@ -454,5 +535,3 @@ app.prepare().then(() => {
     console.log(`> Ready on http://localhost:${port}`);
   });
 });
-
-

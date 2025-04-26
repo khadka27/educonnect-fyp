@@ -1,22 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import type React from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
-import { Button } from "src/components/ui/button";
-import { Input } from "src/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Smile,
   Paperclip,
   Send,
   Minimize2,
   Maximize2,
-  Menu,
-  Image,
+  ImageIcon,
   Video,
   File,
   X,
+  MessageSquare,
+  Users,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import {
@@ -24,16 +29,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import io, { type Socket } from "socket.io-client"; // Import Socket.IO client and type
+import io, { type Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
+import { Badge } from "@/components/ui/badge";
 
 interface User {
   id: string;
   name: string;
   profileImage: string;
   username: string;
+  isOnline?: boolean;
+  isTyping?: boolean;
+  lastSeen?: Date | string;
 }
 
 interface Message {
@@ -42,6 +51,8 @@ interface Message {
   receiverId: string;
   content: string;
   createdAt: Date | string;
+  isRead?: boolean;
+  isDelivered?: boolean;
 }
 
 interface MessageBox {
@@ -51,29 +62,32 @@ interface MessageBox {
   message: string;
 }
 
-const RightSidebar: React.FC = () => {
+interface ChatCardProps {
+  className?: string;
+}
+
+const ChatCard: React.FC<ChatCardProps> = ({ className = "" }) => {
   const [messageBoxes, setMessageBoxes] = useState<MessageBox[]>([]);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [activeTab, setActiveTab] = useState("contacts");
+  const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({});
   const { data: session } = useSession();
-  const socketRef = useRef<typeof io.Socket | null>(null);
+  const socketRef = useRef<typeof Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement[]>([]);
+  const typingTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   // Initialize socket connection
   useEffect(() => {
-    // Only establish socket connection if we have a valid session
     if (session?.user?.id) {
-      // Create socket connection
-      socketRef.current = io("http://localhost:3000", {
+      socketRef.current = io("http://localhost:4000", {
         transports: ["websocket"],
         query: { userId: session.user.id },
       });
 
-      // Join room for the current user
       socketRef.current.emit("joinRoom", session.user.id);
 
-      // Set up socket event listeners
       socketRef.current.on("newMessage", (message: Message) => {
         console.log("Received new message:", message);
         handleNewMessage(message);
@@ -81,7 +95,7 @@ const RightSidebar: React.FC = () => {
 
       socketRef.current.on("messageHistory", (messages: Message[]) => {
         console.log("Received message history:", messages);
-        // Update existing message box with the history
+        // Handle message history when it comes back from socket
         if (messages.length > 0) {
           const otherUserId =
             messages[0].senderId === session.user.id
@@ -105,7 +119,63 @@ const RightSidebar: React.FC = () => {
         }
       });
 
-      // Clean up
+      // Listen for user online status changes
+      socketRef.current.on("userStatusChange", ({ userId, status }: { userId: string; status: string }) => {
+        setOnlineUsers((prev) => ({
+          ...prev,
+          [userId]: status === "online",
+        }));
+
+        // Also update any open message boxes for this user
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  isOnline: status === "online",
+                  lastSeen: status !== "online" ? new Date() : user.lastSeen,
+                }
+              : user
+          )
+        );
+      });
+
+      // Listen for typing indicators
+      socketRef.current.on("userTyping", ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
+        setTypingUsers((prev) => ({
+          ...prev,
+          [userId]: isTyping,
+        }));
+      });
+
+      // Listen for message read receipts
+      socketRef.current.on("messageRead", (messageId: string) => {
+        setMessageBoxes((prevBoxes) =>
+          prevBoxes.map((box) => ({
+            ...box,
+            messages: box.messages.map((msg) =>
+              msg.id === messageId ? { ...msg, isRead: true } : msg
+            ),
+          }))
+        );
+      });
+
+      // Listen for message delivery confirmations
+      socketRef.current.on("messageDelivered", ({ messageId, receiverId }: { messageId: string; receiverId: string }) => {
+        setMessageBoxes((prevBoxes) =>
+          prevBoxes.map((box) =>
+            box.user.id === receiverId
+              ? {
+                  ...box,
+                  messages: box.messages.map((msg) =>
+                    msg.id === messageId ? { ...msg, isDelivered: true } : msg
+                  ),
+                }
+              : box
+          )
+        );
+      });
+
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -116,7 +186,6 @@ const RightSidebar: React.FC = () => {
 
   // Handle new messages coming in from socket
   const handleNewMessage = (message: Message) => {
-    // Get the other party's id (whether sender or receiver)
     const currentUserId = session?.user?.id;
     if (!currentUserId) return;
 
@@ -124,6 +193,14 @@ const RightSidebar: React.FC = () => {
       message.senderId === currentUserId
         ? message.receiverId
         : message.senderId;
+
+    // Mark message as delivered
+    if (message.senderId !== currentUserId && socketRef.current) {
+      socketRef.current.emit("deliverMessage", {
+        messageId: message.id,
+        senderId: message.senderId,
+      });
+    }
 
     setMessageBoxes((prevBoxes) => {
       const existingBoxIndex = prevBoxes.findIndex(
@@ -133,17 +210,10 @@ const RightSidebar: React.FC = () => {
       if (existingBoxIndex >= 0) {
         // Update existing message box
         const updatedBoxes = [...prevBoxes];
-        // Check if the message already exists (to prevent duplicates)
-        const messageExists = updatedBoxes[existingBoxIndex].messages.some(
-          (msg) => msg.id === message.id
-        );
-
-        if (!messageExists) {
-          updatedBoxes[existingBoxIndex] = {
-            ...updatedBoxes[existingBoxIndex],
-            messages: [...updatedBoxes[existingBoxIndex].messages, message],
-          };
-        }
+        updatedBoxes[existingBoxIndex] = {
+          ...updatedBoxes[existingBoxIndex],
+          messages: [...updatedBoxes[existingBoxIndex].messages, message],
+        };
         return updatedBoxes;
       } else {
         // We don't have a box open for this user yet, so don't create one automatically
@@ -158,7 +228,22 @@ const RightSidebar: React.FC = () => {
       try {
         const response = await axios.get("/api/user");
         if (response.data.success) {
-          setUsers(response.data.data);
+          // Enhance with random online status for demonstration
+          const enhancedUsers = response.data.data.map((user: User) => ({
+            ...user,
+            isOnline: Math.random() > 0.5,
+            lastSeen: new Date(
+              Date.now() - Math.floor(Math.random() * 24 * 60 * 60 * 1000)
+            ),
+          }));
+          setUsers(enhancedUsers);
+
+          // Initialize online users state
+          const onlineUsersMap: Record<string, boolean> = {};
+          enhancedUsers.forEach((user: User) => {
+            onlineUsersMap[user.id] = !!user.isOnline;
+          });
+          setOnlineUsers(onlineUsersMap);
         } else {
           console.error("Failed to fetch users:", response.data.message);
         }
@@ -228,6 +313,9 @@ const RightSidebar: React.FC = () => {
             message: "",
           },
         ]);
+
+        // Switch to chats tab
+        setActiveTab("chats");
       } catch (error) {
         console.error("Error fetching messages:", error);
         // Even if API fails, create an empty message box
@@ -235,6 +323,7 @@ const RightSidebar: React.FC = () => {
           ...prev,
           { user, isMinimized: false, messages: [], message: "" },
         ]);
+        setActiveTab("chats");
       }
     }
   };
@@ -260,6 +349,8 @@ const RightSidebar: React.FC = () => {
       receiverId: userId,
       content: box.message,
       createdAt: new Date().toISOString(),
+      isRead: false,
+      isDelivered: false,
     };
 
     // Optimistically update UI with new message
@@ -282,44 +373,22 @@ const RightSidebar: React.FC = () => {
 
     try {
       // Send message via API
-      const response = await axios.post("/api/messages", messageData);
-
-      // If the API returns the created message with an ID, update the temp message
-      if (response.data && response.data.id) {
-        setMessageBoxes((prevBoxes) =>
-          prevBoxes.map((box) =>
-            box.user.id === userId
-              ? {
-                  ...box,
-                  messages: box.messages.map((msg) =>
-                    msg.id === tempMessage.id ? response.data : msg
-                  ),
-                }
-              : box
-          )
-        );
-      }
+      await axios.post("/api/messages", messageData);
 
       // Send message via Socket
       if (socketRef.current) {
         socketRef.current.emit("sendMessage", messageData);
+
+        // Stop typing indicator when sending message
+        socketRef.current.emit("userTyping", {
+          userId: session.user.id,
+          receiverId: userId,
+          isTyping: false,
+        });
       }
     } catch (error) {
       console.error("Error sending message:", error);
-
-      // Show the error by marking the message as failed
-      setMessageBoxes((prevBoxes) =>
-        prevBoxes.map((box) =>
-          box.user.id === userId
-            ? {
-                ...box,
-                messages: box.messages.map((msg) =>
-                  msg.id === tempMessage.id ? { ...msg, error: true } : msg
-                ),
-              }
-            : box
-        )
-      );
+      // Optionally handle failure by showing an error message
     }
   };
 
@@ -329,6 +398,32 @@ const RightSidebar: React.FC = () => {
         box.user.id === userId ? { ...box, message } : box
       )
     );
+
+    // Emit typing status
+    if (socketRef.current && session?.user?.id) {
+      // Clear any existing timeout
+      if (typingTimeoutRef.current[userId]) {
+        clearTimeout(typingTimeoutRef.current[userId]);
+      }
+
+      // Send typing indicator
+      socketRef.current.emit("userTyping", {
+        userId: session.user.id,
+        receiverId: userId,
+        isTyping: true,
+      });
+
+      // Set a timeout to stop typing indicator after 2 seconds of inactivity
+      typingTimeoutRef.current[userId] = setTimeout(() => {
+        if (socketRef.current) {
+          socketRef.current.emit("userTyping", {
+            userId: session.user.id,
+            receiverId: userId,
+            isTyping: false,
+          });
+        }
+      }, 2000);
+    }
   };
 
   const handleEmojiClick = (userId: string, emojiObject: any) => {
@@ -342,309 +437,383 @@ const RightSidebar: React.FC = () => {
     setShowEmojiPicker(null);
   };
 
-  const formatTime = (dateString: Date | string) => {
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
+  // Mark message as read when it's visible
+  const handleMessageRead = (message: Message) => {
+    if (
+      message.senderId !== session?.user?.id &&
+      !message.isRead &&
+      socketRef.current
+    ) {
+      socketRef.current.emit("markAsRead", message.id);
 
-      // Check if the message was sent today
-      if (date.toDateString() === now.toDateString()) {
-        return date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      }
-
-      // Check if the message was sent yesterday
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      if (date.toDateString() === yesterday.toDateString()) {
-        return (
-          "Yesterday " +
-          date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-        );
-      }
-
-      // Otherwise show the date
-      return (
-        date.toLocaleDateString([], {
-          month: "short",
-          day: "numeric",
-        }) +
-        " " +
-        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      // Update local state
+      setMessageBoxes((prev) =>
+        prev.map((box) => ({
+          ...box,
+          messages: box.messages.map((msg) =>
+            msg.id === message.id ? { ...msg, isRead: true } : msg
+          ),
+        }))
       );
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return "Unknown time";
     }
   };
 
-  return (
-    <>
-      {/* User list sidebar */}
-      <div className="fixed right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg flex flex-col">
-        <div className="p-4 bg-green-500 dark:bg-green-600 text-white">
-          <h2 className="font-bold text-lg">Contacts</h2>
-        </div>
-        <div className="flex-grow overflow-y-auto p-4 space-y-4">
-          {users
-            .filter((user) => user.id !== session?.user?.id) // Filter out current user
-            .map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg"
-                onClick={() => handleUserClick(user)}
-              >
-                <Avatar>
-                  <AvatarImage src={user.profileImage} alt={user.name} />
-                  <AvatarFallback>
-                    {user.name ? user.name.charAt(0) : "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {user.name || user.username}
-                </span>
-              </div>
-            ))}
-        </div>
-      </div>
+  const formatTime = (dateString: Date | string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
-      {/* Chat message boxes */}
-      <div className="fixed bottom-0 right-0 flex gap-4 pr-64">
-        {messageBoxes.map((box, index) => (
-          <div
-            key={box.user.id}
-            className={`w-80 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg overflow-hidden transition-all duration-300 ease-in-out ${
-              box.isMinimized ? "h-12" : "h-96"
-            }`}
-            style={{ zIndex: 40 - index }}
-          >
-            <div className="flex items-center justify-between p-3 bg-green-500 dark:bg-green-600 text-white">
-              <div className="flex items-center space-x-2">
-                <Link
-                  href={`/user-profile/${box.user.id}`}
-                  className="flex items-center space-x-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={box.user.profileImage || "https://i.pravatar.cc/150"}
-                      alt={box.user.username || "User"}
-                    />
-                    <AvatarFallback>
-                      {box.user.name ? box.user.name.charAt(0) : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-                <span className="font-medium">
-                  {box.user.name || box.user.username}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handleMinimizeMessageBox(box.user.id)}
-                  className="text-white hover:text-gray-200"
-                >
-                  {box.isMinimized ? (
-                    <Maximize2 size={18} />
-                  ) : (
-                    <Minimize2 size={18} />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleCloseMessageBox(box.user.id)}
-                  className="text-white hover:text-gray-200"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            {!box.isMinimized && (
-              <>
-                <div className="h-64 p-4 overflow-y-auto">
-                  {Array.isArray(box.messages) && box.messages.length > 0 ? (
-                    box.messages.map((msg, msgIndex) => {
-                      const isCurrentUser = msg.senderId === session?.user?.id;
-                      return (
-                        <div
-                          key={msg.id || msgIndex}
-                          className={`mb-3 flex ${
-                            isCurrentUser ? "justify-end" : "justify-start"
-                          }`}
-                        >
-                          {!isCurrentUser && (
-                            <Avatar className="h-8 w-8 mr-2 flex-shrink-0 self-end">
-                              <AvatarImage src={box.user.profileImage} />
-                              <AvatarFallback>
-                                {box.user.name ? box.user.name.charAt(0) : "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div
-                            className={`max-w-[75%] px-3 py-2 rounded-lg ${
-                              isCurrentUser
-                                ? "bg-primary text-primary-foreground rounded-tr-none"
-                                : "bg-gray-200 dark:bg-gray-700 rounded-tl-none"
-                            }`}
-                          >
-                            <p className="text-sm break-words">{msg.content}</p>
-                            <span
-                              className={`text-xs mt-1 block ${
-                                isCurrentUser
-                                  ? "text-primary-foreground/80"
-                                  : "text-gray-500 dark:text-gray-400"
-                              }`}
-                            >
-                              {formatTime(msg.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center text-gray-500 dark:text-gray-400 h-full flex items-center justify-center">
+  // Format relative time for messages
+  const formatRelativeTime = (dateString: Date | string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.round(diffMs / 1000);
+    const diffMin = Math.round(diffSec / 60);
+    const diffHours = Math.round(diffMin / 60);
+    const diffDays = Math.round(diffHours / 24);
+
+    if (diffSec < 60) {
+      return "just now";
+    } else if (diffMin < 60) {
+      return `${diffMin}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else if (diffDays === 1) {
+      return "yesterday";
+    } else if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    } else {
+      return date.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      });
+    }
+  };
+
+  // Get message status component
+  const getMessageStatus = (message: Message) => {
+    if (message.senderId === session?.user?.id) {
+      if (message.isRead) {
+        return <CheckCheck size={14} className="text-blue-500" />;
+      } else if (message.isDelivered) {
+        return <CheckCheck size={14} className="text-gray-400" />;
+      } else {
+        return <Check size={14} className="text-gray-400" />;
+      }
+    }
+    return null;
+  };
+
+  // Get user status component
+  const getUserStatus = (user: User) => {
+    return onlineUsers[user.id] ? (
+      <Badge
+        variant="outline"
+        className="bg-green-500 border-green-500 text-white text-xs py-0 px-1.5"
+      >
+        Online
+      </Badge>
+    ) : user.lastSeen ? (
+      <span className="text-xs text-gray-400">
+        Last seen {formatRelativeTime(user.lastSeen)}
+      </span>
+    ) : null;
+  };
+
+  return (
+    <Card className={`w-full max-w-md mx-auto ${className}`}>
+      <CardHeader className="bg-green-500 text-white p-4">
+        <CardTitle className="text-lg font-bold">Messages</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Tabs
+          defaultValue="contacts"
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="contacts" className="flex items-center gap-2">
+              <Users size={16} />
+              <span>Contacts</span>
+            </TabsTrigger>
+            <TabsTrigger value="chats" className="flex items-center gap-2">
+              <MessageSquare size={16} />
+              <span>
+                Chats {messageBoxes.length > 0 && `(${messageBoxes.length})`}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="contacts" className="m-0">
+            <div className="h-[400px] overflow-y-auto">
+              {users
+                .filter((user) => user.id !== session?.user?.id)
+                .map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-4 border-b border-gray-100"
+                    onClick={() => handleUserClick(user)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <Avatar>
+                          <AvatarImage
+                            src={user.profileImage || "/placeholder.svg"}
+                            alt={user.name}
+                          />
+                          <AvatarFallback>
+                            {user.name ? user.name.charAt(0) : "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        {onlineUsers[user.id] && (
+                          <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+                        )}
+                      </div>
                       <div>
-                        <p className="mb-2">No messages yet</p>
-                        <p className="text-xs">
-                          Send a message to start the conversation
-                        </p>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                          {user.name || user.username}
+                        </span>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {getUserStatus(user)}
+                        </div>
                       </div>
                     </div>
-                  )}
-                  <div
-                    ref={(el) => {
-                      if (el) messagesEndRef.current[index] = el;
-                    }}
-                  />
-                </div>
-                <div className="p-3 bg-gray-100 dark:bg-gray-700">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Type a message..."
-                      value={box.message}
-                      onChange={(e) =>
-                        handleMessageChange(box.user.id, e.target.value)
-                      }
-                      className="flex-grow"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage(box.user.id);
-                        }
-                      }}
-                    />
-                    <div className="relative">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() =>
-                          setShowEmojiPicker(
-                            showEmojiPicker === box.user.id ? null : box.user.id
-                          )
-                        }
-                      >
-                        <Smile className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                      </Button>
-                      {showEmojiPicker === box.user.id && (
-                        <div className="absolute bottom-full right-0 mb-2 z-50">
-                          <EmojiPicker
-                            onEmojiClick={(emojiObject) =>
-                              handleEmojiClick(box.user.id, emojiObject)
-                            }
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost">
-                          <Paperclip className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Image className="mr-2 h-4 w-4" />
-                          <span>Add Image</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Video className="mr-2 h-4 w-4" />
-                          <span>Add Video</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <File className="mr-2 h-4 w-4" />
-                          <span>Add File</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button
-                      size="icon"
-                      variant="default"
-                      onClick={() => handleSendMessage(box.user.id)}
-                      disabled={!box.message.trim()}
-                    >
-                      <Send className="h-5 w-5" />
-                    </Button>
                   </div>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+                ))}
+            </div>
+          </TabsContent>
 
-      {/* Mobile menu toggle */}
-      <div className="fixed top-3 right-3 md:hidden">
-        <Button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          variant="outline"
-          size="icon"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      </div>
+          <TabsContent value="chats" className="m-0">
+            <div className="h-[400px] overflow-y-auto">
+              {messageBoxes.length > 0 ? (
+                messageBoxes.map((box, index) => (
+                  <div
+                    key={box.user.id}
+                    className="border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between p-3 bg-gray-50">
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          href={`/user-profile/${box.user.id}`}
+                          className="flex items-center space-x-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="relative">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={
+                                  box.user.profileImage ||
+                                  "https://i.pravatar.cc/150"
+                                }
+                                alt={box.user.username || "User"}
+                              />
+                              <AvatarFallback>
+                                {box.user.username
+                                  ? box.user.username.charAt(0)
+                                  : "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            {onlineUsers[box.user.id] && (
+                              <span className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full border-2 border-white"></span>
+                            )}
+                          </div>
+                        </Link>
+                        <div>
+                          <span className="font-medium">
+                            {box.user.name || box.user.username}
+                          </span>
+                          <div className="text-xs text-gray-400">
+                            {typingUsers[box.user.id] ? (
+                              <span className="text-green-500">Typing...</span>
+                            ) : (
+                              getUserStatus(box.user)
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleMinimizeMessageBox(box.user.id)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          {box.isMinimized ? (
+                            <Maximize2 size={18} />
+                          ) : (
+                            <Minimize2 size={18} />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleCloseMessageBox(box.user.id)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    </div>
 
-      {/* Mobile sidebar */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
-          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 p-4">
-            <Button
-              onClick={() => setIsMobileMenuOpen(false)}
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-            <h2 className="font-bold text-lg mb-4">Contacts</h2>
-            {users
-              .filter((user) => user.id !== session?.user?.id)
-              .map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg mb-2"
-                  onClick={() => {
-                    handleUserClick(user);
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <Avatar>
-                    <AvatarImage src={user.profileImage} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name ? user.name.charAt(0) : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">
-                    {user.name || user.username}
-                  </span>
+                    {!box.isMinimized && (
+                      <>
+                        <div className="h-48 p-4 overflow-y-auto">
+                          {Array.isArray(box.messages) &&
+                          box.messages.length > 0 ? (
+                            box.messages.map((msg, msgIndex) => {
+                              const isCurrentUser =
+                                msg.senderId === session?.user?.id;
+
+                              // Mark received messages as read when displayed
+                              if (!isCurrentUser && !msg.isRead) {
+                                handleMessageRead(msg);
+                              }
+
+                              return (
+                                <div
+                                  key={msg.id || msgIndex}
+                                  className={`mb-3 flex ${
+                                    isCurrentUser
+                                      ? "justify-end"
+                                      : "justify-start"
+                                  }`}
+                                >
+                                  <div
+                                    className={`max-w-[75%] px-3 py-2 rounded-lg ${
+                                      isCurrentUser
+                                        ? "bg-green-500 text-white rounded-tr-none"
+                                        : "bg-gray-200 dark:bg-gray-700 rounded-tl-none"
+                                    }`}
+                                  >
+                                    <p className="text-sm">{msg.content}</p>
+                                    <div className="flex items-center justify-end mt-1 space-x-1">
+                                      <span
+                                        className={`text-xs ${
+                                          isCurrentUser
+                                            ? "text-green-100"
+                                            : "text-gray-500 dark:text-gray-400"
+                                        }`}
+                                      >
+                                        {formatTime(msg.createdAt)}
+                                      </span>
+                                      {isCurrentUser && getMessageStatus(msg)}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="text-center text-gray-500 dark:text-gray-400">
+                              No messages yet
+                            </div>
+                          )}
+                          <div
+                            ref={(el) => {
+                              if (el) messagesEndRef.current[index] = el;
+                            }}
+                          />
+                          {typingUsers[box.user.id] && (
+                            <div className="flex items-center text-xs text-gray-500 mt-2">
+                              <div className="flex space-x-1 mr-1">
+                                <span className="animate-pulse">.</span>
+                                <span className="animate-pulse animation-delay-200">
+                                  .
+                                </span>
+                                <span className="animate-pulse animation-delay-400">
+                                  .
+                                </span>
+                              </div>
+                              <span>{box.user.name || "User"} is typing</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3 bg-gray-50">
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="text"
+                              placeholder="Type a message..."
+                              value={box.message}
+                              onChange={(e) =>
+                                handleMessageChange(box.user.id, e.target.value)
+                              }
+                              className="flex-grow"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendMessage(box.user.id);
+                                }
+                              }}
+                            />
+                            <div className="relative">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() =>
+                                  setShowEmojiPicker(
+                                    showEmojiPicker === box.user.id
+                                      ? null
+                                      : box.user.id
+                                  )
+                                }
+                              >
+                                <Smile className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                              </Button>
+                              {showEmojiPicker === box.user.id && (
+                                <div className="absolute bottom-full right-0 mb-2 z-50">
+                                  <EmojiPicker
+                                    onEmojiClick={(emojiObject) =>
+                                      handleEmojiClick(box.user.id, emojiObject)
+                                    }
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost">
+                                  <Paperclip className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <ImageIcon className="mr-2 h-4 w-4" />
+                                  <span>Add Image</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Video className="mr-2 h-4 w-4" />
+                                  <span>Add Video</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <File className="mr-2 h-4 w-4" />
+                                  <span>Add File</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button
+                              size="icon"
+                              onClick={() => handleSendMessage(box.user.id)}
+                              className="bg-green-500 hover:bg-green-600"
+                            >
+                              <Send className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full p-6 text-center text-gray-500">
+                  <MessageSquare size={48} className="mb-4 opacity-20" />
+                  <p>No active chats</p>
+                  <p className="text-sm mt-2">
+                    Select a contact to start chatting
+                  </p>
                 </div>
-              ))}
-          </div>
-        </div>
-      )}
-    </>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 
-export default RightSidebar;
+export default ChatCard;
