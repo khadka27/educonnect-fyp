@@ -282,7 +282,7 @@ const PostComponent: React.FC<PostProps> = ({
       <CardFooter className="p-4 pt-0 flex flex-col">
         {/* Engagement counts */}
         <div className="flex justify-start items-center w-full mb-3 space-x-4 text-xs text-gray-500 dark:text-gray-400">
-          {post.savesCount > 0 && (
+          {(post.savesCount ?? 0) > 0 && (
             <div className="flex items-center">
               <Heart className="h-3.5 w-3.5 mr-1 text-red-500" />
               <span>
@@ -291,7 +291,7 @@ const PostComponent: React.FC<PostProps> = ({
             </div>
           )}
 
-          {post.commentsCount > 0 ||
+          {(post.commentsCount ?? 0) > 0 ||
           (post.comments && post.comments.length > 0) ? (
             <div className="flex items-center">
               <MessageSquare className="h-3.5 w-3.5 mr-1 text-blue-500" />
@@ -304,7 +304,7 @@ const PostComponent: React.FC<PostProps> = ({
             </div>
           ) : null}
 
-          {post.savesCount > 0 && (
+          {(post.savesCount ?? 0) > 0 && (
             <div className="flex items-center">
               <Bookmark className="h-3.5 w-3.5 mr-1 text-emerald-500" />
               <span>
