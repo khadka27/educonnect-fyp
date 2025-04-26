@@ -58,8 +58,15 @@ interface Post {
     content: string;
     createdAt: Date;
   }>;
+  savesCount?: number;
   isLiked?: boolean;
   isSaved?: boolean;
+  likesCount?: number; // Added likesCount property
+  commentsCount?: number; // Added commentsCount property
+  reactions?: Array<{
+    id: string;
+    type: string;
+  }>;
 }
 
 interface CommentsState {
