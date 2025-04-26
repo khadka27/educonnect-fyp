@@ -1,68 +1,91 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
 export async function POST(
   req: Request,
-  { params }: { readonly params: { readonly postId: string } }
+  { params }: { params: { postId: string } }
 ) {
   try {
-    // Ensure params is properly resolved before using its properties
-    const postId = params.postId;
+    const { postId } = params;
     const { userId, type } = await req.json();
 
-    // Validate input
-    if (!userId || !type) {
-      return new Response("Missing userId or reaction type", { status: 400 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Validate reaction type
-    const allowedReactionTypes = ["like", "love", "wow"];
-    if (!allowedReactionTypes.includes(type)) {
-      return new Response("Invalid reaction type", { status: 400 });
+    // Verify the post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check if the reaction already exists
-    const existingReaction = await prisma.reaction.findUnique({
+    // Check if the user has already liked this post
+    const existingReaction = await prisma.reaction.findFirst({
       where: {
-        postId_userId_type: {
-          postId,
-          userId,
-          type,
-        },
+        postId,
+        userId,
+        type,
       },
     });
 
     if (existingReaction) {
-      // If the reaction exists, remove it (unlike)
+      // If the user has already liked the post, unlike it (delete the reaction)
       await prisma.reaction.delete({
         where: {
           id: existingReaction.id,
         },
       });
-      return new Response(JSON.stringify({ message: "Reaction removed" }), {
-        status: 200,
+
+      // Get updated like count for the post
+      const likeCount = await prisma.reaction.count({
+        where: {
+          postId,
+          type: "like",
+        },
+      });
+
+      return NextResponse.json({
+        message: "Post unliked successfully",
+        liked: false,
+        likeCount,
+      });
+    } else {
+      // Otherwise, create a new reaction (like)
+      const reaction = await prisma.reaction.create({
+        data: {
+          postId,
+          userId,
+          type,
+        },
+      });
+
+      // Get updated like count for the post
+      const likeCount = await prisma.reaction.count({
+        where: {
+          postId,
+          type: "like",
+        },
+      });
+
+      return NextResponse.json({
+        message: "Post liked successfully",
+        liked: true,
+        reaction,
+        likeCount,
       });
     }
-
-    // If no reaction exists, create a new one
-    const newReaction = await prisma.reaction.create({
-      data: {
-        type,
-        user: { connect: { id: userId } },
-        post: { connect: { id: postId } },
-      },
-    });
-
-    return new Response(JSON.stringify(newReaction), { status: 200 });
   } catch (error) {
-    if (error instanceof Error && (error as any).code === "P2002") {
-      // Unique constraint error
-      return new Response("You have already reacted with this type", {
-        status: 400,
-      });
-    }
-    console.error("Error creating reaction:", error); // Log the error for debugging
-    return new Response("Error creating reaction", { status: 500 });
+    console.error("Error liking/unliking post:", error);
+    return NextResponse.json(
+      { error: "Failed to like/unlike post" },
+      { status: 500 }
+    );
   }
 }
 

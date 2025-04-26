@@ -1,118 +1,162 @@
-// import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
-// export async function POST(
-//   req: Request,
-//   { params }: { params: { postId: string } }
-// ) {
-//   try {
-//     const { userId } = await req.json();  // Extract userId from the request body
-
-//     // Validate input
-//     if (!userId) {
-//       return new Response("Missing userId", { status: 400 });
-//     }
-
-//     // Check if the post is saved by the user
-//     const savedPost = await prisma.savedPost.findFirst({
-//       where: {
-//         userId,
-//         postId: params.postId,
-//       },
-//     });
-
-//     if (savedPost) {
-//       // Remove the saved post if it exists
-//       await prisma.savedPost.delete({
-//         where: {
-//           id: savedPost.id,
-//         },
-//       });
-
-//       return new Response(JSON.stringify({ isSaved: false }), { status: 200 });
-//     } else {
-//       // Add a new saved post if it doesn't exist
-//       await prisma.savedPost.create({
-//         data: {
-//           userId,
-//           postId: params.postId,
-//         },
-//       });
-
-//       return new Response(JSON.stringify({ isSaved: true }), { status: 200 });
-//     }
-//   } catch (error) {
-//     console.error("Error handling saved post:", error);
-//     return new Response(`Error handling saved post: ${(error as Error).message}`, { status: 500 });
-//   }
-// }
-
-// export async function GET(
-//   req: Request,
-//   { params }: { params: { postId: string } }
-// ) {
-//   try {
-//     const url = new URL(req.url);
-//     const userId = url.searchParams.get("userId");
-
-//     // Validate input
-//     if (!userId) {
-//       return new Response("Missing userId", { status: 400 });
-//     }
-
-//     // Check if the post is saved by the user
-//     const savedPost = await prisma.savedPost.findFirst({
-//       where: {
-//         userId,
-//         postId: params.postId,
-//       },
-//     });
-
-//     const isSaved = !!savedPost;
-
-//     return new Response(JSON.stringify({ isSaved }), { status: 200 });
-//   } catch (error) {
-//     console.error("Error fetching saved post status:", error);
-//     return new Response(`Error fetching saved post status: ${(error as Error).message}`, { status: 500 });
-//   }
-// }
-// /src/app/api/posts/[postId]/saved-posts/route.ts
-import { NextResponse } from 'next/server';
-import {prisma} from '@/lib/prisma';
-
-// Handling POST request (Save post)
-export async function POST(req: Request, { params }: { params: { postId: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: { postId: string } }
+) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { postId } = params;
     const { userId } = await req.json();
 
-    const savedPost = await prisma.savedPost.create({
-      data: {
-        userId,
+    // Check if the post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Check if the user has already saved this post
+    const existingSave = await prisma.savedPost.findFirst({
+      where: {
         postId,
+        userId,
       },
     });
 
-    return NextResponse.json({ message: 'Post saved successfully!', savedPost });
+    if (existingSave) {
+      return NextResponse.json(
+        { message: "Post is already saved", saved: true },
+        { status: 200 }
+      );
+    }
+
+    // Create a new saved post
+    const savedPost = await prisma.savedPost.create({
+      data: {
+        postId,
+        userId,
+      },
+    });
+
+    // Get the updated save count
+    const saveCount = await prisma.savedPost.count({
+      where: { postId },
+    });
+
+    return NextResponse.json(
+      {
+        message: "Post saved successfully",
+        savedPost,
+        saveCount,
+        saved: true,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    return NextResponse.json({ message: 'Error saving post', error }, { status: 500 });
+    console.error("Error saving post:", error);
+    return NextResponse.json({ error: "Failed to save post" }, { status: 500 });
   }
 }
 
-// Handling DELETE request (Unsave post)
-export async function DELETE(req: Request, { params }: { params: { postId: string } }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { postId: string } }
+) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { postId } = params;
     const { userId } = await req.json();
 
-    const unsavedPost = await prisma.savedPost.deleteMany({
+    // Find the saved post to delete
+    const savedPost = await prisma.savedPost.findFirst({
       where: {
-        userId,
         postId,
+        userId,
       },
     });
 
-    return NextResponse.json({ message: 'Post unsaved successfully!', unsavedPost });
+    if (!savedPost) {
+      return NextResponse.json(
+        { message: "Post is not saved by this user", saved: false },
+        { status: 404 }
+      );
+    }
+
+    // Delete the saved post
+    await prisma.savedPost.delete({
+      where: {
+        id: savedPost.id,
+      },
+    });
+
+    // Get the updated save count
+    const saveCount = await prisma.savedPost.count({
+      where: { postId },
+    });
+
+    return NextResponse.json(
+      {
+        message: "Post unsaved successfully",
+        saveCount,
+        saved: false,
+      },
+      { status: 200 }
+    );
   } catch (error) {
-    return NextResponse.json({ message: 'Error unsaving post', error }, { status: 500 });
+    console.error("Error unsaving post:", error);
+    return NextResponse.json(
+      { error: "Failed to unsave post" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: { postId: string } }
+) {
+  try {
+    const { postId } = params;
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+
+    // Get the saved status for a specific user
+    if (userId) {
+      const savedPost = await prisma.savedPost.findFirst({
+        where: {
+          postId,
+          userId,
+        },
+      });
+
+      return NextResponse.json({ isSaved: !!savedPost }, { status: 200 });
+    }
+
+    // Get total save count for the post
+    const saveCount = await prisma.savedPost.count({
+      where: { postId },
+    });
+
+    return NextResponse.json({ saveCount }, { status: 200 });
+  } catch (error) {
+    console.error("Error checking saved status:", error);
+    return NextResponse.json(
+      { error: "Failed to check saved status" },
+      { status: 500 }
+    );
   }
 }

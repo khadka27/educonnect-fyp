@@ -57,147 +57,6 @@ export async function POST(req: Request) {
   }
 }
 
-// GET: Fetch posts from the database
-// export async function GET() {
-//   try {
-//     const posts = await prisma.post.findMany({
-//       include: {
-//         user: {
-//           select: {
-//             username: true,
-//             profileImage: true, // Assuming this is the user's image field
-//           },
-//         },
-//       },
-//       orderBy: { createdAt: "desc" }, // Order posts by creation time
-//     });
-
-//     return NextResponse.json(posts);
-//   } catch (error) {
-//     console.error("Error fetching posts:", error);
-//     return new NextResponse("Internal Server Error", { status: 500 });
-//   }
-// }
-
-// GET: Fetch posts from the database with pagination
-
-// export async function GET(request: Request) {
-//   const url = new URL(request.url);
-//   const page = parseInt(url.searchParams.get("page") || "1", 10);
-//   const limit = 1000; // Number of posts per page
-
-//   try {
-//     const posts = await prisma.post.findMany({
-//       skip: (page - 1) * limit,
-//       take: limit,
-//       orderBy: { createdAt: "desc" },
-//       include: {
-//         user: {
-//           select: { username: true, profileImage: true },
-//         },
-//         comments: true,
-//       },
-//     });
-
-//     const totalPosts = await prisma.post.count();
-//     const hasMore = page * limit < totalPosts;
-
-//     return NextResponse.json({
-//       posts,
-//       hasMore,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching posts:", error);
-//     return NextResponse.json(
-//       { error: "Failed to fetch posts" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function GET(request: Request) {
-//   const url = new URL(request.url);
-//   const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
-//   const limit = 10; // Reduce the number of posts per page for better performance
-
-//   try {
-//     const posts = await prisma.post.findMany({
-//       skip: (page - 1) * limit,
-//       take: limit,
-//       orderBy: { createdAt: "desc" },
-//       include: {
-//         user: {
-//           select: { username: true, profileImage: true },
-//         },
-//         comments: {
-//           select: { content: true, userId: true }, // Limit fields
-//           take: 5, // Limit number of comments per post
-//         },
-//       },
-//     });
-
-//     const totalPosts = await prisma.post.count();
-//     const hasMore = page * limit < totalPosts;
-
-//     return NextResponse.json({
-//       posts,
-//       hasMore,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching posts:", (error as Error).message); // Log error message
-//     return NextResponse.json(
-//       { error: "Failed to fetch posts" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function GET(request: Request) {
-//   const url = new URL(request.url);
-//   const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
-//   const limit = 10; // Number of posts per page
-
-//   try {
-//     const posts = await prisma.post.findMany({
-//       skip: (page - 1) * limit,
-//       take: limit,
-//       orderBy: { createdAt: "desc" },
-//       include: {
-//         user: {
-//           select: { username: true, profileImage: true }, // Include user's username and profileImage
-//         },
-//         comments: {
-//           select: {
-//             content: true,
-//             createdAt: true,
-//             user: {
-//               select: {
-//                 username: true, // Include the username of the user who made the comment
-//                 profileImage: true, // Optionally include profileImage if needed
-//               },
-//             },
-//           },
-//           take: 5, // Limit number of comments per post
-//         },
-//       },
-//     });
-
-//     const totalPosts = await prisma.post.count();
-//     const hasMore = page * limit < totalPosts;
-
-//     return NextResponse.json({
-//       posts,
-//       hasMore,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching posts:", (error as Error).message);
-//     return NextResponse.json(
-//       { error: "Failed to fetch posts" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
@@ -229,6 +88,14 @@ export async function GET(request: Request) {
           },
           take: 5, // Limit number of comments per post
         },
+        // Count all likes, saves, and comments
+        _count: {
+          select: {
+            reactions: { where: { type: "like" } }, // Count likes
+            savedBy: true, // Count saves
+            comments: true, // Count comments
+          },
+        },
         // Include saved posts if user is logged in
         ...(userId && {
           savedBy: {
@@ -254,8 +121,15 @@ export async function GET(request: Request) {
       ...post,
       isSaved: post.savedBy?.length > 0, // Check if post is saved by the current user
       isLiked: post.reactions?.length > 0, // Check if post is liked by the current user
-      // Remove these properties as they're now represented by isLiked and isSaved
-      ...(userId && { savedBy: undefined, reactions: undefined }),
+      likesCount: post._count.reactions, // Total count of likes
+      commentsCount: post._count.comments, // Total count of comments
+      savesCount: post._count.savedBy, // Total count of saves
+      // Remove these properties as they're now represented by isLiked, isSaved and the counts
+      ...(userId && {
+        savedBy: undefined,
+        reactions: undefined,
+        _count: undefined,
+      }),
     }));
 
     return NextResponse.json({

@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { date } from "zod";
 
 interface PostProps {
   post: {
@@ -64,6 +65,9 @@ interface PostProps {
     location?: string;
     mood?: string;
     tags?: string[];
+    likesCount?: number; // Count of likes
+    commentsCount?: number; // Count of comments
+    savesCount?: number; // Count of saves
   };
   isLiked?: boolean;
   onLike: (postId: string) => void;
@@ -117,9 +121,9 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
-  const formatTimeAgo = (dateString: string) => {
+  const formatTimeAgo = (inputDate: string | Date) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+      return formatDistanceToNow(new Date(inputDate), { addSuffix: true });
     } catch (error) {
       return "some time ago";
     }
@@ -252,7 +256,7 @@ const PostComponent: React.FC<PostProps> = ({
         {/* Post media */}
         {(post.postUrl || post.fileUrl) && (
           <div className="mt-3 mb-4 rounded-lg overflow-hidden">
-            {post.fileUrl && post.fileUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+            {post.fileUrl?.match(/\.(mp4|webm|ogg)$/i) ? (
               <video
                 src={post.fileUrl}
                 controls
@@ -276,6 +280,40 @@ const PostComponent: React.FC<PostProps> = ({
       </CardContent>
 
       <CardFooter className="p-4 pt-0 flex flex-col">
+        {/* Engagement counts */}
+        <div className="flex justify-start items-center w-full mb-3 space-x-4 text-xs text-gray-500 dark:text-gray-400">
+          {post.savesCount > 0 && (
+            <div className="flex items-center">
+              <Heart className="h-3.5 w-3.5 mr-1 text-red-500" />
+              <span>
+                {post.likesCount} {post.likesCount === 1 ? "like" : "likes"}
+              </span>
+            </div>
+          )}
+
+          {post.commentsCount > 0 ||
+          (post.comments && post.comments.length > 0) ? (
+            <div className="flex items-center">
+              <MessageSquare className="h-3.5 w-3.5 mr-1 text-blue-500" />
+              <span>
+                {post.commentsCount || post.comments.length}{" "}
+                {post.commentsCount === 1 || post.comments.length === 1
+                  ? "comment"
+                  : "comments"}
+              </span>
+            </div>
+          ) : null}
+
+          {post.savesCount > 0 && (
+            <div className="flex items-center">
+              <Bookmark className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+              <span>
+                {post.savesCount} {post.savesCount === 1 ? "save" : "saves"}
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Action buttons */}
         <div className="flex justify-between items-center w-full">
           <div className="flex space-x-2">
@@ -455,7 +493,10 @@ const PostComponent: React.FC<PostProps> = ({
                           <p className="text-xs font-medium text-gray-800 dark:text-gray-200">
                             {comment.user?.username || "User"}
                           </p>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {formatTimeAgo(comment.createdAt.toISOString())}
+                          </p>
+                          <p className="text-sm text-gray-800 dark:text-gray-200">
                             {comment.content}
                           </p>
                         </div>

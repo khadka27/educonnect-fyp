@@ -228,22 +228,57 @@ const PostList: React.FC = () => {
       // Optimistically update the like status
       setPostLikes((prev) => ({ ...prev, [postId]: !prev[postId] }));
 
-      // Update the post in the posts array
+      // Optimistically update the post in the posts array
       setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId ? { ...post, isLiked: !post.isLiked } : post
-        )
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            // Update like count in addition to like status
+            const likesCount =
+              post.likesCount !== undefined
+                ? post.isLiked
+                  ? post.likesCount - 1
+                  : post.likesCount + 1
+                : post.isLiked
+                ? 0
+                : 1;
+
+            return {
+              ...post,
+              isLiked: !post.isLiked,
+              likesCount,
+            };
+          }
+          return post;
+        })
       );
 
       // Make the API call to update the like status
-      await axios.post(`/api/posts/${postId}/like`, { userId, type: "like" });
+      const response = await axios.post(`/api/posts/${postId}/like`, {
+        userId,
+        type: "like",
+      });
+      const { liked, likeCount } = response.data;
+
+      // Update with actual server value
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              isLiked: liked,
+              likesCount: likeCount,
+            };
+          }
+          return post;
+        })
+      );
 
       // Show a subtle toast notification
       toast({
-        title: postLikes[postId] ? "Post unliked" : "Post liked",
-        description: postLikes[postId]
-          ? "You've removed your like"
-          : "You've liked this post",
+        title: liked ? "Post liked" : "Post unliked",
+        description: liked
+          ? "You've liked this post"
+          : "You've removed your like",
         variant: "default",
       });
     } catch (error) {
@@ -254,7 +289,20 @@ const PostList: React.FC = () => {
       // Revert the post in the posts array
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
-          post.id === postId ? { ...post, isLiked: !post.isLiked } : post
+          post.id === postId
+            ? {
+                ...post,
+                isLiked: !post.isLiked,
+                likesCount:
+                  post.likesCount !== undefined
+                    ? post.isLiked
+                      ? post.likesCount + 1
+                      : post.likesCount - 1
+                    : post.isLiked
+                    ? 1
+                    : 0,
+              }
+            : post
         )
       );
 
@@ -268,15 +316,33 @@ const PostList: React.FC = () => {
 
   const handleSave = async (postId: string, isSaved: boolean) => {
     try {
-      // Optimistically update the save status
+      // Optimistically update the save status and count
       setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId ? { ...post, isSaved: !isSaved } : post
-        )
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            // Update save count
+            const savesCount =
+              post.savesCount !== undefined
+                ? isSaved
+                  ? post.savesCount - 1
+                  : post.savesCount + 1
+                : isSaved
+                ? 0
+                : 1;
+
+            return {
+              ...post,
+              isSaved: !isSaved,
+              savesCount,
+            };
+          }
+          return post;
+        })
       );
 
+      let response;
       if (isSaved) {
-        await axios.delete(`/api/posts/${postId}/saved-posts`, {
+        response = await axios.delete(`/api/posts/${postId}/saved-posts`, {
           data: { userId },
         });
         toast({
@@ -285,13 +351,30 @@ const PostList: React.FC = () => {
           variant: "default",
         });
       } else {
-        await axios.post(`/api/posts/${postId}/saved-posts`, { userId });
+        response = await axios.post(`/api/posts/${postId}/saved-posts`, {
+          userId,
+        });
         toast({
           title: "Post saved",
           description: "The post has been added to your saved items.",
           variant: "default",
         });
       }
+
+      // Update with actual server count
+      const { saveCount, saved } = response.data;
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              isSaved: saved,
+              savesCount: saveCount,
+            };
+          }
+          return post;
+        })
+      );
     } catch (error) {
       console.error("Error saving/unsaving post:", error);
       toast({
@@ -299,11 +382,26 @@ const PostList: React.FC = () => {
         description: "There was an error updating the post status.",
         variant: "destructive",
       });
-      // Revert the save status on error
+
+      // Revert the save status and count on error
       setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId ? { ...post, isSaved: isSaved } : post
-        )
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              isSaved: isSaved,
+              savesCount:
+                post.savesCount !== undefined
+                  ? isSaved
+                    ? post.savesCount + 1
+                    : post.savesCount - 1
+                  : isSaved
+                  ? 1
+                  : 0,
+            };
+          }
+          return post;
+        })
       );
     }
   };
@@ -320,13 +418,24 @@ const PostList: React.FC = () => {
       }
 
       try {
+        // Optimistically update comment count
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
+            if (post.id === postId) {
+              const commentsCount = (post.commentsCount || 0) + 1;
+              return { ...post, commentsCount };
+            }
+            return post;
+          })
+        );
+
         const response = await axios.post(`/api/posts/${postId}/comments`, {
           postId,
           content: comment,
           userId,
         });
 
-        const newComment: Comment = response.data;
+        const newComment = response.data;
 
         // Update comments state
         setComments((prevComments: CommentsState) => ({
@@ -347,6 +456,8 @@ const PostList: React.FC = () => {
                   ...post.comments,
                   newComment as unknown as Post["comments"][number],
                 ],
+                // Keep the optimistic update for comment count
+                commentsCount: post.commentsCount || 0,
               };
             }
             return post;
@@ -359,6 +470,18 @@ const PostList: React.FC = () => {
         });
       } catch (error) {
         console.error("Error adding comment:", error);
+
+        // Revert optimistic update if there's an error
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
+            if (post.id === postId) {
+              const commentsCount = Math.max(0, (post.commentsCount || 1) - 1);
+              return { ...post, commentsCount };
+            }
+            return post;
+          })
+        );
+
         toast({
           title: "Error",
           description:
@@ -367,7 +490,7 @@ const PostList: React.FC = () => {
         });
       }
     },
-    [userId, toast]
+    [userId, toast, setComments]
   );
 
   const fetchComments = useCallback(

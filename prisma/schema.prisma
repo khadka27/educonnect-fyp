@@ -115,15 +115,19 @@ model Payment {
 }
 
 model Post {
-  id        String      @id @default(cuid())
-  content   String
-  postUrl   String?
-  createdAt DateTime    @default(now())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reactions Reaction[]
-  savedBy   SavedPost[]
-  comments  Comment[]
+  id            String      @id @default(cuid())
+  content       String
+  postUrl       String?
+  savesCount    Int         @default(0)
+  likesCount    Int         @default(0)
+  commentsCount Int         @default(0)
+  tags          String[]    @default([])
+  createdAt     DateTime    @default(now())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions     Reaction[]
+  savedBy       SavedPost[]
+  comments      Comment[]
 }
 
 model Reaction {
