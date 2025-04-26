@@ -2368,7 +2368,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                           Active Sessions
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          Manage devices where you're currently logged in
+                          Manage devices where you&apos;re currently logged in
                         </p>
                       </div>
                       <Button

@@ -21,6 +21,11 @@ import {
   Search,
   AlertCircle,
   Loader2,
+  Calendar,
+  TrendingUp,
+  Image as ImageIcon,
+  Bookmark,
+  Clock,
 } from "lucide-react";
 
 interface Post {
@@ -45,6 +50,7 @@ interface Post {
   }>;
   isLiked?: boolean;
   isSaved?: boolean;
+  likes?: number;
 }
 
 interface CommentsState {
@@ -73,6 +79,7 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
   const [postLikes, setPostLikes] = useState<{
     [key: string]: boolean | undefined;
   }>({});
+  const [animateRefresh, setAnimateRefresh] = useState(false);
 
   // Refs
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -167,11 +174,17 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
     [userId, activeFilter]
   );
 
-  // Refresh posts
+  // Refresh posts with animation
   const refreshPosts = useCallback(() => {
     setIsRefreshing(true);
+    setAnimateRefresh(true);
     setPage(1);
     fetchPosts(1);
+
+    // Reset animation after completion
+    setTimeout(() => {
+      setAnimateRefresh(false);
+    }, 1000);
   }, [fetchPosts]);
 
   // Handle loading more posts
@@ -200,11 +213,28 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
     }
   };
 
-  // Handle like
+  // Handle like with animation
   const handleLike = async (postId: string, userId: string) => {
     try {
       // Optimistically update the like status
       setPostLikes((prev) => ({ ...prev, [postId]: !prev[postId] }));
+
+      // Also update the likes count in the post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            const newLikeStatus = !postLikes[postId];
+            const likesCount = post.likes || 0;
+            return {
+              ...post,
+              likes: newLikeStatus
+                ? likesCount + 1
+                : Math.max(0, likesCount - 1),
+            };
+          }
+          return post;
+        })
+      );
 
       // Make the API call to update the like status
       await axios.post(`/api/posts/${postId}/like`, { userId, type: "like" });
@@ -212,6 +242,23 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
       console.error("Error liking the post:", error);
       // Revert the like status if there's an error
       setPostLikes((prev) => ({ ...prev, [postId]: !prev[postId] }));
+
+      // Revert the likes count
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            const revertedLikeStatus = postLikes[postId];
+            const likesCount = post.likes || 0;
+            return {
+              ...post,
+              likes: revertedLikeStatus
+                ? likesCount + 1
+                : Math.max(0, likesCount - 1),
+            };
+          }
+          return post;
+        })
+      );
 
       toast({
         title: "Error",
@@ -221,7 +268,7 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
     }
   };
 
-  // Handle save
+  // Handle save with improved user feedback
   const handleSave = async (postId: string, isSaved: boolean) => {
     try {
       // Optimistically update the save status
@@ -262,7 +309,7 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
     }
   };
 
-  // Handle comment
+  // Handle comment with visual feedback
   const handleComment = useCallback(
     async (postId: string, comment: string) => {
       if (!userId) {
@@ -292,7 +339,7 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
           },
         }));
 
-        // Update post comments
+        // Update post comments with animation
         setPosts((prevPosts) =>
           prevPosts.map((post) => {
             if (post.id === postId) {
@@ -322,42 +369,74 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
     [userId, toast]
   );
 
-  // Render post skeleton
-  const PostSkeleton = () => (
-    <Card className="w-full mb-4 overflow-hidden animate-pulse">
-      <div className="p-4">
-        <div className="flex items-center space-x-4 mb-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[150px]" />
-            <Skeleton className="h-3 w-[100px]" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-        <Skeleton className="h-[200px] w-full mt-4 rounded-md" />
-        <div className="flex justify-between mt-4">
-          <div className="flex space-x-2">
-            <Skeleton className="h-8 w-16 rounded-full" />
-            <Skeleton className="h-8 w-16 rounded-full" />
-          </div>
-          <Skeleton className="h-8 w-8 rounded-full" />
-        </div>
-      </div>
-    </Card>
-  );
+  // Improved post skeleton with different sizes for variety
+  const PostSkeleton = ({
+    size = "medium",
+  }: {
+    size?: "small" | "medium" | "large";
+  }) => {
+    const imageHeight = {
+      small: "h-[150px]",
+      medium: "h-[200px]",
+      large: "h-[250px]",
+    };
 
-  // Render filters
+    return (
+      <Card className="w-full mb-4 overflow-hidden">
+        <div className="p-4">
+          <div className="flex items-center space-x-4 mb-4">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[150px]" />
+              <Skeleton className="h-3 w-[100px]" />
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          <Skeleton className={`${imageHeight[size]} w-full rounded-md`} />
+          <div className="flex justify-between mt-4">
+            <div className="flex space-x-2">
+              <Skeleton className="h-8 w-16 rounded-full" />
+              <Skeleton className="h-8 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
+  // Render filters with icons
   const renderFilters = () => {
     const filters = [
-      { id: "all", label: "All Posts" },
-      { id: "trending", label: "Trending" },
-      { id: "latest", label: "Latest" },
-      { id: "media", label: "Media" },
-      { id: "saved", label: "Saved" },
+      {
+        id: "all",
+        label: "All Posts",
+        icon: <Calendar className="w-4 h-4 mr-1" />,
+      },
+      {
+        id: "trending",
+        label: "Trending",
+        icon: <TrendingUp className="w-4 h-4 mr-1" />,
+      },
+      {
+        id: "latest",
+        label: "Latest",
+        icon: <Clock className="w-4 h-4 mr-1" />,
+      },
+      {
+        id: "media",
+        label: "Media",
+        icon: <ImageIcon className="w-4 h-4 mr-1" />,
+      },
+      {
+        id: "saved",
+        label: "Saved",
+        icon: <Bookmark className="w-4 h-4 mr-1" />,
+      },
     ];
 
     return (
@@ -369,11 +448,13 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
             size="sm"
             className={cn(
               "rounded-full whitespace-nowrap",
-              activeFilter === filter.id &&
-                "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600"
+              activeFilter === filter.id
+                ? "bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-600"
+                : "border-teal-200 hover:border-teal-300 dark:border-teal-800 dark:hover:border-teal-700"
             )}
             onClick={() => handleFilterChange(filter.id)}
           >
+            {filter.icon}
             {filter.label}
           </Button>
         ))}
@@ -381,89 +462,102 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
     );
   };
 
-  // Render empty state
+  // Improved empty state with animation
   const renderEmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="bg-green-100 dark:bg-green-900/30 p-6 rounded-full mb-4">
-        <Search className="h-12 w-12 text-green-600 dark:text-green-400" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col items-center justify-center py-12 text-center"
+    >
+      <div className="bg-gradient-to-br from-teal-50 to-blue-50 dark:from-teal-900/30 dark:to-blue-900/30 p-8 rounded-full mb-6 shadow-inner">
+        <Search className="h-16 w-16 text-teal-600 dark:text-teal-400" />
       </div>
-      <h2 className="text-xl font-semibold mb-2">No posts found</h2>
-      <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
+      <h2 className="text-2xl font-semibold mb-2 text-gray-800 dark:text-gray-200">
+        No posts found
+      </h2>
+      <p className="text-gray-600 dark:text-gray-400 max-w-md mb-8 px-4">
         {activeFilter === "all"
-          ? "There are no posts to display at the moment. Check back later!"
-          : `No posts found with the "${activeFilter}" filter. Try a different filter.`}
+          ? "There are no posts to display at the moment. Check back later or create a new post!"
+          : `No posts found with the "${activeFilter}" filter. Try a different filter or check back later.`}
       </p>
       {activeFilter !== "all" && (
         <Button
           onClick={() => handleFilterChange("all")}
-          className="bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600"
+          className="bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-600 rounded-full transition-all duration-300 ease-in-out transform hover:scale-105"
         >
           View all posts
         </Button>
       )}
-    </div>
+    </motion.div>
   );
 
-  // Render error state
+  // Enhanced error state with animation
   const renderErrorState = () => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="bg-red-100 dark:bg-red-900/30 p-6 rounded-full mb-4">
-        <AlertCircle className="h-12 w-12 text-red-600 dark:text-red-400" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col items-center justify-center py-12 text-center"
+    >
+      <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/30 dark:to-orange-900/30 p-8 rounded-full mb-6 shadow-inner">
+        <AlertCircle className="h-16 w-16 text-red-600 dark:text-red-400" />
       </div>
-      <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-      <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
+      <h2 className="text-2xl font-semibold mb-2 text-gray-800 dark:text-gray-200">
+        Something went wrong
+      </h2>
+      <p className="text-gray-600 dark:text-gray-400 max-w-md mb-8 px-4">
         {error || "There was an error loading posts. Please try again."}
       </p>
       <Button
         onClick={refreshPosts}
-        className="bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600"
+        className="bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-600 rounded-full group transition-all duration-300 ease-in-out transform hover:scale-105"
       >
-        <RefreshCw className="h-4 w-4 mr-2" />
+        <RefreshCw
+          className={`h-4 w-4 mr-2 ${
+            isRefreshing ? "animate-spin" : "group-hover:animate-spin"
+          }`}
+        />
         Try again
       </Button>
-    </div>
+    </motion.div>
   );
 
   return (
     <div
       ref={timelineRef}
-      className={`w-full px-4 sm:px-6 md:px-8 lg:px-[15%] py-8 min-h-screen ${
-        theme === "light"
-          ? "bg-gradient-to-br from-green-50 to-blue-50"
-          : " dark:from-emerald-950 dark:to-teal-900"
-      }`}
+      className="w-full px-3 sm:px-6 md:px-8 lg:px-[10%] xl:px-[15%] py-6 min-h-[50vh]"
     >
       {/* Header with filters */}
-      <div className="sticky top-0 z-10 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm pb-4 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
-            Latest Posts
+      <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg pb-3 mb-6 px-3 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-teal-700 dark:text-teal-400 flex items-center">
+            <Calendar className="h-5 w-5 mr-2 hidden sm:inline" />
+            Timeline
           </h1>
 
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full border-green-200 hover:border-green-300 dark:border-green-800 dark:hover:border-green-700"
+              className={cn(
+                "rounded-full border-teal-200 hover:border-teal-300 dark:border-teal-800 dark:hover:border-teal-700",
+                animateRefresh && "animate-spin"
+              )}
               onClick={refreshPosts}
               disabled={isRefreshing}
             >
-              <RefreshCw
-                className={cn(
-                  "h-4 w-4 text-green-600 dark:text-green-400",
-                  isRefreshing && "animate-spin"
-                )}
-              />
+              <RefreshCw className="h-4 w-4 text-teal-600 dark:text-teal-400" />
               <span className="sr-only">Refresh</span>
             </Button>
 
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full border-green-200 hover:border-green-300 dark:border-green-800 dark:hover:border-green-700 md:hidden"
+              className="rounded-full border-teal-200 hover:border-teal-300 dark:border-teal-800 dark:hover:border-teal-700 md:hidden"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <Filter className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <Filter className="h-4 w-4 text-teal-600 dark:text-teal-400" />
               <span className="sr-only">Filters</span>
             </Button>
           </div>
@@ -484,19 +578,30 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
 
       {/* Main content */}
       <div className="space-y-4 max-w-3xl mx-auto">
-        {/* Loading state */}
+        {/* Loading state with varying skeleton sizes */}
         {isLoading && (
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <motion.div
-                key={`skeleton-${index}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                {PostSkeleton()}
-              </motion.div>
-            ))}
+          <div className="space-y-5">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PostSkeleton size="large" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <PostSkeleton size="medium" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <PostSkeleton size="small" />
+            </motion.div>
           </div>
         )}
 
@@ -506,7 +611,7 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
         {/* Empty state */}
         {!isLoading && !error && posts.length === 0 && renderEmptyState()}
 
-        {/* Posts */}
+        {/* Posts with staggered animation */}
         <AnimatePresence>
           {!isLoading &&
             !error &&
@@ -515,11 +620,11 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
                 key={`${post.id}-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                className="mb-4"
               >
                 <PostComponent
-                  key={post.id}
                   post={post}
                   isLiked={postLikes[post.id] ?? false}
                   onLike={() => handleLike(post.id, post.userId)}
@@ -530,34 +635,49 @@ const TimelineList: React.FC<TimelineListProps> = ({ userId }) => {
             ))}
         </AnimatePresence>
 
-        {/* Load more indicator */}
+        {/* Load more indicator with improved visuals */}
         {hasMore && !isLoading && !error && posts.length > 0 && (
           <div ref={ref} className="flex justify-center py-8">
             {isLoadingMore ? (
-              <div className="flex flex-col items-center">
-                <Loader2 className="h-8 w-8 animate-spin text-green-600 dark:text-green-400 mb-2" />
+              <motion.div
+                className="flex flex-col items-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="relative">
+                  <Loader2 className="h-8 w-8 animate-spin text-teal-600 dark:text-teal-400 mb-2" />
+                  <div className="absolute inset-0 bg-white/10 dark:bg-black/10 rounded-full blur-xl animate-pulse"></div>
+                </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Loading more posts...
                 </p>
-              </div>
+              </motion.div>
             ) : (
               <Button
                 variant="outline"
                 onClick={handleLoadMore}
-                className="rounded-full border-green-200 hover:border-green-300 dark:border-green-800 dark:hover:border-green-700"
+                className="rounded-full border-teal-200 hover:border-teal-300 dark:border-teal-800 dark:hover:border-teal-700 transition-all duration-300 ease-in-out transform hover:scale-105"
               >
-                <ChevronDown className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                <ChevronDown className="h-4 w-4 mr-2 text-teal-600 dark:text-teal-400 animate-bounce" />
                 Load more posts
               </Button>
             )}
           </div>
         )}
 
-        {/* End of posts message */}
+        {/* End of posts message with animation */}
         {!hasMore && !isLoading && !error && posts.length > 0 && (
-          <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-            <p>You've reached the end of the timeline</p>
-          </div>
+          <motion.div
+            className="text-center py-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gradient-to-r from-teal-50 to-blue-50 dark:from-teal-900/30 dark:to-blue-900/30 text-teal-700 dark:text-teal-300 shadow-inner">
+              <p>You've reached the end of the timeline</p>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>

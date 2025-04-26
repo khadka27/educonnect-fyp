@@ -198,8 +198,6 @@ export async function POST(req: Request) {
 //   }
 // }
 
-
-
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const page = Math.max(parseInt(url.searchParams.get("page") || "1", 10), 1);
@@ -219,6 +217,7 @@ export async function GET(request: Request) {
         },
         comments: {
           select: {
+            id: true,
             content: true,
             createdAt: true,
             user: {
@@ -236,6 +235,14 @@ export async function GET(request: Request) {
             where: { userId },
             select: { id: true },
           },
+          // Include reactions (likes) if user is logged in
+          reactions: {
+            where: {
+              userId,
+              type: "like",
+            },
+            select: { id: true },
+          },
         }),
       },
     });
@@ -243,13 +250,16 @@ export async function GET(request: Request) {
     const totalPosts = await prisma.post.count();
     const hasMore = page * limit < totalPosts;
 
-    const postsWithSaveStatus = posts.map(post => ({
+    const postsWithUserData = posts.map((post) => ({
       ...post,
       isSaved: post.savedBy?.length > 0, // Check if post is saved by the current user
+      isLiked: post.reactions?.length > 0, // Check if post is liked by the current user
+      // Remove these properties as they're now represented by isLiked and isSaved
+      ...(userId && { savedBy: undefined, reactions: undefined }),
     }));
 
     return NextResponse.json({
-      posts: postsWithSaveStatus,
+      posts: postsWithUserData,
       hasMore,
     });
   } catch (error) {

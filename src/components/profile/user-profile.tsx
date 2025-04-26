@@ -1261,37 +1261,72 @@ const ProfileSkeleton = () => {
             </div>
 
             {/* Action Buttons Skeleton */}
-            <div className="flex mt-4 md:mt-0 space-x-2 justify-center md:justify-end">
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-10 w-32" />
+            <div className="flex flex-wrap mt-4 md:mt-0 gap-2 justify-center md:justify-end">
+              <Skeleton className="h-10 w-28 sm:w-32" />
+              <Skeleton className="h-10 w-28 sm:w-32" />
               <Skeleton className="h-10 w-10 rounded-full" />
             </div>
           </div>
 
-          {/* User Stats Skeleton */}
+          {/* User Stats Skeleton - More responsive layout */}
           <div className="mt-6 flex justify-center md:justify-start">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="text-center">
-                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
-                  <Skeleton className="h-4 w-20 mx-auto" />
-                </div>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-6">
+              <div className="text-center rounded-lg bg-white/50 dark:bg-gray-800/30 p-3 backdrop-blur-sm">
+                <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                <Skeleton className="h-4 w-16 mx-auto" />
+              </div>
+              <div className="text-center rounded-lg bg-white/50 dark:bg-gray-800/30 p-3 backdrop-blur-sm">
+                <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                <Skeleton className="h-4 w-16 mx-auto" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Bio Skeleton */}
+        {/* Bio Skeleton with better mobile layout */}
         <div className="mb-6 max-w-3xl mx-auto">
-          <Skeleton className="h-32 w-full rounded-lg" />
+          <div className="bg-white/30 dark:bg-gray-800/20 rounded-xl p-4 backdrop-blur-sm">
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-2" />
+            <Skeleton className="h-4 w-4/6" />
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-6 w-32 rounded-full" />
+              <Skeleton className="h-6 w-28 rounded-full" />
+            </div>
+          </div>
         </div>
 
-        {/* Tabs Skeleton */}
+        {/* Tabs Skeleton - Improved layout */}
         <div className="mb-8">
-          <Skeleton className="h-10 max-w-md mx-auto rounded-full mb-6" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-12 max-w-md mx-auto rounded-full mb-8" />
+
+          {/* Content skeleton with responsive grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white/30 dark:bg-gray-800/20 rounded-xl p-4 backdrop-blur-sm"
+              >
+                <div className="flex items-start gap-3 mb-3">
+                  <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+                <Skeleton className="h-40 sm:h-48 w-full rounded-lg mb-3" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6" />
+                <div className="flex justify-between items-center mt-4">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </div>
             ))}
           </div>
         </div>

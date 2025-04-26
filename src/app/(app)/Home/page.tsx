@@ -41,6 +41,7 @@ import {
   Sparkles,
   Moon,
   Sun,
+  ChevronUp,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -51,12 +52,8 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState("feed");
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const { toast } = useToast();
-
-  // Refs for scrollable sections
-  const feedRef = useRef<HTMLDivElement>(null);
-  const eventsRef = useRef<HTMLDivElement>(null);
-  const communityRef = useRef<HTMLDivElement>(null);
 
   // Debug output
   useEffect(() => {
@@ -68,6 +65,7 @@ export default function HomePage() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      setShowScrollToTop(window.scrollY > 300);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -84,15 +82,8 @@ export default function HomePage() {
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-
-    // Scroll to the appropriate section with smooth behavior
-    if (value === "feed" && feedRef.current) {
-      feedRef.current.scrollIntoView({ behavior: "smooth" });
-    } else if (value === "events" && eventsRef.current) {
-      eventsRef.current.scrollIntoView({ behavior: "smooth" });
-    } else if (value === "community" && communityRef.current) {
-      communityRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    // Smooth scroll to top of content
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Handle create post
@@ -104,6 +95,11 @@ export default function HomePage() {
         "bg-green-50 border-green-200 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-100",
     });
     // Implement your post creation logic here
+  };
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Loading state
@@ -140,10 +136,11 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-900">
       <div className="container mx-auto py-6 px-4 sm:px-6">
+        {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left column - Profile card and quick links */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="sticky top-6">
+            <div className="lg:sticky lg:top-6">
               <ProfileCard />
 
               {/* Theme Toggle */}
@@ -222,7 +219,7 @@ export default function HomePage() {
               </Card>
 
               {/* Trending Topics (visible on desktop) */}
-              <div className="hidden lg:block mt-4 sticky top-[calc(100vh-24rem)] max-h-[24rem] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500 scrollbar-track-emerald-100 dark:scrollbar-thumb-emerald-700 dark:scrollbar-track-gray-800">
+              <div className="hidden lg:block mt-4">
                 <TrendingTopics />
               </div>
             </div>
@@ -231,8 +228,8 @@ export default function HomePage() {
           {/* Main content - Center column */}
           <div className="lg:col-span-6">
             {/* Welcome and search bar - sticky at top */}
-            <div className="sticky top-0 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-md mb-6">
-              <Card className="overflow-hidden border-none shadow-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+            <div className="sticky top-0 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-lg shadow-md mb-6">
+              <Card className="overflow-hidden border-none shadow-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-semibold flex items-center text-emerald-800 dark:text-emerald-200">
@@ -300,133 +297,105 @@ export default function HomePage() {
               </Card>
             </div>
 
-            {/* Scrollable content sections */}
-            <div className="space-y-6">
-              {/* Feed Section */}
-              <div ref={feedRef} id="feed-section" className="scroll-mt-20">
-                <AnimatePresence mode="wait">
-                  {activeTab === "feed" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
+            {/* Content based on active tab */}
+            <AnimatePresence mode="wait">
+              {activeTab === "feed" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {/* Educational Quotes Carousel */}
+                  <EducationQuotesCarousel />
+
+                  {/* Create Post Button */}
+                  <div className="flex justify-end">
+                    <Button
+                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md"
+                      onClick={handleCreatePost}
                     >
-                      {/* Educational Quotes Carousel */}
-                      <EducationQuotesCarousel />
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Post
+                    </Button>
+                  </div>
 
-                      {/* Create Post Button */}
-                      <div className="flex justify-end">
-                        <Button
-                          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md"
-                          onClick={handleCreatePost}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Post
-                        </Button>
-                      </div>
-
-                      {/* Feeds with enhanced styling */}
-                      <div className="relative">
-                        <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-emerald-50 to-transparent dark:from-emerald-950 dark:to-transparent z-10 pointer-events-none"></div>
-                        <div className="rounded-xl overflow-hidden max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500 scrollbar-track-emerald-100 dark:scrollbar-thumb-emerald-700 dark:scrollbar-track-gray-800">
-                          {session?.user?.id ? (
-                            <Feeds />
-                          ) : (
-                            <Card className="p-4 border-none shadow-md">
-                              <CardContent>
-                                <div className="text-destructive flex items-center">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5 mr-2"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                  Error: User ID is missing. Cannot load
-                                  timeline.
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )}
-                        </div>
-                        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-emerald-50 to-transparent dark:from-emerald-950 dark:to-transparent z-10 pointer-events-none"></div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Events Section */}
-              <div ref={eventsRef} id="events-section" className="scroll-mt-20">
-                <AnimatePresence mode="wait">
-                  {activeTab === "events" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                    >
-                      <Card className="bg-white/90 dark:bg-gray-800/90 border-emerald-100 dark:border-emerald-900/50 overflow-hidden shadow-md">
-                        <CardHeader>
-                          <CardTitle className="text-xl font-semibold flex items-center text-emerald-800 dark:text-emerald-200">
-                            <Calendar className="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                            Upcoming Events
-                          </CardTitle>
-                        </CardHeader>
+                  {/* Feeds */}
+                  <div className="rounded-xl overflow-hidden shadow-md">
+                    {session?.user?.id ? (
+                      <Feeds />
+                    ) : (
+                      <Card className="p-4 border-none shadow-md">
                         <CardContent>
-                          <div className="max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500 scrollbar-track-emerald-100 dark:scrollbar-thumb-emerald-700 dark:scrollbar-track-gray-800 pr-2">
-                            <UpcomingEvents />
+                          <div className="text-destructive flex items-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 mr-2"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Error: User ID is missing. Cannot load timeline.
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
-              {/* Community Section */}
-              <div
-                ref={communityRef}
-                id="community-section"
-                className="scroll-mt-20"
-              >
-                <AnimatePresence mode="wait">
-                  {activeTab === "community" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                    >
-                      <Card className="bg-white/90 dark:bg-gray-800/90 border-emerald-100 dark:border-emerald-900/50 overflow-hidden shadow-md">
-                        <CardHeader>
-                          <CardTitle className="text-xl font-semibold flex items-center text-emerald-800 dark:text-emerald-200">
-                            <Users className="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                            Community
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500 scrollbar-track-emerald-100 dark:scrollbar-thumb-emerald-700 dark:scrollbar-track-gray-800 pr-2">
-                            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                              Community features coming soon!
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+              {activeTab === "events" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border-emerald-100 dark:border-emerald-900/50 overflow-hidden shadow-md">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-semibold flex items-center text-emerald-800 dark:text-emerald-200">
+                        <Calendar className="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        Upcoming Events
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <UpcomingEvents />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {activeTab === "community" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border-emerald-100 dark:border-emerald-900/50 overflow-hidden shadow-md">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-semibold flex items-center text-emerald-800 dark:text-emerald-200">
+                        <Users className="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        Community
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                        Community features coming soon!
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Right column - Trending topics on mobile, upcoming events on desktop */}
@@ -436,8 +405,8 @@ export default function HomePage() {
               <TrendingTopics />
             </div>
 
-            {/* Upcoming Events - sticky on desktop */}
-            <div className="hidden lg:block sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500 scrollbar-track-emerald-100 dark:scrollbar-thumb-emerald-700 dark:scrollbar-track-gray-800">
+            {/* Upcoming Events - on desktop */}
+            <div className="hidden lg:block sticky lg:top-6">
               <UpcomingEvents />
             </div>
           </div>
@@ -451,6 +420,27 @@ export default function HomePage() {
           setActiveTab={handleTabChange}
         />
       </div>
+
+      {/* Scroll to top button */}
+      <AnimatePresence>
+        {showScrollToTop && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-20 lg:bottom-6 right-6 z-40"
+          >
+            <Button
+              onClick={scrollToTop}
+              size="icon"
+              className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md h-10 w-10"
+            >
+              <ChevronUp className="h-5 w-5" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

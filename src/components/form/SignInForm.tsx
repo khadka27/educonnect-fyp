@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 import {
   Form,
   FormControl,
@@ -19,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import  {useToast}  from "../../hooks/use-toast";
+import { useToast } from "../../hooks/use-toast";
 import {
   ArrowRight,
   CheckCircle,
@@ -113,6 +114,23 @@ export function SignInForm() {
     }
   };
 
+  const unsplashImages = [
+    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=1600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1600&auto=format&fit=crop",
+  ];
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % unsplashImages.length
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [unsplashImages.length]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 text-gray-900 p-4 flex items-center justify-center">
       <motion.div
@@ -122,6 +140,20 @@ export function SignInForm() {
         className="w-full max-w-screen-xl m-0 sm:m-10 bg-white shadow-xl sm:rounded-2xl flex flex-col md:flex-row justify-center overflow-hidden"
       >
         <div className="md:w-1/2 p-8 flex flex-col justify-center">
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center mb-6"
+          >
+            <Image
+              src="/eduConnect.png"
+              alt="EduConnect Logo"
+              width={180}
+              height={180}
+              className="mr-4"
+            />
+          </motion.div>
           <div className="text-2xl font-bold mb-4">Sign In</div>
           <p className="text-gray-600 mb-8">
             Welcome back! Please enter your credentials to access your account.
@@ -269,12 +301,58 @@ export function SignInForm() {
         </div>
 
         <div className="hidden md:block md:w-1/2 xl:w-7/12 bg-green-100 relative overflow-hidden">
-          <img
+          <Image
             src="/auth-image.png"
             alt="Authentication"
+            width={300}
+            height={300}
             className="absolute w-full h-full object-cover transform scale-105"
           />
           <div className="absolute inset-0 bg-green-600 opacity-20"></div>
+          <motion.div
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.7 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="relative w-full h-full">
+              <motion.img
+                key={currentImageIndex}
+                src={unsplashImages[currentImageIndex]}
+                alt={`Educational Image ${currentImageIndex + 1}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+              />
+
+              <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                {unsplashImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      currentImageIndex === index
+                        ? "bg-white w-4"
+                        : "bg-white/50"
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              <div className="absolute inset-0 bg-gradient-to-t from-green-900/70 to-transparent flex flex-col items-center justify-end p-10 text-white">
+                <h2 className="text-2xl font-bold mb-2">
+                  Start Your Learning Journey
+                </h2>
+                <p className="text-center max-w-md text-white/90">
+                  Join thousands of students and educators on our platform to
+                  discover new opportunities and expand your knowledge.
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
     </div>

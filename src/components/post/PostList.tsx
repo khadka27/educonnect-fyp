@@ -21,6 +21,11 @@ import {
   LayoutGrid,
   ListIcon,
   X,
+  Calendar,
+  Bookmark,
+  Heart,
+  MessageSquare,
+  ImageIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +36,7 @@ import {
 import { Input } from "src/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { Badge } from "src/components/ui/badge";
 
 interface Post {
   id: string;

@@ -41,9 +41,9 @@ export async function GET() {
       allTrends = [...allTrends, ...hackernewsTrends.value];
     }
 
-    // If all APIs failed, use sample data
+    // If all APIs failed, return an empty array instead of sample data
     if (allTrends.length === 0) {
-      return NextResponse.json(sampleTrendingTopics);
+      return NextResponse.json([]);
     }
 
     // Sort by trend (up first) and then by post count
@@ -56,7 +56,8 @@ export async function GET() {
     return NextResponse.json(allTrends);
   } catch (error) {
     console.error("Error fetching trending topics:", error);
-    return NextResponse.json(sampleTrendingTopics);
+    // Return empty array instead of sample data
+    return NextResponse.json([]);
   }
 }
 
@@ -135,7 +136,12 @@ async function fetchEducationNews(): Promise<TrendingTopic[]> {
   try {
     // Using NewsAPI to get education news
     // You need to sign up for a free API key at https://newsapi.org/
-    const apiKey = process.env.NEWS_API_KEY || "YOUR_NEWS_API_KEY";
+    const apiKey = process.env.NEWS_API_KEY || "";
+    if (!apiKey) {
+      console.warn("NewsAPI key not found, skipping news fetch");
+      return [];
+    }
+
     const response = await fetch(
       `https://newsapi.org/v2/everything?q=education+technology+learning&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`,
       {
@@ -166,13 +172,13 @@ async function fetchEducationNews(): Promise<TrendingTopic[]> {
 
       // Calculate trend and posts (simulated)
       const trend = index < 2 ? "up" : index < 4 ? "stable" : "down";
-      const posts = Math.floor(1000 + Math.random() * 9000);
+      const posts = Math.floor(100 + Math.random() * 900); // More realistic numbers
       const percentageChange =
         trend === "up"
-          ? Math.floor(15 + Math.random() * 30)
+          ? Math.floor(5 + Math.random() * 20) // More realistic percentage changes
           : trend === "down"
-          ? Math.floor(5 + Math.random() * 15)
-          : Math.floor(1 + Math.random() * 8);
+          ? Math.floor(2 + Math.random() * 10)
+          : Math.floor(1 + Math.random() * 5);
 
       // Calculate timeframe
       const publishedDate = new Date(article.publishedAt);
@@ -225,7 +231,7 @@ async function fetchHackerNewsTrends(): Promise<TrendingTopic[]> {
 
     // Get details for top 5 stories
     const storyPromises = storyIds
-      .slice(0, 5)
+      .slice(0, 10) // Get 10 stories to increase chances of finding education/tech related ones
       .map((id: number) =>
         fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(
           (res) => res.json()
@@ -249,15 +255,22 @@ async function fetchHackerNewsTrends(): Promise<TrendingTopic[]> {
         "coding",
         "tech",
         "AI",
+        "computer",
+        "online",
+        "e-learning",
+        "study",
       ];
-      const title = story.title.toLowerCase();
+      const title = story.title?.toLowerCase() || "";
       return keywords.some((keyword) => title.includes(keyword));
     });
 
+    // Slice to get at most 5 stories
+    const finalStories = educationTechStories.slice(0, 5);
+
     // Transform HackerNews data to our format
-    return educationTechStories.map((story: any, index: number) => {
+    return finalStories.map((story: any, index: number) => {
       // Create a hashtag from the title
-      const hashtag = story.title
+      const hashtag = (story.title || "")
         .split(/\s+/)
         .slice(0, 2)
         .map((word: string) => word.replace(/[^a-zA-Z0-9]/g, ""))
@@ -271,7 +284,7 @@ async function fetchHackerNewsTrends(): Promise<TrendingTopic[]> {
 
       // Determine category based on content
       let category = "technology";
-      const title = story.title.toLowerCase();
+      const title = story.title?.toLowerCase() || "";
       if (
         title.includes("education") ||
         title.includes("learning") ||
@@ -288,11 +301,11 @@ async function fetchHackerNewsTrends(): Promise<TrendingTopic[]> {
       return {
         id: `hn-${story.id}`,
         hashtag,
-        title: story.title.substring(0, 60),
+        title: (story.title || "Unknown title").substring(0, 60),
         category,
-        posts: story.score,
+        posts: story.score || 0,
         trend: "up",
-        percentageChange: Math.floor(20 + Math.random() * 30),
+        percentageChange: Math.floor(5 + Math.random() * 20),
         timeframe: "Today",
         url: story.url,
       };
@@ -302,130 +315,3 @@ async function fetchHackerNewsTrends(): Promise<TrendingTopic[]> {
     return [];
   }
 }
-
-// Sample data as fallback
-const sampleTrendingTopics = [
-  {
-    id: "1",
-    hashtag: "WebDevForBegin",
-    title: "24 Lessons, 12 Weeks, Get Started with Web Development",
-    category: "education",
-    posts: 87134,
-    trend: "up",
-    percentageChange: 31,
-    timeframe: "This week",
-  },
-  {
-    id: "2",
-    hashtag: "p5js",
-    title: "p5.js is a client-side JS platform for creative coding",
-    category: "technology",
-    posts: 52408,
-    trend: "up",
-    percentageChange: 48,
-    timeframe: "This week",
-  },
-  {
-    id: "3",
-    hashtag: "VimAndroid",
-    title: "Learning Vim and Vimscript doesn't have to be hard",
-    category: "technology",
-    posts: 14257,
-    trend: "up",
-    percentageChange: 23,
-    timeframe: "This week",
-  },
-  {
-    id: "4",
-    hashtag: "AnkiDroid",
-    title: "AnkiDroid: Anki flashcards on Android devices",
-    category: "education",
-    posts: 9390,
-    trend: "up",
-    percentageChange: 40,
-    timeframe: "This week",
-  },
-  {
-    id: "5",
-    hashtag: "Processing",
-    title: "Source code for the Processing Development Environment",
-    category: "technology",
-    posts: 6511,
-    trend: "up",
-    percentageChange: 18,
-    timeframe: "This week",
-  },
-  {
-    id: "6",
-    hashtag: "EmailSender",
-    title: "The recipient test: a simple test for email deliverability",
-    category: "technology",
-    posts: 4176,
-    trend: "up",
-    percentageChange: 34,
-    timeframe: "Yesterday",
-  },
-  {
-    id: "7",
-    hashtag: "Thechroot",
-    title: "Hotmail's Sabeer Bhatia Slams Indian Tech Education",
-    category: "education",
-    posts: 3742,
-    trend: "up",
-    percentageChange: 23,
-    timeframe: "Yesterday",
-  },
-  {
-    id: "8",
-    hashtag: "Bootcamp",
-    title: "The chroot Technique – a Swiss Army Knife for Developers",
-    category: "technology",
-    posts: 2975,
-    trend: "up",
-    percentageChange: 24,
-    timeframe: "Today",
-  },
-  {
-    id: "9",
-    hashtag: "GlobalToy",
-    title: "How University Students Use Class Time When Lectures",
-    category: "education",
-    posts: 1892,
-    trend: "up",
-    percentageChange: 14,
-    timeframe: "Today",
-  },
-  {
-    id: "10",
-    hashtag: "AIStartups",
-    title: "Global Toy Market Set to Soar to $230 Billion",
-    category: "technology",
-    posts: 1580,
-    trend: "stable",
-    percentageChange: 4,
-    timeframe: "Yesterday",
-    url: "https://example.com/global-toy-market",
-  },
-  {
-    id: "11",
-    hashtag: "HerFinances",
-    title: "AI Startups: SignalFire Raises $1 Billion",
-    category: "technology",
-    posts: 3900,
-    trend: "stable",
-    percentageChange: 8,
-    timeframe: "Yesterday",
-    url: "https://example.com/signalfire-funding",
-  },
-  {
-    id: "12",
-    hashtag: "FinTech",
-    title: "Her Finances Launches AI-Driven Financial Advisor",
-    category: "technology",
-    posts: 1580,
-    trend: "stable",
-    percentageChange: 8,
-    timeframe: "Yesterday",
-    url: "https://example.com/her-finances-ai-advisor",
-  },
-];

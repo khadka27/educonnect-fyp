@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, type ChangeEvent, useRef } from "react";
@@ -28,6 +29,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import {
   Eye,
@@ -90,6 +98,8 @@ export default function SignUpForm() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
   const [formComplete, setFormComplete] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -140,16 +150,15 @@ export default function SignUpForm() {
         setIsCheckingUsername(true);
         setUsernameMessage("");
         try {
-          // Simulate API call for username check
-          await new Promise((resolve) => setTimeout(resolve, 800));
+          const response = await fetch(
+            `/api/check-username-unique?username=${username}`
+          );
+          const data = await response.json();
 
-          // This is a mock response - in a real app, you'd call your API
-          const isUnique = Math.random() > 0.3; // 70% chance username is available
-
-          if (isUnique) {
+          if (response.ok && data.success) {
             setUsernameMessage("Username is available");
           } else {
-            setUsernameMessage("Username is already taken");
+            setUsernameMessage(data.message || "Username is already taken");
           }
         } catch (error) {
           setUsernameMessage("Error checking username");
@@ -176,8 +185,26 @@ export default function SignUpForm() {
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Make a real API call to the sign-up endpoint
+      const response = await fetch("/api/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: values.username,
+          email: values.email,
+          password: values.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Something went wrong during registration"
+        );
+      }
 
       setFormComplete(true);
 
@@ -196,7 +223,10 @@ export default function SignUpForm() {
 
       toast({
         title: "Sign Up Failed",
-        description: "There was a problem with your sign-up. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "There was a problem with your sign-up. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -222,6 +252,12 @@ export default function SignUpForm() {
       setCurrentStep(1);
     }
   };
+
+  const openTerms = () => setIsTermsOpen(true);
+  const closeTerms = () => setIsTermsOpen(false);
+
+  const openPrivacy = () => setIsPrivacyOpen(true);
+  const closePrivacy = () => setIsPrivacyOpen(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 text-gray-900 p-4 flex items-center justify-center">
@@ -592,13 +628,19 @@ export default function SignUpForm() {
 
             <div className="mt-6 text-xs text-gray-500 text-center">
               By creating an account, you agree to our{" "}
-              <Link href="/terms" className="text-green-600 hover:underline">
+              <button
+                onClick={openTerms}
+                className="text-green-600 hover:underline"
+              >
                 Terms of Service
-              </Link>{" "}
+              </button>{" "}
               and{" "}
-              <Link href="/privacy" className="text-green-600 hover:underline">
+              <button
+                onClick={openPrivacy}
+                className="text-green-600 hover:underline"
+              >
                 Privacy Policy
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -652,6 +694,44 @@ export default function SignUpForm() {
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Terms of Service Dialog */}
+      <Dialog open={isTermsOpen} onOpenChange={setIsTermsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Terms of Service</DialogTitle>
+            <DialogDescription>
+              <p>
+                Welcome to EduConnect! By using our platform, you agree to
+                comply with our terms and conditions. Please ensure you use the
+                platform responsibly and respect other users.
+              </p>
+              <p>
+                For more details, contact our support team or visit our website.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      {/* Privacy Policy Dialog */}
+      <Dialog open={isPrivacyOpen} onOpenChange={setIsPrivacyOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Privacy Policy</DialogTitle>
+            <DialogDescription>
+              <p>
+                At EduConnect, we value your privacy. Your personal information
+                is securely stored and will not be shared without your consent.
+              </p>
+              <p>
+                For more information, please review our detailed privacy policy
+                on our website.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

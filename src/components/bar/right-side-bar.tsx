@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
 import Link from "next/link";
-import  io,{ Socket } from "socket.io-client"; // Import Socket.IO client with type
+import io, { Socket } from "socket.io-client"; // Import Socket.IO client with type
 import { useSession } from "next-auth/react";
 
 interface User {
@@ -56,7 +56,7 @@ const RightSidebar: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const { data: session } = useSession();
-  const socketRef = useRef<  Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement[]>([]);
 
   // Initialize socket connection
@@ -64,7 +64,7 @@ const RightSidebar: React.FC = () => {
     // Only establish socket connection if we have a valid session
     if (session?.user?.id) {
       // Create socket connection
-      socketRef.current = io("http://localhost:4000", {
+      socketRef.current = io("http://localhost:3000", {
         transports: ["websocket"],
         query: { userId: session.user.id },
       });
@@ -80,7 +80,28 @@ const RightSidebar: React.FC = () => {
 
       socketRef.current.on("messageHistory", (messages: Message[]) => {
         console.log("Received message history:", messages);
-        // Handle message history when it comes back from socket
+        // Update existing message box with the history
+        if (messages.length > 0) {
+          const otherUserId =
+            messages[0].senderId === session.user.id
+              ? messages[0].receiverId
+              : messages[0].senderId;
+
+          setMessageBoxes((prevBoxes) => {
+            const existingBoxIndex = prevBoxes.findIndex(
+              (box) => box.user.id === otherUserId
+            );
+            if (existingBoxIndex >= 0) {
+              const updatedBoxes = [...prevBoxes];
+              updatedBoxes[existingBoxIndex] = {
+                ...updatedBoxes[existingBoxIndex],
+                messages: messages,
+              };
+              return updatedBoxes;
+            }
+            return prevBoxes;
+          });
+        }
       });
 
       // Clean up
@@ -111,10 +132,17 @@ const RightSidebar: React.FC = () => {
       if (existingBoxIndex >= 0) {
         // Update existing message box
         const updatedBoxes = [...prevBoxes];
-        updatedBoxes[existingBoxIndex] = {
-          ...updatedBoxes[existingBoxIndex],
-          messages: [...updatedBoxes[existingBoxIndex].messages, message],
-        };
+        // Check if the message already exists (to prevent duplicates)
+        const messageExists = updatedBoxes[existingBoxIndex].messages.some(
+          (msg) => msg.id === message.id
+        );
+
+        if (!messageExists) {
+          updatedBoxes[existingBoxIndex] = {
+            ...updatedBoxes[existingBoxIndex],
+            messages: [...updatedBoxes[existingBoxIndex].messages, message],
+          };
+        }
         return updatedBoxes;
       } else {
         // We don't have a box open for this user yet, so don't create one automatically
@@ -253,7 +281,23 @@ const RightSidebar: React.FC = () => {
 
     try {
       // Send message via API
-      await axios.post("/api/messages", messageData);
+      const response = await axios.post("/api/messages", messageData);
+
+      // If the API returns the created message with an ID, update the temp message
+      if (response.data && response.data.id) {
+        setMessageBoxes((prevBoxes) =>
+          prevBoxes.map((box) =>
+            box.user.id === userId
+              ? {
+                  ...box,
+                  messages: box.messages.map((msg) =>
+                    msg.id === tempMessage.id ? response.data : msg
+                  ),
+                }
+              : box
+          )
+        );
+      }
 
       // Send message via Socket
       if (socketRef.current) {
@@ -261,7 +305,20 @@ const RightSidebar: React.FC = () => {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      // Optionally handle failure by showing an error message
+
+      // Show the error by marking the message as failed
+      setMessageBoxes((prevBoxes) =>
+        prevBoxes.map((box) =>
+          box.user.id === userId
+            ? {
+                ...box,
+                messages: box.messages.map((msg) =>
+                  msg.id === tempMessage.id ? { ...msg, error: true } : msg
+                ),
+              }
+            : box
+        )
+      );
     }
   };
 
@@ -285,8 +342,41 @@ const RightSidebar: React.FC = () => {
   };
 
   const formatTime = (dateString: Date | string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+
+      // Check if the message was sent today
+      if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      // Check if the message was sent yesterday
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (date.toDateString() === yesterday.toDateString()) {
+        return (
+          "Yesterday " +
+          date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        );
+      }
+
+      // Otherwise show the date
+      return (
+        date.toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        }) +
+        " " +
+        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Unknown time";
+    }
   };
 
   return (
@@ -320,14 +410,14 @@ const RightSidebar: React.FC = () => {
       </div>
 
       {/* Chat message boxes */}
-      <div className="fixed bottom-0 right-64 flex space-x-4">
+      <div className="fixed bottom-0 right-0 flex gap-4 pr-64">
         {messageBoxes.map((box, index) => (
           <div
             key={box.user.id}
             className={`w-80 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg overflow-hidden transition-all duration-300 ease-in-out ${
               box.isMinimized ? "h-12" : "h-96"
             }`}
-            style={{ right: `${index * 320 + 72}px` }}
+            style={{ zIndex: 40 - index }}
           >
             <div className="flex items-center justify-between p-3 bg-green-500 dark:bg-green-600 text-white">
               <div className="flex items-center space-x-2">
@@ -342,7 +432,7 @@ const RightSidebar: React.FC = () => {
                       alt={box.user.username || "User"}
                     />
                     <AvatarFallback>
-                      {box.user.username ? box.user.username.charAt(0) : "?"}
+                      {box.user.name ? box.user.name.charAt(0) : "?"}
                     </AvatarFallback>
                   </Avatar>
                 </Link>
@@ -372,7 +462,7 @@ const RightSidebar: React.FC = () => {
             {!box.isMinimized && (
               <>
                 <div className="h-64 p-4 overflow-y-auto">
-                  {Array.isArray(box.messages) ? (
+                  {Array.isArray(box.messages) && box.messages.length > 0 ? (
                     box.messages.map((msg, msgIndex) => {
                       const isCurrentUser = msg.senderId === session?.user?.id;
                       return (
@@ -382,18 +472,26 @@ const RightSidebar: React.FC = () => {
                             isCurrentUser ? "justify-end" : "justify-start"
                           }`}
                         >
+                          {!isCurrentUser && (
+                            <Avatar className="h-8 w-8 mr-2 flex-shrink-0 self-end">
+                              <AvatarImage src={box.user.profileImage} />
+                              <AvatarFallback>
+                                {box.user.name ? box.user.name.charAt(0) : "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
                           <div
                             className={`max-w-[75%] px-3 py-2 rounded-lg ${
                               isCurrentUser
-                                ? "bg-green-500 text-white rounded-tr-none"
+                                ? "bg-primary text-primary-foreground rounded-tr-none"
                                 : "bg-gray-200 dark:bg-gray-700 rounded-tl-none"
                             }`}
                           >
-                            <p className="text-sm">{msg.content}</p>
+                            <p className="text-sm break-words">{msg.content}</p>
                             <span
                               className={`text-xs mt-1 block ${
                                 isCurrentUser
-                                  ? "text-green-100"
+                                  ? "text-primary-foreground/80"
                                   : "text-gray-500 dark:text-gray-400"
                               }`}
                             >
@@ -404,8 +502,13 @@ const RightSidebar: React.FC = () => {
                       );
                     })
                   ) : (
-                    <div className="text-center text-gray-500 dark:text-gray-400">
-                      No messages yet
+                    <div className="text-center text-gray-500 dark:text-gray-400 h-full flex items-center justify-center">
+                      <div>
+                        <p className="mb-2">No messages yet</p>
+                        <p className="text-xs">
+                          Send a message to start the conversation
+                        </p>
+                      </div>
                     </div>
                   )}
                   <div
@@ -415,7 +518,7 @@ const RightSidebar: React.FC = () => {
                   />
                 </div>
                 <div className="p-3 bg-gray-100 dark:bg-gray-700">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Input
                       type="text"
                       placeholder="Type a message..."
@@ -476,7 +579,9 @@ const RightSidebar: React.FC = () => {
                     </DropdownMenu>
                     <Button
                       size="icon"
+                      variant="primary"
                       onClick={() => handleSendMessage(box.user.id)}
+                      disabled={!box.message.trim()}
                     >
                       <Send className="h-5 w-5" />
                     </Button>

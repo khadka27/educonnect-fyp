@@ -5,16 +5,14 @@ import { useState, useEffect, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   Search,
-  Bell,
   Sun,
   Moon,
   User,
   Settings,
   LogOut,
-  CheckCircle,
-  BellOff,
   Menu,
   X,
   Home,
@@ -23,13 +21,13 @@ import {
   Bookmark,
   Book,
   HelpCircle,
-  Heart,
   Group,
   Compass,
   ChevronRight,
   Plus,
   Zap,
   Hash,
+  CheckCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
 import { Switch } from "src/components/ui/switch";
@@ -74,20 +72,17 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
-import { io } from "socket.io-client";
 
-interface Notification {
+interface TrendingTopic {
   id: string;
-  type: "like" | "comment" | "follow" | "mention" | "system";
-  content: string;
-  time: string;
-  read: boolean;
-  actionUrl: string;
-  user?: {
-    id: string;
-    name: string;
-    profileImage: string;
-  };
+  hashtag: string;
+  title: string;
+  category: string;
+  posts: number;
+  trend: "up" | "down" | "stable";
+  percentageChange?: number;
+  timeframe: string;
+  url?: string;
 }
 
 interface UserData {
@@ -111,12 +106,10 @@ const EnhancedNavbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
 
   // Hooks
   const { data: session, status } = useSession();
@@ -132,78 +125,9 @@ const EnhancedNavbar: React.FC = () => {
     { name: "Home", icon: Home, path: "/" },
     { name: "Event", icon: Compass, path: "/Events" },
     { name: "Messages", icon: MessageSquare, path: "/chat", badge: 3 },
-    {
-      name: "GroupChat",
-      icon: Group,
-      path: "/group",
-      badge: unreadCount,
-    },
+    { name: "GroupChat", icon: Group, path: "/group" },
     { name: "Library", icon: Book, path: "/library" },
     { name: "Profile", icon: User, path: `/user-profile/${session?.user?.id}` },
-  ];
-
-  // Mock notifications data
-  const mockNotifications: Notification[] = [
-    {
-      id: "1",
-      type: "like",
-      content: "Alex liked your post about machine learning",
-      time: "2 minutes ago",
-      read: false,
-      actionUrl: "/post/123",
-      user: {
-        id: "user1",
-        name: "Alex Johnson",
-        profileImage: "/placeholder.svg?height=40&width=40",
-      },
-    },
-    {
-      id: "2",
-      type: "comment",
-      content: "Sarah commented on your research paper",
-      time: "1 hour ago",
-      read: false,
-      actionUrl: "/post/456",
-      user: {
-        id: "user2",
-        name: "Sarah Williams",
-        profileImage: "/placeholder.svg?height=40&width=40",
-      },
-    },
-    {
-      id: "3",
-      type: "follow",
-      content: "Professor Davis started following you",
-      time: "3 hours ago",
-      read: true,
-      actionUrl: "/profile/user3",
-      user: {
-        id: "user3",
-        name: "Prof. Davis",
-        profileImage: "/placeholder.svg?height=40&width=40",
-      },
-    },
-    {
-      id: "4",
-      type: "mention",
-      content: "Michael mentioned you in a comment",
-      time: "Yesterday",
-      read: true,
-      actionUrl: "/post/789",
-      user: {
-        id: "user4",
-        name: "Michael Brown",
-        profileImage: "/placeholder.svg?height=40&width=40",
-      },
-    },
-    {
-      id: "5",
-      type: "system",
-      content: "Your account was successfully verified",
-      time: "2 days ago",
-      read: true,
-      actionUrl: "/settings/account",
-    },
   ];
 
   // Effect for theme mounting
@@ -245,11 +169,11 @@ const EnhancedNavbar: React.FC = () => {
     }
   }, [lastScrollY]);
 
-  // Effect for fetching user data
+  // Effect for fetching user data and trending topics
   useEffect(() => {
     if (session?.user?.id && mounted) {
       fetchUserData();
-      fetchNotifications();
+      fetchTrendingTopics();
     }
   }, [session, mounted]);
 
@@ -260,57 +184,32 @@ const EnhancedNavbar: React.FC = () => {
     }
   }, [isSearchExpanded]);
 
-  // Effect for counting unread notifications
-  useEffect(() => {
-    const count = notifications.filter(
-      (notification) => !notification.read
-    ).length;
-    setUnreadCount(count);
-  }, [notifications]);
-
-  useEffect(() => {
-    const socket = io();
-
-    // Join the user's room (replace with actual user ID from session)
-    const userId = session?.user?.id || "user-id-placeholder"; // Replace with actual user ID
-    socket.emit("joinRoom", userId);
-
-    // Listen for new notifications
-    socket.on("newNotification", (notification: Notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [session]);
-
   // Fetch user data
   const fetchUserData = async () => {
     setIsLoading(true);
     try {
-      // In a real app, you would fetch from your API
-      // const response = await axios.get(`/api/user/${session?.user.id}`);
-      // setUserData(response.data);
+      if (session?.user?.id) {
+        const response = await fetch(`/api/user/${session.user.id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        const userData = await response.json();
 
-      // For demo purposes, we'll use mock data
-      setTimeout(() => {
+        // Transform API response to match our interface
         setUserData({
-          id: session?.user?.id || "user123",
-          name: session?.user?.name || "User Name",
-          username: session?.user?.email?.split("@")[0] || "username",
-          email: session?.user?.email || "user@example.com",
+          id: userData.id,
+          name: userData.name || "User",
+          username: userData.email?.split("@")[0] || "username",
+          email: userData.email,
           profileImage:
-            session?.user?.profileImage ||
-            "/placeholder.svg?height=40&width=40",
-          role: "Student",
-          createdAt: new Date().toISOString(),
-          followers: 120,
-          following: 85,
-          posts: 24,
+            userData.profileImage || "/placeholder.svg?height=40&width=40",
+          role: userData.role || "Student",
+          createdAt: userData.createdAt,
+          followers: userData.followers?.length || 0,
+          following: userData.following?.length || 0,
+          posts: userData.posts?.length || 0,
         });
-        setIsLoading(false);
-      }, 800);
+      }
     } catch (error) {
       console.error("Failed to fetch user data:", error);
       toast({
@@ -318,32 +217,27 @@ const EnhancedNavbar: React.FC = () => {
         description: "Failed to load user data. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Fetch notifications
-  const fetchNotifications = async () => {
+  // Fetch trending topics
+  const fetchTrendingTopics = async () => {
     try {
-      // In a real app, you would fetch from your API
-      // const response = await axios.get(`/api/notifications`);
-      // setNotifications(response.data);
-
-      // For demo purposes, we'll use mock data
-      setTimeout(() => {
-        setNotifications(mockNotifications);
-      }, 1000);
+      const response = await fetch("/api/trending-topics");
+      if (!response.ok) {
+        throw new Error("Failed to fetch trending topics");
+      }
+      const data = await response.json();
+      setTrendingTopics(data);
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load notifications. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error fetching trending topics:", error);
+      setTrendingTopics([]);
     }
   };
 
-  // Replace the mock search functionality with a real search implementation
+  // Handle search
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -372,58 +266,6 @@ const EnhancedNavbar: React.FC = () => {
     }
   };
 
-  // Mark all notifications as read
-  const markAllAsRead = async () => {
-    try {
-      await fetch("/api/notifications", { method: "PATCH" });
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) => ({
-          ...notification,
-          read: true,
-        }))
-      );
-      setUnreadCount(0);
-      toast({
-        title: "Success",
-        description: "All notifications marked as read",
-      });
-    } catch (error) {
-      console.error("Failed to mark notifications as read:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update notifications. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Mark a single notification as read
-  const markAsRead = async (id: string) => {
-    try {
-      // In a real app, you would call your API
-      // await axios.post(`/api/notifications/${id}/read`);
-
-      // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) =>
-          notification.id === id
-            ? { ...notification, read: true }
-            : notification
-        )
-      );
-
-      // Recalculate unread count
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update notification. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Toggle dark mode
   const toggleDarkMode = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -440,22 +282,6 @@ const EnhancedNavbar: React.FC = () => {
         description: "Failed to log out. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  // Get notification icon based on type
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "like":
-        return <Heart className="h-4 w-4 text-red-500" />;
-      case "comment":
-        return <MessageSquare className="h-4 w-4 text-blue-500" />;
-      case "follow":
-        return <Users className="h-4 w-4 text-green-500" />;
-      case "mention":
-        return <User className="h-4 w-4 text-purple-500" />;
-      default:
-        return <Bell className="h-4 w-4 text-yellow-500" />;
     }
   };
 
@@ -478,7 +304,7 @@ const EnhancedNavbar: React.FC = () => {
           isScrolled ? "shadow-md" : "",
           theme === "dark"
             ? "bg-gray-900/95 backdrop-blur-sm"
-            : "bg-white/95 backdrop-blur-sm"
+            : "bg-lightgreen/95 backdrop-blur-sm"
         )}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -641,10 +467,14 @@ const EnhancedNavbar: React.FC = () => {
               {/* Logo */}
               <Link href="/" className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
-                  <Zap className="h-6 w-6 text-primary mr-2" />
-                  <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent hidden sm:inline-block">
-                    EduConnect
-                  </span>
+                  <Image
+                    src="/eduConnect.png"
+                    alt="EduConnect Logo"
+                    width={130}
+                    height={60}
+                    className="h-10 w-auto"
+                    priority
+                  />
                 </div>
               </Link>
             </div>
@@ -856,127 +686,6 @@ const EnhancedNavbar: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>Create a new post</TooltipContent>
               </Tooltip>
-
-              {/* Notification Bell with Dropdown */}
-              <Popover
-                open={isNotificationsOpen}
-                onOpenChange={setIsNotificationsOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 dark:bg-red-400"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-700 dark:bg-red-500 text-white text-xs items-center justify-center">
-                          {unreadCount}
-                        </span>
-                      </span>
-                    )}
-                    <span className="sr-only">Notifications</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[350px] p-0" align="end">
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="font-semibold">Notifications</h3>
-                    <div className="flex space-x-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={markAllAsRead}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Mark all as read</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <BellOff className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Mute notifications</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-
-                  <div className="max-h-[350px] overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8">
-                        <Bell className="h-10 w-10 text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          No notifications yet
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={cn(
-                              "p-4 hover:bg-muted/50 transition-colors",
-                              !notification.read && "bg-muted/20"
-                            )}
-                          >
-                            <div className="flex items-start">
-                              {notification.user ? (
-                                <Avatar className="h-8 w-8 mr-3">
-                                  <AvatarImage
-                                    src={notification.user.profileImage}
-                                    alt={notification.user.name}
-                                  />
-                                  <AvatarFallback>
-                                    {notification.user.name.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ) : (
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                                  {getNotificationIcon(notification.type)}
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm">
-                                  {notification.content}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {notification.time}
-                                </p>
-                              </div>
-                              {!notification.read && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 rounded-full"
-                                  onClick={() => markAsRead(notification.id)}
-                                >
-                                  <span className="h-2 w-2 rounded-full bg-primary"></span>
-                                  <span className="sr-only">Mark as read</span>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-2 border-t">
-                    <Button variant="ghost" className="w-full text-xs" asChild>
-                      <Link href="/notifications">
-                        View all notifications
-                        <ChevronRight className="ml-2 h-3 w-3" />
-                      </Link>
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
 
               {/* Dark Mode Toggle */}
               <div className="hidden md:flex items-center">

@@ -403,26 +403,85 @@ export default function EnhancedPostBox({
       setLocation("Detecting location...");
 
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // In a real app, you would use a reverse geocoding service
-          // For demo purposes, we'll set a fixed location
-          setTimeout(() => {
-            setLocation("San Francisco, CA");
+        async (position) => {
+          try {
+            // Use OpenStreetMap Nominatim API for reverse geocoding (free and no API key required)
+            const { latitude, longitude } = position.coords;
+            const response = await axios.get(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+              {
+                headers: {
+                  "Accept-Language": "en", // Ensure we get English results
+                  "User-Agent": "EduConnect App", // Required by Nominatim usage policy
+                },
+              }
+            );
+
+            // Format the location data
+            const addressData = response.data;
+            let locationString;
+
+            if (addressData.address) {
+              // Create a user-friendly location string based on available data
+              const city =
+                addressData.address.city ||
+                addressData.address.town ||
+                addressData.address.village ||
+                addressData.address.county;
+
+              const state = addressData.address.state;
+              const country = addressData.address.country;
+
+              if (city && state) {
+                locationString = `${city}, ${state}`;
+              } else if (city) {
+                locationString = city;
+              } else if (state) {
+                locationString = state;
+              } else if (country) {
+                locationString = country;
+              } else {
+                locationString = addressData.display_name
+                  .split(",")
+                  .slice(0, 2)
+                  .join(",");
+              }
+            } else {
+              // Fallback if structured address data is not available
+              locationString =
+                addressData.display_name?.split(",").slice(0, 2).join(",") ||
+                "Unknown location";
+            }
+
+            setLocation(locationString);
             toast({
-              title: "Location added",
-              description: "Your location has been added to the post.",
+              title: "Location detected",
+              description: "Your current location has been added to the post.",
+              variant: "default",
+              className: "bg-green-50 border-green-200 text-green-800",
             });
-          }, 1000);
+          } catch (error) {
+            console.error("Reverse geocoding error:", error);
+            setLocation("");
+            toast({
+              title: "Location error",
+              description:
+                "Unable to determine your location name. Please try again or enter manually.",
+              variant: "destructive",
+            });
+          }
         },
         (error) => {
           console.error("Geolocation error:", error);
           setLocation("");
           toast({
             title: "Location error",
-            description: "Unable to detect your location. Please try again.",
+            description:
+              "Unable to detect your location. Please try again or check your browser permissions.",
             variant: "destructive",
           });
-        }
+        },
+        { timeout: 10000, enableHighAccuracy: true }
       );
     } else {
       toast({
@@ -483,15 +542,15 @@ export default function EnhancedPostBox({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full px-4 sm:px-6 md:px-8 lg:px-[15%] pt-6 transition-all duration-300"
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="sm:px-6 md:px-8 pt-6 transition-all duration-300"
     >
       <div
         ref={dropZoneRef}
         className={cn(
-          "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl",
+          "bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl border border-gray-100 dark:border-gray-700",
           isDragging &&
-            "border-2 border-dashed border-green-500 bg-green-50 dark:bg-gray-700"
+            "border-2 border-dashed border-green-500 bg-green-50 dark:bg-gray-700 scale-[1.01] transform duration-300"
         )}
       >
         {/* User info section */}
@@ -499,17 +558,18 @@ export default function EnhancedPostBox({
           {isLoadingUser ? (
             <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
           ) : (
-            <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-green-400">
+            <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-green-400 ring-2 ring-green-100 dark:ring-green-900 transition-all duration-300 hover:scale-105">
               <AvatarImage
                 src={
                   user?.profileImage || "/placeholder.svg?height=40&width=40"
                 }
                 alt={user?.name || "User"}
               />
-              <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+              <AvatarFallback className="bg-gradient-to-br from-green-400 to-emerald-600 text-white font-semibold">
+                {user?.name?.charAt(0) || "U"}
+              </AvatarFallback>
             </Avatar>
           )}
-
           <div className="flex-grow">
             {isLoadingUser ? (
               <div className="space-y-2">
@@ -600,8 +660,19 @@ export default function EnhancedPostBox({
 
               <Progress
                 value={(characterCount / MAX_CHAR_COUNT) * 100}
-                className="w-24 h-1"
-                indicatorClassName={cn(
+                className={cn(
+                  "w-24 h-1",
+                  characterCount > MAX_CHAR_COUNT * 0.9
+                    ? "bg-red-500"
+                    : characterCount > MAX_CHAR_COUNT * 0.8
+                    ? "bg-amber-500"
+                    : "bg-green-500"
+                )}
+              />
+              <Progress
+                value={(characterCount / MAX_CHAR_COUNT) * 100}
+                className={cn(
+                  "w-24 h-1",
                   characterCount > MAX_CHAR_COUNT * 0.9
                     ? "bg-red-500"
                     : characterCount > MAX_CHAR_COUNT * 0.8
@@ -631,7 +702,7 @@ export default function EnhancedPostBox({
                       className="relative group"
                     >
                       <div className="aspect-square bg-green-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden transition-all duration-300 hover:shadow-md">
-                        {file.type.startsWith("image/") ? (
+                        {file.type?.startsWith("image/") ? (
                           <Image
                             src={file.preview || "/placeholder.svg"}
                             alt={file.name}
