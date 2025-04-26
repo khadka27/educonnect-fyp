@@ -56,24 +56,40 @@ function ChatSkeleton() {
           </div>
         </div>
 
-        <div className="flex-1 p-4">
-          <div className="space-y-4">
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="space-y-6">
+            {/* Incoming messages */}
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex justify-start">
-                <Skeleton className="h-10 w-10 rounded-full mr-2" />
-                <div>
-                  <Skeleton className="h-24 w-64 rounded-2xl mb-1" />
-                  <Skeleton className="h-3 w-16" />
+              <div key={`incoming-${i}`} className="flex justify-start">
+                <Skeleton className="h-10 w-10 rounded-full mr-2 flex-shrink-0" />
+                <div className="max-w-[75%]">
+                  <Skeleton
+                    className={`h-${16 + i * 6} w-${
+                      48 + i * 8
+                    } rounded-2xl mb-1`}
+                  />
+                  <Skeleton className="h-3 w-16 ml-1" />
                 </div>
               </div>
             ))}
 
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="flex justify-end">
-                <div>
-                  <Skeleton className="h-20 w-56 rounded-2xl mb-1" />
-                  <div className="flex justify-end">
-                    <Skeleton className="h-3 w-16" />
+            {/* Date separator */}
+            <div className="flex justify-center my-6">
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+
+            {/* Outgoing messages */}
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={`outgoing-${i}`} className="flex justify-end">
+                <div className="max-w-[75%]">
+                  <Skeleton
+                    className={`h-${14 + i * 4} w-${
+                      44 + i * 6
+                    } rounded-2xl mb-1 bg-primary/20`}
+                  />
+                  <div className="flex justify-end items-center gap-1 mr-1">
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-3 w-3 rounded-full" />
                   </div>
                 </div>
               </div>
@@ -81,11 +97,17 @@ function ChatSkeleton() {
           </div>
         </div>
 
-        <div className="p-4 border-t">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-12 flex-1 rounded-full" />
+        <div className="p-4 border-t bg-background/80 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-full flex-shrink-0" />
+            <Skeleton className="h-9 w-9 rounded-full flex-shrink-0" />
+            <div className="flex-1 relative">
+              <Skeleton className="h-12 w-full rounded-full" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
+                <Skeleton className="h-7 w-7 rounded-full" />
+                <Skeleton className="h-7 w-7 rounded-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
