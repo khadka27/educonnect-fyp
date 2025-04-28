@@ -1,228 +1,3 @@
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { useRouter, useParams } from "next/navigation";
-// import { useSession } from "next-auth/react";
-// import Image from "next/image";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Card,
-//   CardContent,
-//   CardFooter,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card";
-// import { Skeleton } from "@/components/ui/skeleton";
-// import { useToast } from "@/hooks/use-toast";
-// import { Calendar, MapPin, Mail, Phone, Tag, ArrowLeft } from "lucide-react";
-// import RegistrationForm from "@/components/event/registration-form";
-
-// interface Event {
-//   id: string;
-//   title: string;
-//   description: string;
-//   date: string;
-//   location: string;
-//   type: string;
-//   bannerUrl?: string;
-//   contactEmail: string;
-//   contactPhone: string;
-//   price: string;
-// }
-
-// export default function EventDetailPage() {
-//   const [event, setEvent] = useState<Event | null>(null);
-//   const [loading, setLoading] = useState(true);
-//   const [isRegistered, setIsRegistered] = useState(false);
-//   const [formSubmitting, setFormSubmitting] = useState(false);
-//   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-//   const router = useRouter();
-//   const { eventId } = useParams();
-//   const { data: session } = useSession();
-//   const { toast } = useToast();
-
-//   useEffect(() => {
-//     const fetchEvent = async () => {
-//       if (!eventId) return;
-
-//       setLoading(true);
-//       try {
-//         const res = await fetch(`/api/events/${eventId}`);
-//         if (!res.ok) throw new Error("Failed to fetch event");
-//         const data = await res.json();
-//         setEvent(data.event);
-
-//         if (session?.user?.id) {
-//           const regRes = await fetch(
-//             `/api/events/check-registration?eventId=${eventId}&userId=${session.user.id}`
-//           );
-//           if (!regRes.ok)
-//             throw new Error("Failed to check registration status");
-//           const regData = await regRes.json();
-//           setIsRegistered(regData.isRegistered);
-//         }
-//       } catch (error) {
-//         console.error("Error fetching event:", error);
-//         toast({
-//           title: "Error",
-//           description: "Failed to load event details. Please try again.",
-//           variant: "destructive",
-//         });
-//         router.push("/events");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchEvent();
-//   }, [eventId, session?.user?.id, router]);
-
-//   const handleRegisterClick = () => {
-//     if (!session) {
-//       toast({
-//         title: "Sign in required",
-//         description: "You need to sign in before registering for this event.",
-//         variant: "destructive",
-//       });
-//       router.push("/sign-in");
-//       return;
-//     }
-//     setShowRegistrationForm(true);
-//   };
-
-//   const handleRegistrationSuccess = () => {
-//     setIsRegistered(true);
-//     setShowRegistrationForm(false);
-//     setFormSubmitting(false);
-//     toast({
-//       title: "Thank You!",
-//       description:
-//         "You've successfully registered for the event. Check your email for the ticket.",
-//       variant: "success",
-//     });
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="container mx-auto px-4 py-8 w-1/2">
-//         <Card>
-//           <CardHeader>
-//             <Skeleton className="h-12 w-3/4" />
-//           </CardHeader>
-//           <CardContent className="space-y-4">
-//             <Skeleton className="h-4 w-full" />
-//             <Skeleton className="h-4 w-full" />
-//             <Skeleton className="h-4 w-2/3" />
-//           </CardContent>
-//         </Card>
-//       </div>
-//     );
-//   }
-
-//   if (!event) {
-//     return (
-//       <div className="container mx-auto px-4 py-8 w-1/2">
-//         <Card>
-//           <CardContent>
-//             <p className="text-center">Event not found</p>
-//           </CardContent>
-//         </Card>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="container mx-auto px-4 py-8 w-1/2">
-//       <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-//         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
-//       </Button>
-//       <Card className="overflow-hidden">
-//         {event.bannerUrl && (
-//           <div className="relative h-64 w-full">
-//             <Image
-//               @={event.bannerUrl}
-//               alt={event.title}
-//               layout="fill"
-//               objectFit="cover"
-//               priority
-//             />
-//           </div>
-//         )}
-//         <CardHeader>
-//           <CardTitle className="text-2xl md:text-3xl lg:text-4xl">
-//             {event.title}
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent className="space-y-4">
-//           <p className="text-muted-foreground">{event.description}</p>
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//             <div className="flex items-center">
-//               <Calendar className="mr-2 h-4 w-4" />
-//               <span>
-//                 {new Date(event.date).toLocaleDateString(undefined, {
-//                   weekday: "long",
-//                   year: "numeric",
-//                   month: "long",
-//                   day: "numeric",
-//                 })}
-//               </span>
-//             </div>
-//             <div className="flex items-center">
-//               <MapPin className="mr-2 h-4 w-4" />
-//               <span>{event.location}</span>
-//             </div>
-//             <div className="flex items-center">
-//               <Tag className="mr-2 h-4 w-4" />
-//               <span className="capitalize">{event.type}</span>
-//             </div>
-//             <div className="flex items-center">
-//               <Mail className="mr-2 h-4 w-4" />
-//               <a
-//                 href={`mailto:${event.contactEmail}`}
-//                 className="hover:underline"
-//               >
-//                 {event.contactEmail}
-//               </a>
-//             </div>
-//             <div className="flex items-center">
-//               <Phone className="mr-2 h-4 w-4" />
-//               <a href={`tel:${event.contactPhone}`} className="hover:underline">
-//                 {event.contactPhone}
-//               </a>
-//             </div>
-
-//             {/* price */}
-//             <div className="flex items-center">
-//               <Tag className="mr-2 h-4 w-4" />
-//               <span className="capitalize">{event.price}</span>
-//             </div>
-//           </div>
-//         </CardContent>
-//         <CardFooter>
-//           {!loading && !isRegistered ? (
-//             <Button onClick={handleRegisterClick} className="w-full">
-//               Register for Event
-//             </Button>
-//           ) : (
-//             <p className="text-center w-full p-2 bg-green-100 text-green-800 rounded">
-//               You are registered for this event!
-//             </p>
-//           )}
-//         </CardFooter>
-//       </Card>
-//       {showRegistrationForm && (
-//         <RegistrationForm
-//           event={event}
-//           onSuccess={handleRegistrationSuccess}
-//           onClose={() => setShowRegistrationForm(false)}
-//           submitting={formSubmitting}
-//           setSubmitting={setFormSubmitting}
-//         />
-//       )}
-//     </div>
-//   );
-// }
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -239,12 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -294,7 +64,7 @@ interface Event {
   }>;
 }
 
- function EventDetailPage() {
+function EventDetailPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -356,6 +126,38 @@ interface Event {
         };
 
         setEvent(enhancedEvent);
+
+        // Fetch similar events
+        try {
+          const similarRes = await fetch(`/api/events`);
+          if (similarRes.ok) {
+            const allEvents = await similarRes.json();
+            // Filter out current event and get random events
+            const otherEvents = allEvents.filter((e: any) => e.id !== eventId);
+            // Get up to 3 random events
+            const randomEvents = otherEvents
+              .sort(() => 0.5 - Math.random())
+              .slice(0, 3)
+              .map((e: any) => ({
+                id: e.id,
+                title: e.title,
+                date: e.date,
+                bannerUrl: e.bannerUrl || "/default-events.jpg",
+              }));
+
+            // Update the event with real similar events
+            setEvent((prevEvent) => ({
+              ...prevEvent!,
+              similarEvents:
+                randomEvents.length > 0
+                  ? randomEvents
+                  : prevEvent?.similarEvents,
+            }));
+          }
+        } catch (error) {
+          console.error("Error fetching similar events:", error);
+          // If there's an error, we'll keep the mock data
+        }
 
         if (session?.user?.id) {
           const regRes = await fetch(
@@ -439,7 +241,7 @@ interface Event {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-900">
         <div className="max-w-4xl mx-auto">
           <Skeleton className="h-10 w-32 mb-6" />
           <Skeleton className="h-[400px] w-full rounded-xl mb-8" />
@@ -483,7 +285,7 @@ interface Event {
   const isPastEvent = eventDate < new Date();
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-900">
       <div className="max-w-4xl mx-auto">
         <Button
           variant="ghost"
@@ -943,7 +745,7 @@ interface Event {
                     <Button
                       variant="outline"
                       className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
-                      onClick={() => router.push("/events")}
+                      onClick={() => router.push("/Events")}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
                       View All Events

@@ -1,14 +1,18 @@
 "use client";
 
 import { Suspense } from "react";
+import { useSession } from "next-auth/react";
 import DirectChat from "src/components/chat/direct-chat";
 import { ChatProvider } from "src/context/ChatContext";
 import { Skeleton } from "src/components/ui/skeleton";
 
 export default function MessagesPage() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id || "";
+
   return (
     <div className="flex h-screen w-full p-4 md:p-6">
-      <ChatProvider children={undefined} userId={""}>
+      <ChatProvider userId={userId}>
         <Suspense fallback={<ChatSkeleton />}>
           <DirectChat />
         </Suspense>
