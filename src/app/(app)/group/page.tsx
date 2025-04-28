@@ -16,7 +16,7 @@ export default function GroupChatPage() {
 
 function GroupChatSkeleton() {
   return (
-    <div className="flex h-[calc(100vh-60px)] rounded-lg shadow-lg overflow-hidden bg-background">
+    <div className="flex h-fit rounded-lg shadow-lg overflow-hidden bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-900">
       {/* Sidebar skeleton */}
       <div className="hidden md:block w-1/4 min-w-[300px] border-r">
         <div className="p-4 border-b">

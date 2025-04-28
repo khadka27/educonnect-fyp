@@ -72,6 +72,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
+import { HelpModal } from "@/components/help-modal";
 
 interface TrendingTopic {
   id: string;
@@ -110,6 +111,7 @@ const EnhancedNavbar: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Hooks
   const { data: session, status } = useSession();
@@ -772,9 +774,9 @@ const EnhancedNavbar: React.FC = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/bookmarks">
+                      <Link href="/news">
                         <Bookmark className="mr-2 h-4 w-4" />
-                        <span>Bookmarks</span>
+                        <span>News</span>
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
@@ -817,12 +819,20 @@ const EnhancedNavbar: React.FC = () => {
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
-                    <DropdownMenuItem asChild>
-                      <Link href="/help">
-                        <HelpCircle className="mr-2 h-4 w-4" />
-                        <span>Help</span>
-                      </Link>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      <span>Help</span>
                     </DropdownMenuItem>
+
+                    <HelpModal
+                      open={isModalOpen}
+                      onOpenChange={setIsModalOpen}
+                    />
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

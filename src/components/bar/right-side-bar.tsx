@@ -81,7 +81,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ className = "" }) => {
   // Initialize socket connection
   useEffect(() => {
     if (session?.user?.id) {
-      socketRef.current = io("http://localhost:4000", {
+      socketRef.current = io("http://localhost:3000", {
         transports: ["websocket"],
         query: { userId: session.user.id },
       });
@@ -120,33 +120,39 @@ const ChatCard: React.FC<ChatCardProps> = ({ className = "" }) => {
       });
 
       // Listen for user online status changes
-      socketRef.current.on("userStatusChange", ({ userId, status }: { userId: string; status: string }) => {
-        setOnlineUsers((prev) => ({
-          ...prev,
-          [userId]: status === "online",
-        }));
+      socketRef.current.on(
+        "userStatusChange",
+        ({ userId, status }: { userId: string; status: string }) => {
+          setOnlineUsers((prev) => ({
+            ...prev,
+            [userId]: status === "online",
+          }));
 
-        // Also update any open message boxes for this user
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id === userId
-              ? {
-                  ...user,
-                  isOnline: status === "online",
-                  lastSeen: status !== "online" ? new Date() : user.lastSeen,
-                }
-              : user
-          )
-        );
-      });
+          // Also update any open message boxes for this user
+          setUsers((prev) =>
+            prev.map((user) =>
+              user.id === userId
+                ? {
+                    ...user,
+                    isOnline: status === "online",
+                    lastSeen: status !== "online" ? new Date() : user.lastSeen,
+                  }
+                : user
+            )
+          );
+        }
+      );
 
       // Listen for typing indicators
-      socketRef.current.on("userTyping", ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
-        setTypingUsers((prev) => ({
-          ...prev,
-          [userId]: isTyping,
-        }));
-      });
+      socketRef.current.on(
+        "userTyping",
+        ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
+          setTypingUsers((prev) => ({
+            ...prev,
+            [userId]: isTyping,
+          }));
+        }
+      );
 
       // Listen for message read receipts
       socketRef.current.on("messageRead", (messageId: string) => {
@@ -161,20 +167,29 @@ const ChatCard: React.FC<ChatCardProps> = ({ className = "" }) => {
       });
 
       // Listen for message delivery confirmations
-      socketRef.current.on("messageDelivered", ({ messageId, receiverId }: { messageId: string; receiverId: string }) => {
-        setMessageBoxes((prevBoxes) =>
-          prevBoxes.map((box) =>
-            box.user.id === receiverId
-              ? {
-                  ...box,
-                  messages: box.messages.map((msg) =>
-                    msg.id === messageId ? { ...msg, isDelivered: true } : msg
-                  ),
-                }
-              : box
-          )
-        );
-      });
+      socketRef.current.on(
+        "messageDelivered",
+        ({
+          messageId,
+          receiverId,
+        }: {
+          messageId: string;
+          receiverId: string;
+        }) => {
+          setMessageBoxes((prevBoxes) =>
+            prevBoxes.map((box) =>
+              box.user.id === receiverId
+                ? {
+                    ...box,
+                    messages: box.messages.map((msg) =>
+                      msg.id === messageId ? { ...msg, isDelivered: true } : msg
+                    ),
+                  }
+                : box
+            )
+          );
+        }
+      );
 
       return () => {
         if (socketRef.current) {

@@ -539,8 +539,8 @@ function GroupChat() {
       className={cn(
         "flex h-[calc(100vh-60px)] overflow-hidden rounded-lg shadow-lg",
         theme === "dark"
-          ? "bg-background text-foreground"
-          : "bg-background text-foreground"
+          ? "bg-gradient-to-br from-emerald-950 to-teal-900 text-emerald-200"
+          : "bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-800"
       )}
     >
       {/* Left Sidebar - Groups List */}
@@ -557,21 +557,21 @@ function GroupChat() {
                 ? "fixed inset-0 z-50 w-full md:w-80 lg:w-96"
                 : "w-1/4 min-w-[300px]",
               theme === "dark"
-                ? "border-border bg-background"
-                : "border-border bg-background"
+                ? "border-emerald-900/50 bg-gray-900/90"
+                : "border-emerald-100 bg-white/90"
             )}
           >
             <div
               className={cn(
                 "p-4 border-b sticky top-0 z-10",
                 theme === "dark"
-                  ? "border-border bg-background"
-                  : "border-border bg-background"
+                  ? "border-emerald-900/50 bg-gray-900/90"
+                  : "border-emerald-100 bg-white/90"
               )}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 ">
                 <h2 className="text-xl font-bold flex items-center">
-                  <Users className="mr-2 h-5 w-5 text-primary" />
+                  <Users className="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   Group Chats
                 </h2>
                 <div className="flex items-center space-x-1">
@@ -607,10 +607,10 @@ function GroupChat() {
               </div>
 
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                 <Input
                   placeholder="Search groups..."
-                  className="pl-9 rounded-full"
+                  className="pl-9 rounded-full border-emerald-200 dark:border-emerald-800 focus-visible:ring-emerald-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -633,9 +633,19 @@ function GroupChat() {
                   value={activeTab}
                   onValueChange={setActiveTab}
                 >
-                  <TabsList className="grid grid-cols-2 w-full">
-                    <TabsTrigger value="all">All Groups</TabsTrigger>
-                    <TabsTrigger value="my">My Groups</TabsTrigger>
+                  <TabsList className="grid grid-cols-2 w-full bg-emerald-100/70 dark:bg-emerald-900/30">
+                    <TabsTrigger
+                      value="all"
+                      className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-700"
+                    >
+                      All Groups
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="my"
+                      className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-700"
+                    >
+                      My Groups
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
               )}
@@ -665,19 +675,21 @@ function GroupChat() {
                       "p-3 mx-2 my-1 rounded-lg flex items-center space-x-3 cursor-pointer transition-colors duration-200",
                       selectedGroup?.id === group.id
                         ? theme === "dark"
-                          ? "bg-primary/10 border-l-4 border-primary"
-                          : "bg-primary/10 border-l-4 border-primary"
+                          ? "bg-emerald-900/30 border-l-4 border-emerald-600"
+                          : "bg-emerald-100/70 border-l-4 border-emerald-600"
                         : theme === "dark"
-                        ? "hover:bg-muted/50"
-                        : "hover:bg-muted/50"
+                        ? "hover:bg-emerald-900/20"
+                        : "hover:bg-emerald-50"
                     )}
                     onClick={() => fetchGroupMessages(group.id)}
                   >
-                    <Avatar className="w-12 h-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                    <Avatar className="w-12 h-12 ring-2 ring-offset-2 ring-offset-background ring-emerald-400/20">
                       <AvatarImage src={group.avatar || "/placeholder.svg"} />
                       <AvatarFallback
                         className={cn(
-                          theme === "dark" ? "bg-muted" : "bg-muted"
+                          theme === "dark"
+                            ? "bg-emerald-900/60"
+                            : "bg-emerald-100"
                         )}
                       >
                         {group.name.charAt(0).toUpperCase()}
@@ -688,7 +700,7 @@ function GroupChat() {
                       <div className="flex justify-between items-start">
                         <h3 className="font-semibold truncate">{group.name}</h3>
                         {group.lastMessage && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-emerald-600/80 dark:text-emerald-400/80">
                             {formatTimestamp(group.lastMessage.timestamp)}
                           </span>
                         )}
@@ -699,8 +711,8 @@ function GroupChat() {
                           className={cn(
                             "text-sm truncate",
                             theme === "dark"
-                              ? "text-muted-foreground"
-                              : "text-muted-foreground"
+                              ? "text-emerald-400/80"
+                              : "text-emerald-600/80"
                           )}
                         >
                           {group.members.length} members
@@ -709,7 +721,7 @@ function GroupChat() {
                         {group.adminId === session?.user?.id && (
                           <Badge
                             variant="outline"
-                            className="text-xs px-1.5 py-0 border-primary text-primary"
+                            className="text-xs px-1.5 py-0 border-emerald-400 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400"
                           >
                             Admin
                           </Badge>
@@ -720,9 +732,9 @@ function GroupChat() {
                 ))
               ) : (
                 <div className="p-8 text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <MessageSquare className="h-12 w-12 mx-auto text-emerald-500/50 dark:text-emerald-400/50 mb-4" />
                   <h3 className="text-lg font-medium mb-2">No groups found</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-emerald-700/70 dark:text-emerald-400/70">
                     {searchQuery
                       ? `No results for "${searchQuery}"`
                       : isTeacher
@@ -731,7 +743,7 @@ function GroupChat() {
                   </p>
                   {isTeacher && (
                     <Button
-                      className="mt-4"
+                      className="mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
                       onClick={() => setIsCreatingGroup(true)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
@@ -750,35 +762,37 @@ function GroupChat() {
         {selectedGroup ? (
           <>
             {/* Chat Header */}
-            <CardHeader className="flex flex-row p-4 justify-between border-b">
+            <CardHeader className="flex flex-row p-4 justify-between border-b border-emerald-100 dark:border-emerald-900/50 bg-white/90 dark:bg-gray-800/90">
               <div className="flex items-center space-x-3">
                 {isMobile() && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="mr-2"
+                    className="mr-2 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:text-emerald-200 dark:hover:bg-emerald-900/20"
                     onClick={toggleSidebar}
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                 )}
 
-                <Avatar className="w-10 h-10 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                <Avatar className="w-10 h-10 ring-2 ring-offset-2 ring-offset-background ring-emerald-400/20">
                   <AvatarImage
                     src={selectedGroup.avatar ?? "/placeholder.svg"}
                   />
                   <AvatarFallback
-                    className={cn(theme === "dark" ? "bg-muted" : "bg-muted")}
+                    className={cn(
+                      theme === "dark" ? "bg-emerald-900/60" : "bg-emerald-100"
+                    )}
                   >
                     {selectedGroup.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
                 <div>
-                  <h2 className="text-lg font-semibold">
+                  <h2 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200">
                     {selectedGroup.name}
                   </h2>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">
                     {selectedGroup.members.length} members
                   </p>
                 </div>
@@ -791,7 +805,7 @@ function GroupChat() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="rounded-full"
+                        className="rounded-full text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:text-emerald-200 dark:hover:bg-emerald-900/20"
                         onClick={toggleDetails}
                       >
                         <Info className="h-5 w-5" />
@@ -806,7 +820,7 @@ function GroupChat() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full"
+                      className="rounded-full text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:text-emerald-200 dark:hover:bg-emerald-900/20"
                     >
                       <MoreVertical className="h-5 w-5" />
                     </Button>
@@ -835,7 +849,7 @@ function GroupChat() {
             </CardHeader>
 
             {/* Messages */}
-            <CardContent className="flex-1 p-4 overflow-hidden">
+            <CardContent className="flex-1 p-4 overflow-hidden bg-white/80 dark:bg-gray-900/60">
               <ScrollArea className="h-[calc(100vh-200px)]">
                 {groupMessages.length > 0 ? (
                   <div className="space-y-6">
@@ -843,9 +857,9 @@ function GroupChat() {
                       <div key={date} className="space-y-4">
                         <div className="relative flex items-center justify-center my-6">
                           <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
+                            <span className="w-full border-t border-emerald-200 dark:border-emerald-800" />
                           </div>
-                          <span className="relative px-2 text-xs font-medium text-muted-foreground bg-background">
+                          <span className="relative px-2 text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-white dark:bg-gray-900">
                             {date}
                           </span>
                         </div>
@@ -880,8 +894,8 @@ function GroupChat() {
                                     <AvatarFallback
                                       className={cn(
                                         theme === "dark"
-                                          ? "bg-muted"
-                                          : "bg-muted"
+                                          ? "bg-emerald-900/60"
+                                          : "bg-emerald-100"
                                       )}
                                     >
                                       {sender?.name
@@ -899,7 +913,7 @@ function GroupChat() {
                                 )}
                               >
                                 {!isSender && (
-                                  <p className="text-xs text-muted-foreground mb-1 ml-1">
+                                  <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mb-1 ml-1">
                                     {sender?.name || msg.senderName || "User"}
                                   </p>
                                 )}
@@ -908,10 +922,10 @@ function GroupChat() {
                                   className={cn(
                                     "px-4 py-2 rounded-2xl break-words",
                                     isSender
-                                      ? "bg-primary text-primary-foreground rounded-br-none"
+                                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-br-none"
                                       : theme === "dark"
-                                      ? "bg-muted rounded-bl-none"
-                                      : "bg-muted rounded-bl-none"
+                                      ? "bg-emerald-900/40 rounded-bl-none"
+                                      : "bg-emerald-100/70 rounded-bl-none"
                                   )}
                                 >
                                   {/* File content */}
@@ -935,7 +949,7 @@ function GroupChat() {
                                     </div>
                                   ) : msg.fileUrl ? (
                                     <div
-                                      className="flex items-center space-x-2 p-2 bg-background/50 rounded-lg mb-2 cursor-pointer"
+                                      className="flex items-center space-x-2 p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg mb-2 cursor-pointer"
                                       onClick={() =>
                                         setPreviewFile({
                                           fileUrl: msg.fileUrl!,
@@ -963,7 +977,7 @@ function GroupChat() {
                                   <span
                                     className={cn(
                                       "text-xs",
-                                      "text-muted-foreground"
+                                      "text-emerald-600/80 dark:text-emerald-400/80"
                                     )}
                                   >
                                     {formatTimestamp(msg.createdAt)}
@@ -982,15 +996,17 @@ function GroupChat() {
                     <div
                       className={cn(
                         "p-6 rounded-full mb-4",
-                        theme === "dark" ? "bg-muted" : "bg-muted"
+                        theme === "dark"
+                          ? "bg-emerald-900/40"
+                          : "bg-emerald-100/70"
                       )}
                     >
-                      <MessageSquare className="h-12 w-12 opacity-30" />
+                      <MessageSquare className="h-12 w-12 opacity-30 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">
+                    <h3 className="text-xl font-semibold mb-2 text-emerald-800 dark:text-emerald-200">
                       No messages yet
                     </h3>
-                    <p className="text-muted-foreground text-center max-w-md">
+                    <p className="text-emerald-700/70 dark:text-emerald-400/70 text-center max-w-md">
                       Send a message to start the conversation in{" "}
                       {selectedGroup.name}
                     </p>
@@ -1000,7 +1016,7 @@ function GroupChat() {
             </CardContent>
 
             {/* Message Input */}
-            <CardFooter className="p-4 border-t">
+            <CardFooter className="p-4 border-t border-emerald-100 dark:border-emerald-900/50 bg-white/90 dark:bg-gray-800/90">
               <div className="flex flex-col gap-2 w-full">
                 <div className="flex gap-2">
                   <Input
@@ -1013,12 +1029,13 @@ function GroupChat() {
                       }
                     }}
                     placeholder="Type your message"
-                    className="flex-1"
+                    className="flex-1 border-emerald-200 dark:border-emerald-800 focus-visible:ring-emerald-500"
                     disabled={isSending}
                   />
                   <Button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || isSending}
+                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
                   >
                     {isSending ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
@@ -1042,21 +1059,21 @@ function GroupChat() {
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isSending}
-                    className="text-xs"
+                    className="text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                   >
                     <Paperclip className="h-4 w-4 mr-1" />
                     Attach File
                   </Button>
 
                   {selectedFile && (
-                    <div className="flex items-center gap-2 flex-1 p-2 bg-muted/30 rounded-md">
+                    <div className="flex items-center gap-2 flex-1 p-2 bg-emerald-50/60 dark:bg-emerald-900/20 rounded-md">
                       <div className="flex-1 truncate text-sm">
                         {selectedFile.name}
                       </div>
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-6 w-6 rounded-full"
+                        className="h-6 w-6 rounded-full text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:text-emerald-200 dark:hover:bg-emerald-900/20"
                         onClick={() => setSelectedFile(null)}
                       >
                         <X className="h-3 w-3" />
@@ -1065,7 +1082,7 @@ function GroupChat() {
                         size="sm"
                         onClick={handleSendFile}
                         disabled={isSending}
-                        className="text-xs"
+                        className="text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
                       >
                         {isSending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -1087,21 +1104,21 @@ function GroupChat() {
               transition={{ duration: 0.3 }}
               className={cn(
                 "p-6 rounded-full mb-4",
-                theme === "dark" ? "bg-muted" : "bg-muted"
+                theme === "dark" ? "bg-emerald-900/40" : "bg-emerald-100/70"
               )}
             >
-              <MessageSquare className="h-12 w-12 opacity-30" />
+              <MessageSquare className="h-12 w-12 opacity-30 text-emerald-600 dark:text-emerald-400" />
             </motion.div>
-            <h3 className="text-xl font-semibold mb-2">
+            <h3 className="text-xl font-semibold mb-2 text-emerald-800 dark:text-emerald-200">
               Welcome to Group Chat
             </h3>
-            <p className="text-muted-foreground text-center max-w-md">
+            <p className="text-emerald-700/70 dark:text-emerald-400/70 text-center max-w-md">
               Select a group from the sidebar to start chatting
             </p>
             <Button
               variant="outline"
               onClick={toggleSidebar}
-              className="mt-4 md:hidden"
+              className="mt-4 md:hidden border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
             >
               <Users className="h-5 w-5 mr-2" />
               View Groups
@@ -1124,8 +1141,8 @@ function GroupChat() {
                 ? "fixed right-0 top-0 bottom-0 z-50 w-full md:w-80 lg:w-96"
                 : "w-1/4 min-w-[300px]",
               theme === "dark"
-                ? "border-border bg-background"
-                : "border-border bg-background"
+                ? "border-emerald-900/50 bg-gray-900/90"
+                : "border-emerald-100 bg-white/90"
             )}
           >
             {isMobile() && (
@@ -1133,7 +1150,7 @@ function GroupChat() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-full"
+                  className="rounded-full text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:text-emerald-200 dark:hover:bg-emerald-900/20"
                   onClick={toggleDetails}
                 >
                   <X className="h-5 w-5" />
@@ -1151,13 +1168,18 @@ function GroupChat() {
 
       {/* Create Group Dialog */}
       <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
-        <DialogContent>
+        <DialogContent className="bg-white dark:bg-gray-900 border-emerald-100 dark:border-emerald-900/50">
           <DialogHeader>
-            <DialogTitle>Create New Group</DialogTitle>
+            <DialogTitle className="text-emerald-800 dark:text-emerald-200">
+              Create New Group
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label htmlFor="group-name" className="text-sm font-medium">
+              <label
+                htmlFor="group-name"
+                className="text-sm font-medium text-emerald-800 dark:text-emerald-200"
+              >
                 Group Name
               </label>
               <Input
@@ -1165,14 +1187,23 @@ function GroupChat() {
                 placeholder="Enter group name"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
+                className="border-emerald-200 dark:border-emerald-800 focus-visible:ring-emerald-500"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreatingGroup(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreatingGroup(false)}
+              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+            >
               Cancel
             </Button>
-            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>
+            <Button
+              onClick={handleCreateGroup}
+              disabled={!newGroupName.trim()}
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+            >
               Create Group
             </Button>
           </DialogFooter>
