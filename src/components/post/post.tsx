@@ -494,7 +494,9 @@ const PostComponent: React.FC<PostProps> = ({
                             {comment.user?.username || "User"}
                           </p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {formatTimeAgo(comment.createdAt.toISOString())}
+                            {comment?.createdAt
+                              ? formatTimeAgo(new Date(comment.createdAt))
+                              : ""}
                           </p>
                           <p className="text-sm text-gray-800 dark:text-gray-200">
                             {comment.content}

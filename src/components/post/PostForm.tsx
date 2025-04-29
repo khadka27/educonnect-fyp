@@ -713,7 +713,7 @@ export default function EnhancedPostBox({
                               file.error && "opacity-50"
                             )}
                           />
-                        ) : file.type.startsWith("video/") ? (
+                        ) : file.type?.startsWith("video/") ? (
                           <video
                             src={file.preview}
                             className={cn(

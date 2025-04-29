@@ -44,6 +44,8 @@ import {
   Sun,
   ChevronUp,
 } from "lucide-react";
+import { CreatePostModal } from "@/components/post/create-post-modal";
+import { CreatePostButtonMobile } from "@/components/post/create-post-button-mobile";
 
 export default function HomePage() {
   // Hooks
@@ -53,6 +55,9 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState("feed");
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const { toast } = useToast();
 
@@ -97,6 +102,63 @@ export default function HomePage() {
     });
     // Implement your post creation logic here
   };
+
+  // Handle search functionality
+  const handleSearch = async (
+    e: React.FormEvent<HTMLFormElement> | React.ChangeEvent<HTMLInputElement>
+  ) => {
+    e.preventDefault();
+
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowSearchResults(true);
+
+    try {
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(searchQuery)}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch search results");
+      }
+
+      const data = await response.json();
+      setSearchResults(data.results || []);
+    } catch (error) {
+      console.error("Search failed:", error);
+      toast({
+        title: "Search Error",
+        description: "Failed to perform search. Please try again.",
+        variant: "destructive",
+      });
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle click outside to close search results
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchResults(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -253,14 +315,77 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="relative mt-2">
+                  <div className="relative mt-2" ref={searchRef}>
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                     <Input
                       placeholder="Search posts, topics, or users..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        handleSearch(e);
+                      }}
                       className="pl-10 border-emerald-200 dark:border-emerald-800 focus-visible:ring-emerald-500"
                     />
+
+                    {/* Search Results Dropdown */}
+                    {showSearchResults && (
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-emerald-100 dark:border-emerald-800 max-h-60 overflow-auto">
+                        {isSearching ? (
+                          <div className="p-4 space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          <div className="py-1">
+                            {searchResults.map((result) => (
+                              <Button
+                                key={result.id}
+                                variant="ghost"
+                                className="w-full justify-start rounded-none hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                onClick={() => {
+                                  setShowSearchResults(false);
+                                  if (result.type === "user") {
+                                    router.push(`/user-profile/${result.id}`);
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center py-2">
+                                  {result.type === "user" && (
+                                    <>
+                                      <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-800 overflow-hidden mr-3">
+                                        <img
+                                          src={
+                                            result.image ||
+                                            "/placeholder.svg?height=40&width=40"
+                                          }
+                                          alt={result.name || "User"}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium">
+                                          {result.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          @{result.username}
+                                        </p>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </Button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center">
+                            <p className="text-sm text-muted-foreground">
+                              No results found
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="pt-0 pb-4 px-4">
@@ -312,7 +437,7 @@ export default function HomePage() {
                   <EducationQuotesCarousel />
 
                   {/* Create Post Button */}
-                  <div className="flex justify-end">
+                  {/* <div className="flex justify-end">
                     <Button
                       className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md"
                       onClick={handleCreatePost}
@@ -320,7 +445,13 @@ export default function HomePage() {
                       <Plus className="mr-2 h-4 w-4" />
                       Create Post
                     </Button>
+                  </div> */}
+                  <div className="flex justify-end">
+                    <CreatePostButtonMobile />
+                    <CreatePostModal />
                   </div>
+
+                  {/* Post List */}
 
                   {/* Feeds */}
                   <div className="rounded-xl overflow-hidden shadow-md">

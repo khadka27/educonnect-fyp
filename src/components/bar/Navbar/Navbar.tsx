@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import type React from "react";
@@ -68,11 +69,23 @@ import {
 } from "src/components/ui/popover";
 import { Separator } from "src/components/ui/separator";
 import { Skeleton } from "src/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "src/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { HelpModal } from "@/components/help-modal";
+import { CreatePostModal } from "@/components/post/create-post-modal";
+import { CreatePostButtonMobile } from "@/components/post/create-post-button-mobile";
 
 interface TrendingTopic {
   id: string;
@@ -112,6 +125,7 @@ const EnhancedNavbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   // Hooks
   const { data: session, status } = useSession();
@@ -246,7 +260,7 @@ const EnhancedNavbar: React.FC = () => {
 
     setIsSearching(true);
     try {
-      // Call the real API to perform the search
+      // Call the API to perform the search
       const response = await fetch(
         `/api/search?q=${encodeURIComponent(searchQuery)}`
       );
@@ -287,6 +301,11 @@ const EnhancedNavbar: React.FC = () => {
     }
   };
 
+  // Open logout confirmation dialog
+  const openLogoutDialog = () => {
+    setIsLogoutDialogOpen(true);
+  };
+
   // If theme is not mounted yet, return null to prevent flash
   if (!mounted) return null;
 
@@ -298,6 +317,25 @@ const EnhancedNavbar: React.FC = () => {
           transform: translateY(-100%);
         }
       `}</style>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog
+        open={isLogoutDialogOpen}
+        onOpenChange={setIsLogoutDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Main Navbar */}
       <motion.nav
@@ -457,7 +495,7 @@ const EnhancedNavbar: React.FC = () => {
                     <Button
                       variant="destructive"
                       className="w-full"
-                      onClick={handleLogout}
+                      onClick={openLogoutDialog}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
@@ -579,63 +617,70 @@ const EnhancedNavbar: React.FC = () => {
                             key={result.id}
                             variant="ghost"
                             className="w-full justify-start py-3 px-2"
-                            asChild
+                            onClick={() => {
+                              setIsSearchExpanded(false);
+                              if (result.type === "user") {
+                                router.push(`/user-profile/${result.id}`);
+                              } else if (result.type === "post") {
+                                router.push(`/posts/${result.id}`);
+                              } else if (result.type === "topic") {
+                                router.push(`/topic/${result.id}`);
+                              }
+                            }}
                           >
-                            <Link href={`/${result.type}/${result.id}`}>
-                              <div className="flex items-center w-full">
-                                {result.type === "user" && (
-                                  <>
-                                    <Avatar className="h-8 w-8 mr-3">
-                                      <AvatarImage
-                                        src={result.image}
-                                        alt={result.name}
-                                      />
-                                      <AvatarFallback>
-                                        {result.name.charAt(0)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <p className="text-sm font-medium">
-                                        {result.name}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {result.username}
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                                {result.type === "post" && (
-                                  <>
-                                    <div className="h-8 w-8 rounded bg-muted flex items-center justify-center mr-3">
-                                      <MessageSquare className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-medium">
-                                        {result.title}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        By {result.author}
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                                {result.type === "topic" && (
-                                  <>
-                                    <div className="h-8 w-8 rounded bg-muted flex items-center justify-center mr-3">
-                                      <Hash className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-medium">
-                                        {result.name}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {result.posts} posts
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </Link>
+                            <div className="flex items-center w-full">
+                              {result.type === "user" && (
+                                <>
+                                  <Avatar className="h-8 w-8 mr-3">
+                                    <AvatarImage
+                                      src={result.image || "/placeholder.svg?height=40&width=40"}
+                                      alt={result.name || "User"}
+                                    />
+                                    <AvatarFallback>
+                                      {(result.name || "U").charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {result.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      @{result.username || "username"}
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                              {result.type === "post" && (
+                                <>
+                                  <div className="h-8 w-8 rounded bg-muted flex items-center justify-center mr-3">
+                                    <MessageSquare className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {result.title}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      By {result.author}
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                              {result.type === "topic" && (
+                                <>
+                                  <div className="h-8 w-8 rounded bg-muted flex items-center justify-center mr-3">
+                                    <Hash className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {result.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {result.posts} posts
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </Button>
                         ))}
                       </div>
@@ -643,7 +688,7 @@ const EnhancedNavbar: React.FC = () => {
                       <div className="text-center py-8">
                         <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                         <p className="text-sm text-muted-foreground">
-                          No results found for "{searchQuery}"
+                          No results found for &quot;{searchQuery}&quot;
                         </p>
                       </div>
                     ) : (
@@ -679,7 +724,7 @@ const EnhancedNavbar: React.FC = () => {
             {/* Right Side Icons */}
             <div className="flex items-center space-x-2">
               {/* Create Post Button */}
-              <Tooltip>
+              {/* <Tooltip>
                 <TooltipTrigger asChild>
                   <Button size="sm" className="hidden md:flex">
                     <Plus className="h-4 w-4 mr-2" />
@@ -687,7 +732,12 @@ const EnhancedNavbar: React.FC = () => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Create a new post</TooltipContent>
-              </Tooltip>
+              </Tooltip> */}
+              {/* Replace your existing Create button with this */}
+              <CreatePostModal />
+
+              {/* Add the mobile button somewhere in your layout */}
+              <CreatePostButtonMobile />
 
               {/* Dark Mode Toggle */}
               <div className="hidden md:flex items-center">
@@ -768,9 +818,9 @@ const EnhancedNavbar: React.FC = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard">
+                      <Link href="/posts">
                         <Compass className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
+                        <span>Posts</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -836,7 +886,7 @@ const EnhancedNavbar: React.FC = () => {
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={handleLogout}
+                    onClick={openLogoutDialog}
                     className="text-red-500 focus:text-red-500"
                   >
                     <LogOut className="mr-2 h-4 w-4" />

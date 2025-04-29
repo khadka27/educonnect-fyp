@@ -3,7 +3,7 @@ import {
   prisma,
   cleanupDatabase,
 } from "../../helpers/testHelper";
-import handler from "@/app/api/auth/signup/route";
+import handler from "src/app/api/auth/[...nextauth]/options";
 import bcrypt from "bcryptjs";
 
 jest.mock("bcryptjs");

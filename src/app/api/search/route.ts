@@ -1,13 +1,17 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
-  const { q } = req.query;
+export async function GET(req: NextRequest) {
+  const searchParams = req.nextUrl.searchParams;
+  const q = searchParams.get('q');
 
-  if (!q || typeof q !== "string") {
-    return res.status(400).json({ error: "Query parameter `q` is required" });
+  if (!q) {
+    return NextResponse.json(
+      { error: "Query parameter 'q' is required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -27,9 +31,21 @@ export async function GET(req: NextApiRequest, res: NextApiResponse) {
       },
     });
 
-    return res.status(200).json({ results: users });
+    // Format results to include type information for the frontend
+    const formattedResults = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      image: user.profileImage,
+      type: "user"
+    }));
+
+    return NextResponse.json({ results: formattedResults });
   } catch (error) {
     console.error("Error fetching users:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
