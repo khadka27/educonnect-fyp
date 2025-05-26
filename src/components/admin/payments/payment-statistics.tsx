@@ -1,6 +1,12 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "src/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "src/components/ui/card";
 import {
   BarChart,
   Bar,
@@ -13,23 +19,23 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
+} from "recharts";
 
 interface PaymentStatisticsProps {
   statistics: {
     byStatus: Array<{
-      status: string
-      count: number
-      totalAmount: number
-    }>
+      status: string;
+      count: number;
+      totalAmount: number;
+    }>;
     byMethod: Array<{
-      method: string
-      count: number
-      totalAmount: number
-    }>
-    totalAmount: number
-    totalCount: number
-  }
+      method: string;
+      count: number;
+      totalAmount: number;
+    }>;
+    totalAmount: number;
+    totalCount: number;
+  };
 }
 
 export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
@@ -38,29 +44,36 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
     name: item.status,
     value: item.count,
     amount: item.totalAmount,
-  }))
+  }));
 
   const methodData = statistics.byMethod.map((item) => ({
     name: item.method,
     value: item.count,
     amount: item.totalAmount,
-  }))
+  }));
 
   // Colors for the pie charts
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"]
+  const COLORS = [
+    "#0088FE",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#8884d8",
+    "#82ca9d",
+  ];
 
   // Format method name for display
   const formatMethodName = (method: string) => {
     return method
       .replace(/_/g, " ")
       .toLowerCase()
-      .replace(/\b\w/g, (l) => l.toUpperCase())
-  }
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  };
 
   // Format status name for display
   const formatStatusName = (status: string) => {
-    return status.charAt(0) + status.slice(1).toLowerCase()
-  }
+    return status.charAt(0) + status.slice(1).toLowerCase();
+  };
 
   return (
     <div className="space-y-6">
@@ -69,7 +82,9 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Payment Status Distribution</CardTitle>
-            <CardDescription>Distribution of payments by status</CardDescription>
+            <CardDescription>
+              Distribution of payments by status
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -85,14 +100,24 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
                     dataKey="value"
                     nameKey="name"
                     label={({ name, value, percent }) =>
-                      `${formatStatusName(name)}: ${value} (${(percent * 100).toFixed(0)}%)`
+                      `${formatStatusName(name)}: ${value} (${(
+                        percent * 100
+                      ).toFixed(0)}%)`
                     }
                   >
                     {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value, name) => [`${value} payments`, formatStatusName(name as string)]} />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      `${value} payments`,
+                      formatStatusName(name as string),
+                    ]}
+                  />
                   <Legend formatter={(value) => formatStatusName(value)} />
                 </PieChart>
               </ResponsiveContainer>
@@ -104,7 +129,9 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Payment Method Distribution</CardTitle>
-            <CardDescription>Distribution of payments by method</CardDescription>
+            <CardDescription>
+              Distribution of payments by method
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -120,14 +147,24 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
                     dataKey="value"
                     nameKey="name"
                     label={({ name, value, percent }) =>
-                      `${formatMethodName(name)}: ${value} (${(percent * 100).toFixed(0)}%)`
+                      `${formatMethodName(name)}: ${value} (${(
+                        percent * 100
+                      ).toFixed(0)}%)`
                     }
                   >
                     {methodData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value, name) => [`${value} payments`, formatMethodName(name as string)]} />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      `${value} payments`,
+                      formatMethodName(name as string),
+                    ]}
+                  />
                   <Legend formatter={(value) => formatMethodName(value)} />
                 </PieChart>
               </ResponsiveContainer>
@@ -145,19 +182,32 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
         <CardContent>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={statusData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart
+                data={statusData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tickFormatter={(value) => formatStatusName(value)} />
+                <XAxis
+                  dataKey="name"
+                  tickFormatter={(value) => formatStatusName(value)}
+                />
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
-                    `₹${Number(value).toLocaleString()}`,
+                    `Rs${Number(value).toLocaleString()}`,
                     name === "amount" ? "Revenue" : "Count",
                   ]}
-                  labelFormatter={(label) => `Status: ${formatStatusName(label)}`}
+                  labelFormatter={(label) =>
+                    `Status: ${formatStatusName(label)}`
+                  }
                 />
                 <Legend />
-                <Bar dataKey="amount" name="Revenue" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="amount"
+                  name="Revenue"
+                  fill="#8884d8"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -173,25 +223,37 @@ export function PaymentStatistics({ statistics }: PaymentStatisticsProps) {
         <CardContent>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={methodData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart
+                data={methodData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tickFormatter={(value) => formatMethodName(value)} />
+                <XAxis
+                  dataKey="name"
+                  tickFormatter={(value) => formatMethodName(value)}
+                />
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
-                    `₹${Number(value).toLocaleString()}`,
+                    `Rs${Number(value).toLocaleString()}`,
                     name === "amount" ? "Revenue" : "Count",
                   ]}
-                  labelFormatter={(label) => `Method: ${formatMethodName(label)}`}
+                  labelFormatter={(label) =>
+                    `Method: ${formatMethodName(label)}`
+                  }
                 />
                 <Legend />
-                <Bar dataKey="amount" name="Revenue" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="amount"
+                  name="Revenue"
+                  fill="#82ca9d"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

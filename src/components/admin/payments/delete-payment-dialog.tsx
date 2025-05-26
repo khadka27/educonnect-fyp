@@ -57,7 +57,7 @@ export function DeletePaymentDialog({ payment, open, onOpenChange, onSuccess }: 
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete the payment record for transaction{" "}
-            <span className="font-medium">{payment.transactionId}</span>({payment.user.name}'s payment of ₹
+            <span className="font-medium">{payment.transactionId}</span>({payment.user.name}'s payment of Rs
             {payment.amount} for {payment.event.title}).
             <p className="mt-2">This action cannot be undone.</p>
           </AlertDialogDescription>

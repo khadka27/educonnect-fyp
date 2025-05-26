@@ -258,7 +258,7 @@ export function CreatePaymentDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="amount">Amount (₹)*</Label>
+              <Label htmlFor="amount">Amount (Rs)*</Label>
               <Input
                 id="amount"
                 name="amount"

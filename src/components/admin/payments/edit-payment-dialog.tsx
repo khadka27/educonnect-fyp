@@ -179,7 +179,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onSuccess }: Ed
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-amount">Amount (₹)*</Label>
+              <Label htmlFor="edit-amount">Amount (Rs)*</Label>
               <Input
                 id="edit-amount"
                 name="amount"

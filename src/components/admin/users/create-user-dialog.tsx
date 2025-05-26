@@ -143,7 +143,7 @@ export function CreateUserDialog({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="John Doe"
+                placeholder="User"
                 className={errors.name ? "border-red-500" : ""}
               />
               {errors.name && (
@@ -159,7 +159,7 @@ export function CreateUserDialog({
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="john@example.com"
+                placeholder="user@example.com"
                 className={errors.email ? "border-red-500" : ""}
               />
               {errors.email && (
@@ -174,7 +174,7 @@ export function CreateUserDialog({
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="johndoe"
+                placeholder="User"
                 className={errors.username ? "border-red-500" : ""}
               />
               {errors.username && (

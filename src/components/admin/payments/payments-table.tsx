@@ -247,7 +247,7 @@ export function PaymentsTable({
                     </div>
                   </TableCell>
                   <TableCell>{payment.event.title}</TableCell>
-                  <TableCell>₹{payment.amount.toLocaleString()}</TableCell>
+                  <TableCell>Rs{payment.amount.toLocaleString()}</TableCell>
                   <TableCell>{payment.method}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(payment.status)}>

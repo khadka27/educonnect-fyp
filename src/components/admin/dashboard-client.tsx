@@ -244,7 +244,7 @@ export default function DashboardClient() {
                     <p className="text-xs text-muted-foreground">{format(new Date(payment.createdAt), "PPp")}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">₹{payment.amount}</p>
+                    <p className="font-medium">Rs{payment.amount}</p>
                     <Badge
                       variant={
                         payment.status === "COMPLETED"

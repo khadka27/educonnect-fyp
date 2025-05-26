@@ -190,7 +190,7 @@ export default function PaymentsClient() {
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{statistics.totalAmount.toLocaleString()}</div>
+              <div className="text-2xl font-bold">Rs{statistics.totalAmount.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">From {statistics.totalCount} payments</p>
             </CardContent>
           </Card>
@@ -201,7 +201,7 @@ export default function PaymentsClient() {
                 <CardTitle className="text-sm font-medium">{stat.status} Payments</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{stat.totalAmount?.toLocaleString() || 0}</div>
+                <div className="text-2xl font-bold">Rs{stat.totalAmount?.toLocaleString() || 0}</div>
                 <p className="text-xs text-muted-foreground">{stat.count} payments</p>
               </CardContent>
             </Card>
